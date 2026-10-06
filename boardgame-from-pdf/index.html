@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adventure Board Game 🎲</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #FF6B6B;
+            --secondary-color: #4EC0CA;
+            --accent-color: #FFD93D;
+            --bg-color: #F0F7FF;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-stylesheet;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden; /* Prevents scrolling while moving pieces */
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            color: var(--primary-color);
+            margin: 10px 0;
+            text-shadow: 2px 2px white;
+        }
+
+        /* UI Controls */
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 8px 0 #d1d1d1;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.1s;
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .btn:active { transform: scale(0.9); }
+
+        .btn-upload { background-color: var(--secondary-color); color: white; }
+        .btn-dice { background-color: var(--primary-color); color: white; }
+
+        /* Game Board Area */
+        #game-container {
+            position: relative;
+            width: 90vw;
+            height: 70vh;
+            background-color: #eee;
+            border: 10px solid white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            overflow: hidden;
+        }
+
+        #board-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Game Pieces */
+        .piece {
+            width: 60px;
+            height: 60px;
+            position: absolute;
+            cursor: grab;
+            z-index: 10;
+            transition: transform 0.1s;
+        }
+
+        .piece:active { cursor: grabbing; }
+
+        .piece-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+
+        /* Dice UI */
+        #dice-display {
+            font-size: 80px;
+            width: 120px;
+            height: 120px;
+            background: white;
+            border: 5px solid var(--primary-color);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 20px;
+            box-shadow: 0 8px 0 var(--primary-color);
+        }
+
+        .instructions {
+            margin-top: 10px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Adventure Land! 🏰</h1>
+
+    <div class="controls">
+        <input type="file" id="upload" accept="image/*,application/pdf" style="display:none;">
+        <button class="btn btn-upload" onclick="document.getElementById('upload').click()">1. Upload Board</button>
+        
+        <button class="btn btn-dice" onclick="rollDice()">2. Roll Dice</button>
+        
+        <div id="dice-display">?</div>
+    </div>
+
+    <div id="game-container" id="container">
+        <!-- Pieces will be generated here -->
+    </div>
+
+    <div class="instructions">Upload your board, then click & drag the colored circles!</div>
+
+    <script>
+        const container = document.getElementById('game-container');
+        const diceDisplay = document.getElementById('dice-display');
+        const uploadInput = document.getElementById('upload');
+
+        // 1. Handle Image/PDF Upload
+        uploadInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                // Set the background image of the container
+                container.style.backgroundImage = `url(${event.target.result})`;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 2. Create Game Pieces
+        // We'll create 4 different colored pieces automatically
+        const colors = ['#FF6B6B', '#4EC0CA', '#FFD93D', '#6BCB77'];
+        const icons = ['🦊', '🐰', '🐻', '🦁'];
+
+        function createPieces() {
+            if (container.querySelectorAll('.piece').length > 0) return; // Don't double create
+
+            for (let i = 0; i < 4; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'piece';
+                piece.style.left = (50 + (i * 100)) % 80 + 'px';
+                piece.style.top = (100 + (i * 50)) % 80 + 'px';
+                
+                const inner = document.createElement('div');
+                inner.className = 'piece-inner';
+                inner.style.backgroundColor = colors[i];
+                inner.innerHTML = icons[i];
+                
+                piece.appendChild(inner);
+                container.appendChild(piece);
+
+                // Drag and Drop Logic
+                let isDragging = false;
+                let offsetX, offsetY;
+
+                piece.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    piece.style.zIndex = 1000;
+                    offsetX = e.clientX - piece.offsetLeft;
+                    offsetY = e.clientY - piece.offsetTop;
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    
+                    let x = e.clientX - offsetX;
+                    let y = e.clientY - offsetY;
+                    
+                    // Keep inside container
+                    const rect = container.getBoundingClientRect();
+                    x = Math.max(0, Math.min(x, rect.width - piece.offsetWidth));
+                    y = Math.max(0, Math.min(y, rect.height - piece.offsetHeight));
+                    
+                    piece.style.left = x + 'px';
+                    piece.style.top = y + 'px';
+                });
+
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                    piece.style.zIndex = 10;
+                });
+            }
+        }
+
+        // 3. Dice Logic
+        function rollDice() {
+            // Add a little "shake" effect
+            diceDisplay.style.transform = 'scale(0.8)';
+            
+            setTimeout(() => {
+                const result = Math.floor(Math.random() * 6) + 1;
+                diceDisplay.innerHTML = result;
+                diceDisplay.style.transform = 'scale(1)';
+                
+                // Optional: Add a simple animation
+                diceDisplay.style.transition = 'transform 0.1s';
+            }, 150);
+        }
+
+        // Initialize pieces on load
+        createPieces();
+    </script>
+</body>
+</html>
