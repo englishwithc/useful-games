@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adventure Board Game 🎲</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root {
             --primary-color: #FF6B6B;
@@ -16,12 +17,12 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Nunito', sans-stylesheet;
+            font-family: 'Nunito', sans-serif;
             background-color: var(--bg-color);
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow: hidden; /* Prevents scrolling while moving pieces */
+            overflow: hidden;
         }
 
         h1 {
@@ -31,7 +32,6 @@
             text-shadow: 2px 2px white;
         }
 
-        /* UI Controls */
         .controls {
             background: white;
             padding: 15px;
@@ -54,11 +54,10 @@
         }
 
         .btn:active { transform: scale(0.9); }
-
         .btn-upload { background-color: var(--secondary-color); color: white; }
         .btn-dice { background-color: var(--primary-color); color: white; }
+        .btn-clear { background-color: #aaa; color: white; font-size: 0.9rem; padding: 8px 16px; }
 
-        /* Game Board Area */
         #game-container {
             position: relative;
             width: 90vw;
@@ -67,19 +66,39 @@
             border: 10px solid white;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
             overflow: hidden;
+            transition: box-shadow 0.2s, border-color 0.2s;
         }
 
-        #board-image {
+        #game-container.drag-over {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 6px rgba(78, 192, 202, 0.4), 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        #board-canvas {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            display: block;
         }
 
-        /* Game Pieces */
+        .drop-hint {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.5rem;
+            pointer-events: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .drop-hint .big { font-size: 4rem; margin-bottom: 10px; }
+
         .piece {
             width: 60px;
             height: 60px;
@@ -87,6 +106,7 @@
             cursor: grab;
             z-index: 10;
             transition: transform 0.1s;
+            touch-action: none;
         }
 
         .piece:active { cursor: grabbing; }
@@ -101,9 +121,9 @@
             align-items: center;
             justify-content: center;
             font-size: 30px;
+            pointer-events: none;
         }
 
-        /* Dice UI */
         #dice-display {
             font-size: 80px;
             width: 120px;
@@ -116,6 +136,14 @@
             justify-content: center;
             margin-left: 20px;
             box-shadow: 0 8px 0 var(--primary-color);
+            font-family: 'Fredoka One', cursive;
+        }
+
+        #status-msg {
+            font-size: 0.85rem;
+            color: #888;
+            margin-left: 10px;
+            max-width: 220px;
         }
 
         .instructions {
@@ -131,109 +159,301 @@
 
     <div class="controls">
         <input type="file" id="upload" accept="image/*,application/pdf" style="display:none;">
-        <button class="btn btn-upload" onclick="document.getElementById('upload').click()">1. Upload Board</button>
-        
+        <button class="btn btn-upload" onclick="document.getElementById('upload').click()">1. Upload Board (Image or PDF)</button>
         <button class="btn btn-dice" onclick="rollDice()">2. Roll Dice</button>
-        
         <div id="dice-display">?</div>
+        <span id="status-msg"></span>
+        <button class="btn btn-clear" onclick="clearBoard()">Clear Board</button>
     </div>
 
-    <div id="game-container" id="container">
-        <!-- Pieces will be generated here -->
+    <div id="game-container">
+        <canvas id="board-canvas"></canvas>
+        <div class="drop-hint" id="drop-hint">
+            <span class="big">📄🖼️</span>
+            <span>Drag &amp; drop a board image or PDF here,<br>or use the Upload Board button</span>
+        </div>
     </div>
 
-    <div class="instructions">Upload your board, then click & drag the colored circles!</div>
+    <div class="instructions">Drop a PDF or image board onto the area above, then click &amp; drag the colored circles!</div>
 
     <script>
+        // PDF.js worker (required to render PDFs)
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
         const container = document.getElementById('game-container');
+        const canvas = document.getElementById('board-canvas');
+        const ctx = canvas.getContext('2d');
         const diceDisplay = document.getElementById('dice-display');
         const uploadInput = document.getElementById('upload');
+        const dropHint = document.getElementById('drop-hint');
+        const statusMsg = document.getElementById('status-msg');
 
-        // 1. Handle Image/PDF Upload
-        uploadInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        const STORAGE_KEY = 'adventure-board-data';
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                // Set the background image of the container
-                container.style.backgroundImage = `url(${event.target.result})`;
+        function setStatus(msg) { statusMsg.textContent = msg; }
+
+        // ---------- Board rendering ----------
+
+        function fitCanvasToContainer() {
+            const rect = container.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.round(rect.width * dpr);
+            canvas.height = Math.round(rect.height * dpr);
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            return { width: rect.width, height: rect.height, dpr };
+        }
+
+        // Draw an image file onto the canvas, fitted with "contain"
+        function renderImage(dataUrl) {
+            const img = new Image();
+            img.onload = () => {
+                const { width, height } = fitCanvasToContainer();
+                ctx.clearRect(0, 0, width, height);
+                const scale = Math.min(width / img.width, height / img.height);
+                const w = img.width * scale;
+                const h = img.height * scale;
+                ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h);
+                dropHint.style.display = 'none';
+                setStatus('Image board loaded ✔');
             };
-            reader.readAsDataURL(file);
+            img.src = dataUrl;
+        }
+
+        // Render the first page of a PDF file onto the canvas
+        async function renderPdf(arrayBuffer) {
+            setStatus('Rendering PDF…');
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const page = await pdf.getPage(1); // first page as the board
+            const { width, height } = fitCanvasToContainer();
+
+            const baseViewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(width / baseViewport.width, height / baseViewport.height);
+            const viewport = page.getViewport({ scale });
+
+            // Temporarily resize the backing canvas for the PDF render
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.round(viewport.width * dpr);
+            canvas.height = Math.round(viewport.height * dpr);
+            canvas.style.width = Math.round(viewport.width) + 'px';
+            canvas.style.height = Math.round(viewport.height) + 'px';
+
+            // Center the PDF canvas inside the container
+            canvas.style.position = 'absolute';
+            canvas.style.left = Math.round((width - viewport.width) / 2) + 'px';
+            canvas.style.top = Math.round((height - viewport.height) / 2) + 'px';
+
+            await page.render({
+                canvasContext: ctx,
+                viewport: viewport,
+                transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null
+            }).promise;
+
+            dropHint.style.display = 'none';
+            setStatus(`PDF loaded (page 1 of ${pdf.numPages}) ✔ — multi-page PDFs: only page 1 is shown`);
+        }
+
+        function resetCanvasSizing() {
+            canvas.style.position = '';
+            canvas.style.left = '';
+            canvas.style.top = '';
+            const { width, height } = fitCanvasToContainer();
+            ctx.clearRect(0, 0, width, height);
+        }
+
+        // ---------- File handling ----------
+
+        function handleFile(file) {
+            if (!file) return;
+            const isPdf = file.type === 'application/pdf' ||
+                          file.name.toLowerCase().endsWith('.pdf');
+            const isImage = file.type.startsWith('image/');
+
+            if (isPdf) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    renderPdf(e.target.result).catch(err => {
+                        console.error(err);
+                        setStatus('Could not render this PDF 😞');
+                    });
+                    saveToStorage(file.name, 'pdf');
+                };
+                reader.readAsArrayBuffer(file);
+            } else if (isImage) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    renderImage(e.target.result);
+                    saveToStorage(file.name, 'image', e.target.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                setStatus('Please drop an image or PDF file.');
+            }
+        }
+
+        // File picker
+        uploadInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+            uploadInput.value = ''; // allow re-uploading the same file
         });
 
-        // 2. Create Game Pieces
-        // We'll create 4 different colored pieces automatically
+        // Drag & drop onto the game container (and the whole page as fallback)
+        ['dragenter', 'dragover'].forEach(evt =>
+            container.addEventListener(evt, (e) => {
+                e.preventDefault();
+                container.classList.add('drag-over');
+            })
+        );
+        ['dragleave', 'drop'].forEach(evt =>
+            container.addEventListener(evt, (e) => {
+                e.preventDefault();
+                if (evt === 'dragleave' && container.contains(e.relatedTarget)) return;
+                container.classList.remove('drag-over');
+            })
+        );
+        container.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files && e.dataTransfer.files[0];
+            handleFile(file);
+        });
+
+        // Re-render image board on window resize
+        let lastImageData = null;
+        const origRenderImage = renderImage;
+        window.addEventListener('resize', () => {
+            if (lastImageData) renderImage(lastImageData);
+            else if (lastPdfBuffer) renderPdf(lastPdfBuffer);
+        });
+
+        let lastPdfBuffer = null;
+        const origRenderPdf = renderPdf;
+
+        // Wrap renderers to remember the source for resize handling
+        renderImage = function(dataUrl) { lastImageData = dataUrl; lastPdfBuffer = null; origRenderImage(dataUrl); };
+        renderPdf = async function(buf) { lastPdfBuffer = buf; lastImageData = null; return origRenderPdf(buf); };
+
+        // ---------- Simple persistence (survives reloads on the same device) ----------
+        // Note: PDFs can be large; we only persist images in localStorage.
+        // PDFs must be re-dropped after a reload (browser security limits apply).
+
+        function saveToStorage(name, kind, dataUrl) {
+            try {
+                if (kind === 'image' && dataUrl) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify({ kind, dataUrl }));
+                } else {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify({ kind, name }));
+                }
+            } catch (err) { /* storage full or unavailable — ignore */ }
+        }
+
+        function restoreFromStorage() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                if (saved && saved.kind === 'image' && saved.dataUrl) {
+                    renderImage(saved.dataUrl);
+                    setStatus('Restored your board from last session ✔');
+                } else if (saved && saved.kind === 'pdf') {
+                    setStatus(`Last board was PDF "${saved.name}" — please drop it again to continue.`);
+                }
+            } catch (err) { /* ignore */ }
+        }
+
+        function clearBoard() {
+            localStorage.removeItem(STORAGE_KEY);
+            lastImageData = null;
+            lastPdfBuffer = null;
+            resetCanvasSizing();
+            dropHint.style.display = 'flex';
+            setStatus('Board cleared.');
+        }
+
+        // ---------- Game pieces (drag with mouse + touch) ----------
+
         const colors = ['#FF6B6B', '#4EC0CA', '#FFD93D', '#6BCB77'];
         const icons = ['🦊', '🐰', '🐻', '🦁'];
 
         function createPieces() {
-            if (container.querySelectorAll('.piece').length > 0) return; // Don't double create
+            if (container.querySelectorAll('.piece').length > 0) return;
 
             for (let i = 0; i < 4; i++) {
                 const piece = document.createElement('div');
                 piece.className = 'piece';
-                piece.style.left = (50 + (i * 100)) % 80 + 'px';
-                piece.style.top = (100 + (i * 50)) % 80 + 'px';
-                
+                piece.style.left = (50 + i * 100) % 80 + 'px';
+                piece.style.top = (100 + i * 50) % 80 + 'px';
+
                 const inner = document.createElement('div');
                 inner.className = 'piece-inner';
                 inner.style.backgroundColor = colors[i];
                 inner.innerHTML = icons[i];
-                
+
                 piece.appendChild(inner);
                 container.appendChild(piece);
 
-                // Drag and Drop Logic
                 let isDragging = false;
                 let offsetX, offsetY;
 
-                piece.addEventListener('mousedown', (e) => {
+                function startDrag(clientX, clientY) {
                     isDragging = true;
                     piece.style.zIndex = 1000;
-                    offsetX = e.clientX - piece.offsetLeft;
-                    offsetY = e.clientY - piece.offsetTop;
-                });
+                    const rect = piece.getBoundingClientRect();
+                    offsetX = clientX - rect.left;
+                    offsetY = clientY - rect.top;
+                }
 
-                document.addEventListener('mousemove', (e) => {
+                function moveDrag(clientX, clientY) {
                     if (!isDragging) return;
-                    
-                    let x = e.clientX - offsetX;
-                    let y = e.clientY - offsetY;
-                    
-                    // Keep inside container
                     const rect = container.getBoundingClientRect();
+                    let x = clientX - rect.left - offsetX;
+                    let y = clientY - rect.top - offsetY;
                     x = Math.max(0, Math.min(x, rect.width - piece.offsetWidth));
                     y = Math.max(0, Math.min(y, rect.height - piece.offsetHeight));
-                    
                     piece.style.left = x + 'px';
                     piece.style.top = y + 'px';
-                });
+                }
 
-                document.addEventListener('mouseup', () => {
+                function endDrag() {
                     isDragging = false;
                     piece.style.zIndex = 10;
+                }
+
+                piece.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    startDrag(e.clientX, e.clientY);
                 });
+                document.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
+                document.addEventListener('mouseup', endDrag);
+
+                // Touch support
+                piece.addEventListener('touchstart', (e) => {
+                    const t = e.touches[0];
+                    startDrag(t.clientX, t.clientY);
+                }, { passive: true });
+                document.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    const t = e.touches[0];
+                    moveDrag(t.clientX, t.clientY);
+                }, { passive: true });
+                document.addEventListener('touchend', endDrag);
             }
         }
 
-        // 3. Dice Logic
+        // ---------- Dice ----------
+
         function rollDice() {
-            // Add a little "shake" effect
             diceDisplay.style.transform = 'scale(0.8)';
-            
             setTimeout(() => {
                 const result = Math.floor(Math.random() * 6) + 1;
                 diceDisplay.innerHTML = result;
                 diceDisplay.style.transform = 'scale(1)';
-                
-                // Optional: Add a simple animation
                 diceDisplay.style.transition = 'transform 0.1s';
             }, 150);
         }
 
-        // Initialize pieces on load
+        // ---------- Init ----------
+
         createPieces();
+        restoreFromStorage();
     </script>
 </body>
 </html>
