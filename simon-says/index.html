@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌈 Simon Says Classroom Game</title>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #FF6B6B, #4ECDC4, #FFE66D, #FF9F43);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --text-main: #2d3436;
+      --accent: #6c5ce7;
+      --trap-reveal: #ff4757;
+      --freeze-reveal: #2ed573;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    body {
+      background: var(--bg-gradient);
+      background-size: 400% 400%;
+      animation: gradientShift 12s ease infinite;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--text-main);
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      width: 90vw;
+      max-width: 1000px;
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+      padding: 2rem;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 1.5rem;
+    }
+
+    h1 { text-align: center; font-size: 2.8rem; color: var(--accent); text-shadow: 2px 2px 0px rgba(0,0,0,0.1); }
+
+    /* Game Display */
+    .stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 350px;
+      background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 18px;
+      padding: 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .emoji-display { font-size: 6rem; margin-bottom: 1rem; animation: bounce 1s infinite; }
+    .text-display { font-size: 3.5rem; font-weight: 800; line-height: 1.2; color: #333; }
+    .sub-text { font-size: 1.8rem; margin-top: 0.5rem; color: #666; font-weight: 600; }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    .reveal-trap { animation: shake 0.5s ease-in-out, colorFlash 1s infinite; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+    @keyframes colorFlash { 0%, 100% { color: var(--trap-reveal); } 50% { color: #ff6b6b; } }
+
+    .repeat-counter { font-size: 4rem; font-weight: bold; margin-top: 1rem; opacity: 0; transition: opacity 0.3s; }
+    .repeat-counter.show { opacity: 1; animation: pulse 0.8s infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      align-items: center;
+      background: #f1f3f5;
+      padding: 1.2rem;
+      border-radius: 16px;
+    }
+
+    .toggle-group { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .toggle-item { background: white; padding: 0.8rem 1.2rem; border-radius: 12px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; user-select: none; }
+    .toggle-item input { transform: scale(1.3); accent-color: var(--accent); cursor: pointer; }
+
+    .vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.8rem; margin-top: 0.5rem; }
+    .vocab-item { background: white; padding: 0.6rem; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 0.95rem; cursor: pointer; }
+    .vocab-item input { margin-right: 6px; accent-color: var(--accent); }
+
+    button { padding: 0.8rem 1.8rem; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    button:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
+    #start-btn { background: #2ed573; color: white; }
+    #stop-btn { background: #ff4757; color: white; display: none; }
+
+    .hidden { display: none !important; }
+    
+    select {
+      padding: 0.8rem;
+      border-radius: 12px;
+      border: 2px solid #ddd;
+      font-size: 1.1rem;
+      background: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header><h1>🌈 Simon Says!</h1></header>
+
+    <main class="stage" id="stage">
+      <div class="emoji-display" id="emoji"></div>
+      <div class="text-display" id="mainText">Press START to begin!</div>
+      <div class="sub-text hidden" id="subText"></div>
+      <div class="repeat-counter hidden" id="repeatCounter"></div>
+    </main>
+
+    <section class="controls">
+      <div class="vocab-grid" id="vocabGrid">
+        <!-- Generated by JS -->
+      </div>
+
+      <div class="toggle-group">
+        <label class="toggle-item"><input type="checkbox" id="trapMode"> 🎭 Trap Mode</label>
+        <label class="toggle-item"><input type="checkbox" id="repetitionMode"> 🔁 Repetition Mode</label>
+        
+        <select id="speedSelect">
+          <option value="slow">🐢 Slow Speed</option>
+          <option value="normal" selected>🚶 Normal Speed</option>
+          <option value="fast">⚡ Fast Speed</option>
+        </select>
+      </div>
+
+      <button id="startBtn">▶️ START</button>
+      <button id="stopBtn">⏹️ STOP</button>
+    </section>
+  </div>
+
+  <script>
+    // --- Configuration & State ---
+    const ACTIONS = [
+      { name: 'JUMP', emoji: '🦘' },
+      { name: 'CLAP', emoji: '👏' },
+      { name: 'TURN AROUND', emoji: '🔄' },
+      { name: 'SIT DOWN', emoji: '🪑' },
+      { name: 'STAND UP', emoji: '🧍' },
+      { name: 'LISTEN', emoji: '👂' },
+      { name: 'LOOK', emoji: '👀' },
+      { name: 'STOMP FEET', emoji: '👣' },
+      { name: 'FREEZE', emoji: '✋' }
+    ];
+
+    // Timing Constants (in milliseconds)
+    const TIMING = {
+      slow: { actionDisplay: 4500, break: 3000, countPerAction: 1200 },
+      normal: { actionDisplay: 3000, break: 2000, countPerAction: 900 },
+      fast: { actionDisplay: 1800, break: 600, countPerAction: 700 }
+    };
+
+    let state = {
+      running: false,
+      trapMode: false,
+      repetitionMode: false,
+      speed: 'normal', // slow, normal, fast
+      enabledActions: new Set(ACTIONS.map(a => a.name)),
+      currentAction: null,
+      timeoutIds: []
+    };
+
+    // --- DOM Elements ---
+    const els = {
+      emoji: document.getElementById('emoji'),
+      mainText: document.getElementById('mainText'),
+      subText: document.getElementById('subText'),
+      repeatCounter: document.getElementById('repeatCounter'),
+      vocabGrid: document.getElementById('vocabGrid'),
+      trapMode: document.getElementById('trapMode'),
+      repetitionMode: document.getElementById('repetitionMode'),
+      speedSelect: document.getElementById('speedSelect'),
+      startBtn: document.getElementById('startBtn'),
+      stopBtn: document.getElementById('stopBtn')
+    };
+
+    // --- Initialization ---
+    function init() {
+      // Build vocabulary toggles
+      ACTIONS.forEach(action => {
+        const div = document.createElement('div');
+        div.className = 'vocab-item';
+        div.innerHTML = `<label><input type="checkbox" checked data-action="${action.name}">${action.emoji} ${action.name}</label>`;
+        els.vocabGrid.appendChild(div);
+      });
+
+      // Event Listeners
+      document.querySelectorAll('.vocab-item input').forEach(cb => {
+        cb.addEventListener('change', updateVocab);
+      });
+
+      els.trapMode.addEventListener('change', (e) => { state.trapMode = e.target.checked; });
+      els.repetitionMode.addEventListener('change', (e) => { state.repetitionMode = e.target.checked; });
+      els.speedSelect.addEventListener('change', (e) => { state.speed = e.target.value; });
+
+      els.startBtn.addEventListener('click', startGame);
+      els.stopBtn.addEventListener('click', stopGame);
+    }
+
+    function updateVocab() {
+      const checkboxes = document.querySelectorAll('.vocab-item input');
+      state.enabledActions.clear();
+      
+      checkboxes.forEach(cb => {
+        if (cb.checked) state.enabledActions.add(cb.dataset.action);
+      });
+
+      // Ensure at least one is enabled
+      if (state.enabledActions.size === 0) {
+        checkboxes[0].checked = true;
+        state.enabledActions.add(checkboxes[0].dataset.action);
+      }
+    }
+
+    // --- Game Logic ---
+    function delay(ms) {
+      return new Promise(resolve => {
+        const id = setTimeout(resolve, ms);
+        state.timeoutIds.push(id);
+      });
+    }
+
+    function speak(text) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function getRandomAction() {
+      const arr = Array.from(state.enabledActions);
+      if (arr.length === 0) return ACTIONS[0]; // Fallback safety
+      const randomName = arr[Math.floor(Math.random() * arr.length)];
+      return ACTIONS.find(a => a.name === randomName);
+    }
+
+    async function startGame() {
+      state.running = true;
+      
+      // Hide controls and show stop button
+      els.startBtn.classList.add('hidden');
+      els.stopBtn.style.display = 'inline-block';
+      els.vocabGrid.classList.add('hidden');
+      document.querySelector('.toggle-group').classList.add('hidden');
+
+      while (state.running) {
+        const action = getRandomAction();
+        if (!action) continue; // Safety check
+        state.currentAction = action;
+
+        // Reset visuals
+        els.emoji.className = 'emoji-display';
+        els.mainText.className = 'text-display';
+        els.subText.classList.add('hidden');
+        els.repeatCounter.classList.remove('show');
+        els.repeatCounter.classList.add('hidden');
+
+        const times = state.repetitionMode ? Math.floor(Math.random() * 10) + 1 : 1;
+        const t = TIMING[state.speed]; // Get timing config
+
+        // --- Trap Mode Logic ---
+        // 20% chance of a trap if enabled
+        const isTrap = state.trapMode && Math.random() < 0.2;
+
+        if (isTrap) {
+          // TRAP TURN: Show action, but NO "Simon Says" text initially
+          els.mainText.textContent = action.name;
+          els.emoji.textContent = action.emoji;
+          
+          // Speak the action so they think it's valid
+          speak(action.name);
+
+          // Wait for them to react (standard display time)
+          await delay(t.actionDisplay);
+
+          // REVEAL: Flash Freeze
+          els.mainText.textContent = 'FREEZE!';
+          els.emoji.textContent = '🛑';
+          els.subText.classList.add('hidden');
+          els.repeatCounter.classList.remove('show');
+          els.emoji.classList.add('reveal-trap');
+          
+          speak("Freeze! Stay still!");
+          await delay(2500); // Time to realize mistake
+        } else {
+          // --- NORMAL TURN ---
+          if (state.repetitionMode && times > 1) {
+            // Repetition Mode: Simon Says + Action + Count
+            els.mainText.textContent = `SIMON SAYS ${action.name}`;
+            els.emoji.textContent = action.emoji;
+            
+            speak(`Simon says ${action.name} ${times} times`);
+
+            // Show dynamic countdown
+            els.repeatCounter.classList.remove('hidden');
+            els.repeatCounter.classList.add('show');
+            
+            for (let i = 1; i <= times; i++) {
+              if (!state.running) break;
+              els.repeatCounter.textContent = `🔁 ${i} / ${times}`;
+              speak(`${i}`);
+              await delay(t.countPerAction);
+            }
+          } else {
+            // Standard Single Action
+            els.mainText.textContent = 'SIMON SAYS';
+            els.subText.textContent = action.name;
+            els.subText.classList.remove('hidden');
+            els.emoji.textContent = action.emoji;
+            
+            speak(`Simon says ${action.name}`);
+            
+            await delay(t.actionDisplay);
+          }
+        }
+
+        // --- BREAK BETWEEN ROUNDS ---
+        const breakTime = state.trapMode ? 2500 : t.break; // Slightly longer break after a trap to debrief
+        els.mainText.textContent = 'Get Ready...';
+        els.emoji.textContent = '⏳';
+        els.subText.classList.add('hidden');
+        els.repeatCounter.classList.remove('show');
+        await delay(breakTime);
+      }
+
+      // --- RESET UI ON STOP ---
+      els.startBtn.classList.remove('hidden');
+      els.stopBtn.style.display = 'none';
+      els.vocabGrid.classList.remove('hidden');
+      document.querySelector('.toggle-group').classList.remove('hidden');
+      
+      els.emoji.className = 'emoji-display';
+      els.mainText.textContent = 'Press START to begin!';
+      els.subText.classList.add('hidden');
+      els.repeatCounter.classList.add('hidden');
+    }
+
+    function stopGame() {
+      state.running = false;
+      state.timeoutIds.forEach(id => clearTimeout(id));
+      state.timeoutIds = [];
+      window.speechSynthesis.cancel();
+      
+      // Force reset UI immediately
+      els.startBtn.classList.remove('hidden');
+      els.stopBtn.style.display = 'none';
+      els.vocabGrid.classList.remove('hidden');
+      document.querySelector('.toggle-group').classList.remove('hidden');
+      
+      els.emoji.className = 'emoji-display';
+      els.mainText.textContent = 'Press START to begin!';
+      els.subText.classList.add('hidden');
+      els.repeatCounter.classList.add('hidden');
+    }
+
+    // Start
+    init();
+  </script>
+</body>
+</html>
