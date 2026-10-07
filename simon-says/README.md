@@ -4,17 +4,6 @@
 
 ---
 
-## 🚀 Quick Start Guide
-
-| Step | Action |
-|------|--------|
-| 1 | Download the game file (`.html`) from this website |
-| 2 | Save it to your computer or a USB drive |
-| 3 | Open the file in any web browser (Chrome, Edge, Safari, etc.) |
-| 4 | Connect your computer to your classroom projector/Smartboard |
-
----
-
 ## 🎮 How to Play: The Basics
 
 The game runs automatically on a loop. Here is how the standard mode works:
@@ -75,21 +64,9 @@ Instead of doing an action once, students must do it multiple times.
 
 ---
 
-## ❓ Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| 🔊 No Sound? | Make sure your computer volume is up and that your browser allows the site to play sounds. |
-| 🔄 Game Stuck? | Click the **STOP** button to reset everything back to the main menu. |
-| 📱 Can I use this on a tablet? | Yes! It works on iPads and Android tablets too. |
-
----
-
 ## 🎓 Have Fun Playing with Your Class!
 
 Enjoy teaching Simon Says with ease! ✨
 
----
 
-**📄 File Info:** This is an offline HTML file – no internet required after download.
 
