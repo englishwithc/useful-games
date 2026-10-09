@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocabulary Quest</title>
+
+<style>
+:root {
+  --navy: #172554;
+  --blue: #2563eb;
+  --purple: #7c3aed;
+  --pink: #ec4899;
+  --yellow: #facc15;
+  --green: #22c55e;
+  --red: #ef4444;
+  --orange: #f97316;
+  --cream: #fffdf5;
+  --shadow: 0 12px 25px rgba(23, 37, 84, .18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  color: var(--navy);
+  background:
+    radial-gradient(circle at 10% 10%, #fde68a 0 7%, transparent 8%),
+    radial-gradient(circle at 90% 20%, #fbcfe8 0 8%, transparent 9%),
+    linear-gradient(135deg, #dbeafe, #fce7f3 50%, #fef3c7);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+.app {
+  width: min(1250px, 95%);
+  margin: auto;
+  padding: 25px 0 50px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.logo {
+  display: inline-block;
+  font-size: clamp(2.3rem, 6vw, 4.5rem);
+  font-weight: 900;
+  color: var(--purple);
+  text-shadow: 4px 4px 0 white, 7px 7px 0 var(--yellow);
+  transform: rotate(-2deg);
+  margin: 10px 0;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #374151;
+}
+
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+.panel {
+  background: rgba(255, 255, 255, .93);
+  border-radius: 28px;
+  padding: clamp(20px, 4vw, 38px);
+  box-shadow: var(--shadow);
+  border: 4px solid white;
+}
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .setup-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+h2 {
+  margin-top: 0;
+  color: var(--purple);
+}
+
+h3 {
+  color: var(--blue);
+}
+
+label {
+  display: block;
+  margin: 12px 0 6px;
+  font-weight: bold;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 3px solid #c7d2fe;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: white;
+  color: var(--navy);
+  outline: none;
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  border-color: var(--pink);
+}
+
+textarea {
+  min-height: 105px;
+  line-height: 1.45;
+}
+
+.help {
+  padding: 16px;
+  background: #fef9c3;
+  border-radius: 15px;
+  line-height: 1.5;
+  font-size: .95rem;
+}
+
+.category-block {
+  background: #eef2ff;
+  border: 3px solid #c7d2fe;
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 14px;
+  position: relative;
+}
+
+.category-block.invalid {
+  border-color: var(--red);
+  background: #fee2e2;
+}
+
+.category-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.category-number {
+  font-weight: 900;
+  color: var(--blue);
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.category-block .cat-title-input {
+  flex: 1;
+}
+
+.remove-category-btn {
+  background: var(--red);
+  color: white;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-weight: 900;
+  font-size: .85rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 0 #b91c1c;
+  transition: transform .15s, filter .15s;
+}
+
+.remove-category-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.category-block .term-hint {
+  font-size: .85rem;
+  color: #475569;
+  margin: 8px 0 4px;
+  font-weight: bold;
+}
+
+.setup-actions-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.add-category-btn {
+  background: var(--green);
+  color: white;
+  border-radius: 16px;
+  padding: 12px 20px;
+  font-weight: 900;
+  box-shadow: 0 6px 0 #15803d;
+  transition: transform .15s, filter .15s;
+}
+
+.add-category-btn:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.08);
+}
+
+.category-count-note {
+  font-size: .9rem;
+  font-weight: bold;
+  color: #475569;
+  margin: 10px 0 4px;
+}
+
+.players-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.player-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-input span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.player-input:nth-child(1) span { background: #ef4444; }
+.player-input:nth-child(2) span { background: #2563eb; }
+.player-input:nth-child(3) span { background: #16a34a; }
+.player-input:nth-child(4) span { background: #9333ea; }
+.player-input:nth-child(5) span { background: #ea580c; }
+.player-input:nth-child(6) span { background: #0891b2; }
+
+.primary-btn,
+.secondary-btn,
+.danger-btn {
+  border-radius: 16px;
+  padding: 14px 21px;
+  font-weight: 900;
+  transition: transform .15s, filter .15s;
+}
+
+.primary-btn:hover,
+.secondary-btn:hover,
+.danger-btn:hover,
+.result-btn:hover,
+.jeopardy-card:hover:not(:disabled) {
+  transform: translateY(-3px);
+  filter: brightness(1.08);
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  color: white;
+  box-shadow: 0 7px 0 #9d174d;
+}
+
+.secondary-btn {
+  background: var(--yellow);
+  color: var(--navy);
+  box-shadow: 0 6px 0 #ca8a04;
+}
+
+.danger-btn {
+  background: var(--red);
+  color: white;
+  box-shadow: 0 6px 0 #b91c1c;
+}
+
+.full-btn {
+  width: 100%;
+  margin-top: 22px;
+}
+
+.error {
+  display: none;
+  color: #b91c1c;
+  background: #fee2e2;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+.game-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.game-title {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  color: var(--purple);
+  font-weight: 900;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.score-card {
+  color: white;
+  border-radius: 20px;
+  padding: 15px;
+  text-align: center;
+  box-shadow: 0 7px 0 rgba(23, 37, 84, .25);
+}
+
+.score-card:nth-child(6n+1) { background: #ef4444; }
+.score-card:nth-child(6n+2) { background: #2563eb; }
+.score-card:nth-child(6n+3) { background: #16a34a; }
+.score-card:nth-child(6n+4) { background: #9333ea; }
+.score-card:nth-child(6n+5) { background: #ea580c; }
+.score-card:nth-child(6n+6) { background: #0891b2; }
+
+.score-name {
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score-value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  margin-top: 5px;
+}
+
+.board {
+  display: grid;
+  gap: 12px;
+}
+
+@media (max-width: 800px) {
+  .board {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 500px) {
+  .board {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+.category {
+  color: white;
+  text-align: center;
+  font-size: clamp(.8rem, 2vw, 1.2rem);
+  font-weight: 900;
+  padding: 15px 6px;
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 17px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.jeopardy-card {
+  min-height: 100px;
+  border-radius: 18px;
+  color: var(--yellow);
+  background: linear-gradient(135deg, #172554, #312e81);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 900;
+  box-shadow: 0 7px 0 #0f172a;
+  transition: transform .18s, background .18s;
+}
+
+.jeopardy-card:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4c1d95, #be185d);
+}
+
+.jeopardy-card:disabled {
+  cursor: not-allowed;
+  background: #cbd5e1;
+  color: #64748b;
+  box-shadow: 0 5px 0 #94a3b8;
+  text-decoration: line-through;
+}
+
+.status-bar {
+  text-align: center;
+  margin: 20px 0 0;
+  font-weight: bold;
+  color: #475569;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, .75);
+  z-index: 10;
+}
+
+.modal-backdrop.open {
+  display: grid;
+}
+
+.modal {
+  width: min(720px, 100%);
+  max-height: 94vh;
+  overflow-y: auto;
+  background: var(--cream);
+  border-radius: 30px;
+  padding: clamp(22px, 5vw, 42px);
+  text-align: center;
+  box-shadow: 0 25px 70px rgba(0,0,0,.35);
+  animation: pop .2s ease-out;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(.75) rotate(-3deg);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+.modal h2 {
+  font-size: clamp(1.7rem, 5vw, 3rem);
+  margin-bottom: 8px;
+}
+
+.points-display {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: var(--yellow);
+  font-size: 2rem;
+  font-weight: 900;
+  margin: 12px 0;
+}
+
+.vocab-word {
+  background: linear-gradient(135deg, #dbeafe, #fce7f3);
+  border-radius: 20px;
+  padding: 28px 15px;
+  margin: 14px 0;
+}
+
+.vocab-word .term {
+  font-size: clamp(2rem, 7vw, 4rem);
+  color: var(--purple);
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.assignment {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 20px 0;
+}
+
+@media (max-width: 500px) {
+  .assignment {
+    grid-template-columns: 1fr;
+  }
+}
+
+.assignment-box {
+  padding: 15px;
+  border-radius: 17px;
+  color: white;
+  font-weight: bold;
+}
+
+.assignment-box:first-child {
+  background: #2563eb;
+}
+
+.assignment-box:last-child {
+  background: #ec4899;
+}
+
+.assignment-box strong {
+  display: block;
+  font-size: 1.35rem;
+  margin-top: 4px;
+}
+
+.instruction {
+  font-size: 1.1rem;
+  line-height: 1.5;
+  margin: 20px 0;
+}
+
+.penalty-controls {
+  text-align: left;
+  background: #fff7ed;
+  border: 3px solid #fdba74;
+  border-radius: 18px;
+  padding: 16px;
+  margin: 20px 0;
+}
+
+.penalty-controls h3 {
+  margin-top: 0;
+  color: #c2410c;
+}
+
+.penalty-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  margin: 7px 0;
+  border-radius: 12px;
+  cursor: pointer;
+  background: white;
+}
+
+.penalty-option:hover {
+  background: #ffedd5;
+}
+
+.penalty-option input {
+  width: auto;
+  margin-top: 4px;
+}
+
+.penalty-option span {
+  font-weight: bold;
+}
+
+.penalty-option small {
+  display: block;
+  color: #9a3412;
+  margin-top: 3px;
+  font-weight: normal;
+}
+
+.result-buttons {
+  display: grid;
+  gap: 10px;
+}
+
+.result-btn {
+  border-radius: 15px;
+  padding: 14px;
+  font-weight: 900;
+  color: white;
+  transition: transform .15s;
+}
+
+.both-btn {
+  background: var(--green);
+}
+
+.questioner-btn {
+  background: var(--blue);
+}
+
+.responder-btn {
+  background: var(--pink);
+}
+
+.none-btn {
+  background: #64748b;
+}
+
+.close-btn {
+  margin-top: 17px;
+  background: transparent;
+  color: #64748b;
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+.small-note {
+  margin-top: 12px;
+  color: #475569;
+  line-height: 1.4;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header>
+  <div class="logo">Vocabulary Quest!</div>
+  <div class="subtitle">
+    Create questions, answer creatively, and earn points
+  </div>
+</header>
+
+<section id="setupScreen" class="screen active">
+  <div class="panel">
+    <div class="setup-grid">
+
+      <div>
+        <h2>Categories &amp; phrases</h2>
+
+        <div class="help">
+          Add 3–5 categories. For each one, type a title and paste the
+          target phrases separated by commas (3–5 phrases per category).
+          Each phrase will be shown to the questioner, who must build an
+          original question around it for the randomly chosen answerer.
+        </div>
+
+        <div id="categoryList"></div>
+
+        <div class="category-count-note" id="categoryCountNote"></div>
+
+        <div class="setup-actions-row">
+          <button id="addCategoryBtn" class="add-category-btn">
+            + Add category
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <h2>Players</h2>
+
+        <label>Player names</label>
+
+        <div class="players-inputs">
+          <div class="player-input">
+            <span>1</span>
+            <input class="player-name" placeholder="Player 1">
+          </div>
+
+          <div class="player-input">
+            <span>2</span>
+            <input class="player-name" placeholder="Player 2">
+          </div>
+
+          <div class="player-input">
+            <span>3</span>
+            <input class="player-name" placeholder="Player 3">
+          </div>
+
+          <div class="player-input">
+            <span>4</span>
+            <input class="player-name" placeholder="Player 4">
+          </div>
+
+          <div class="player-input">
+            <span>5</span>
+            <input class="player-name" placeholder="Player 5">
+          </div>
+
+          <div class="player-input">
+            <span>6</span>
+            <input class="player-name" placeholder="Player 6">
+          </div>
+        </div>
+
+        <div class="help" style="margin-top:20px;">
+          At least two players are required. The player whose turn it is
+          selects the card. The answerer is then chosen randomly from the
+          other players.
+        </div>
+
+        <button id="startBtn" class="primary-btn full-btn">
+          Start the game
+        </button>
+
+        <div id="setupError" class="error"></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="gameScreen" class="screen">
+
+  <div class="game-top">
+    <div class="game-title">Vocabulary Quest</div>
+
+    <div class="controls">
+      <button id="restartBtn" class="secondary-btn">
+        Restart Game
+      </button>
+
+      <button id="homeBtn" class="danger-btn">
+        Back to Setup
+      </button>
+    </div>
+  </div>
+
+  <div id="scoreboard" class="scoreboard"></div>
+
+  <div class="panel">
+    <div id="board" class="board"></div>
+
+    <div id="statusBar" class="status-bar">
+      Choose a card to begin!
+    </div>
+  </div>
+
+</section>
+
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop">
+
+  <div class="modal">
+
+    <h2 id="modalCategory"></h2>
+
+    <div id="modalPoints" class="points-display"></div>
+
+    <div class="vocab-word">
+      <div id="modalTerm" class="term"></div>
+    </div>
+
+    <div class="assignment">
+      <div class="assignment-box">
+        Questioner
+        <strong id="questionerName"></strong>
+      </div>
+
+      <div class="assignment-box">
+        Answerer
+        <strong id="answererName"></strong>
+      </div>
+    </div>
+
+    <div class="instruction">
+      The questioner must create an original question using the target phrase.
+      The answerer must respond with a complete and appropriate answer.
+    </div>
+
+    <div class="penalty-controls">
+      <h3>Optional deductions</h3>
+
+      <label class="penalty-option">
+        <input type="checkbox" id="questionerYesNo">
+        <span>
+          The question was a simple yes/no question
+          <small>Reduce the questioner's award by 50%</small>
+        </span>
+      </label>
+
+      <label class="penalty-option">
+        <input type="checkbox" id="questionerUncreative">
+        <span>
+          The question was not creative enough
+          <small>Reduce the questioner's award by 50%</small>
+        </span>
+      </label>
+
+      <label class="penalty-option">
+        <input type="checkbox" id="answererShort">
+        <span>
+          The answer was too short
+          <small>Reduce the answerer's award by 50%</small>
+        </span>
+      </label>
+    </div>
+
+    <div class="result-buttons">
+      <button class="result-btn both-btn" data-result="both">
+        Both were correct — split the points
+      </button>
+
+      <button class="result-btn questioner-btn" data-result="questioner">
+        Only the questioner was correct
+      </button>
+
+      <button class="result-btn responder-btn" data-result="responder">
+        Only the answerer was correct
+      </button>
+
+      <button class="result-btn none-btn" data-result="none">
+        Neither was correct
+      </button>
+    </div>
+
+    <button id="closeModalBtn" class="close-btn">
+      Close without scoring
+    </button>
+
+  </div>
+</div>
+
+<script>
+const POINTS = [100, 200, 300, 400, 500];
+const MIN_CATEGORIES = 3;
+const MAX_CATEGORIES = 5;
+const MIN_TERMS = 3;
+const MAX_TERMS = 5;
+
+const state = {
+  players: [],
+  board: [],
+  usedCards: new Set(),
+  currentCard: null,
+  currentQuestioner: null,
+  currentResponder: null,
+  currentTurnIndex: 0
+};
+
+const setupScreen = document.getElementById("setupScreen");
+const gameScreen = document.getElementById("gameScreen");
+const setupError = document.getElementById("setupError");
+const scoreboardElement = document.getElementById("scoreboard");
+const boardElement = document.getElementById("board");
+const statusBar = document.getElementById("statusBar");
+const modalBackdrop = document.getElementById("modalBackdrop");
+const categoryList = document.getElementById("categoryList");
+const categoryCountNote = document.getElementById("categoryCountNote");
+const addCategoryBtn = document.getElementById("addCategoryBtn");
+
+function createCategoryBlock(index, focusTitle = false) {
+  const block = document.createElement("div");
+  block.className = "category-block";
+  block.dataset.index = index;
+
+  const header = document.createElement("div");
+  header.className = "category-block-header";
+
+  const number = document.createElement("span");
+  number.className = "category-number";
+  number.textContent = `Category ${index + 1}`;
+
+  const titleInput = document.createElement("input");
+  titleInput.className = "cat-title-input";
+  titleInput.placeholder = "Category title (e.g. Personality Traits)";
+  titleInput.maxLength = 60;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "remove-category-btn";
+  removeBtn.textContent = "Remove";
+
+  header.appendChild(number);
+  header.appendChild(titleInput);
+  header.appendChild(removeBtn);
+
+  const hint = document.createElement("div");
+  hint.className = "term-hint";
+  hint.textContent = "Paste 3–5 phrases separated by commas:";
+
+  const termsInput = document.createElement("textarea");
+  termsInput.className = "cat-terms-input";
+  termsInput.placeholder = "Bad-tempered, Bossy, Cautious, ...";
+  termsInput.rows = 3;
+
+  block.appendChild(header);
+  block.appendChild(hint);
+  block.appendChild(termsInput);
+
+  removeBtn.addEventListener("click", () => {
+    if (categoryList.children.length <= MIN_CATEGORIES) {
+      showSetupError(
+        `You need at least ${MIN_CATEGORIES} categories.`
+      );
+      return;
+    }
+    block.remove();
+    renumberCategories();
+    updateCategoryCountNote();
+    setupError.style.display = "none";
+  });
+
+  [titleInput, termsInput].forEach(input => {
+    input.addEventListener("input", () => {
+      block.classList.remove("invalid");
+      setupError.style.display = "none";
+    });
+  });
+
+  categoryList.appendChild(block);
+
+  if (focusTitle) {
+    titleInput.focus();
+  }
+
+  updateCategoryCountNote();
+  addCategoryBtn.disabled = categoryList.children.length >= MAX_CATEGORIES;
+  addCategoryBtn.style.opacity =
+    categoryList.children.length >= MAX_CATEGORIES ? ".55" : "1";
+}
+
+function renumberCategories() {
+  [...categoryList.children].forEach((block, i) => {
+    block.querySelector(".category-number").textContent =
+      `Category ${i + 1}`;
+    block.dataset.index = i;
+  });
+}
+
+function updateCategoryCountNote() {
+  const count = categoryList.children.length;
+  categoryCountNote.textContent =
+    `${count} of ${MIN_CATEGORIES}–${MAX_CATEGORIES} categories added.`;
+}
+
+addCategoryBtn.addEventListener("click", () => {
+  if (categoryList.children.length >= MAX_CATEGORIES) {
+    showSetupError(`You can add at most ${MAX_CATEGORIES} categories.`);
+    return;
+  }
+  setupError.style.display = "none";
+  createCategoryBlock(categoryList.children.length, true);
+});
+
+// Start with 3 empty category blocks
+createCategoryBlock(0);
+createCategoryBlock(1);
+createCategoryBlock(2);
+
+document.getElementById("startBtn").addEventListener("click", startGame);
+
+document.getElementById("restartBtn").addEventListener("click", restartGame);
+
+document.getElementById("homeBtn").addEventListener("click", returnToSetup);
+
+document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+
+document.querySelectorAll(".result-btn").forEach(button => {
+  button.addEventListener("click", () => {
+    scoreRound(button.dataset.result);
+  });
+});
+
+function getPlayers() {
+  return [...document.querySelectorAll(".player-name")]
+    .map(input => input.value.trim())
+    .filter(Boolean);
+}
+
+function parseCategories() {
+  const blocks = [...categoryList.children];
+  const categories = [];
+  let firstInvalidBlock = null;
+
+  blocks.forEach(block => {
+    const title = block.querySelector(".cat-title-input").value.trim();
+    const rawTerms = block.querySelector(".cat-terms-input").value;
+
+    const terms = rawTerms
+      .split(/[,\n]/)
+      .map(term => term.trim())
+      .filter(Boolean);
+
+    if (!title || terms.length === 0) {
+      block.classList.add("invalid");
+      if (!firstInvalidBlock) {
+        firstInvalidBlock = block;
+      }
+    }
+
+    categories.push({ title, terms });
+  });
+
+  return { categories, firstInvalidBlock };
+}
+
+function startGame() {
+  setupError.style.display = "none";
+
+  const players = getPlayers();
+
+  if (players.length < 2) {
+    showSetupError("Please enter at least two player names.");
+    return;
+  }
+
+  const { categories, firstInvalidBlock } = parseCategories();
+
+  const filledCategories = categories.filter(
+    cat => cat.title && cat.terms.length > 0
+  );
+
+  if (firstInvalidBlock) {
+    showSetupError(
+      "Every category needs a title and at least one phrase."
+    );
+    firstInvalidBlock.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+
+  if (filledCategories.length < MIN_CATEGORIES) {
+    showSetupError(`Please fill in at least ${MIN_CATEGORIES} categories.`);
+    return;
+  }
+
+  if (filledCategories.length > MAX_CATEGORIES) {
+    showSetupError(`You can use at most ${MAX_CATEGORIES} categories.`);
+    return;
+  }
+
+  for (const cat of filledCategories) {
+    if (cat.terms.length < MIN_TERMS) {
+      showSetupError(
+        `The category "${cat.title}" needs at least ${MIN_TERMS} phrases.`
+      );
+      return;
+    }
+
+    if (cat.terms.length > MAX_TERMS) {
+      showSetupError(
+        `The category "${cat.title}" has too many phrases ` +
+        `(max ${MAX_TERMS}).`
+      );
+      return;
+    }
+  }
+
+  const vocabulary = filledCategories.flatMap(cat =>
+    cat.terms.map(term => ({
+      category: cat.title,
+      term
+    }))
+  );
+
+  state.players = players.map(name => ({
+    name,
+    score: 0
+  }));
+
+  state.usedCards = new Set();
+  state.currentTurnIndex = 0;
+
+  createBoard(filledCategories);
+
+  setupScreen.classList.remove("active");
+  gameScreen.classList.add("active");
+
+  renderScoreboard();
+  renderBoard();
+}
+
+function showSetupError(message) {
+  setupError.textContent = message;
+  setupError.style.display = "block";
+}
+
+function createBoard(categories) {
+  state.board = [];
+
+  categories.forEach(cat => {
+    // Shuffle terms so each game feels fresh
+    const shuffled = [...cat.terms].sort(() => Math.random() - 0.5);
+
+    POINTS.forEach((points, index) => {
+      state.board.push({
+        id: `${cat.title}-${points}-${index}`,
+        category: cat.title,
+        points,
+        term: shuffled[index % shuffled.length]
+      });
+    });
+  });
+}
+
+function renderScoreboard() {
+  scoreboardElement.innerHTML = "";
+
+  state.players.forEach(player => {
+    const card = document.createElement("div");
+
+    card.className = "score-card";
+
+    card.innerHTML = `
+      <div class="score-name">
+        ${escapeHTML(player.name)}
+      </div>
+
+      <div class="score-value">
+        ${formatScore(player.score)}
+      </div>
+    `;
+
+    scoreboardElement.appendChild(card);
+  });
+}
+
+function renderBoard() {
+  boardElement.innerHTML = "";
+
+  const categories = [
+    ...new Set(
+      state.board.map(card => card.category)
+    )
+  ];
+
+  // Dynamically set the grid columns to match the number of categories
+  boardElement.style.gridTemplateColumns =
+    `repeat(${Math.min(categories.length, 5)}, 1fr)`;
+
+  // Build a map of category → array of cards (sorted by points)
+  const categoryColumns = {};
+  categories.forEach(cat => {
+    categoryColumns[cat] = state.board
+      .filter(card => card.category === cat)
+      .sort((a, b) => a.points - b.points);
+  });
+
+  // Get the maximum number of rows across all categories
+  const maxRows = Math.max(
+    ...categories.map(cat => categoryColumns[cat].length)
+  );
+
+  // Render category headers in a row
+  categories.forEach(category => {
+    const header = document.createElement("div");
+    header.className = "category";
+    header.textContent = category;
+    boardElement.appendChild(header);
+  });
+
+  // Render point cards row by row
+  for (let row = 0; row < maxRows; row++) {
+    categories.forEach(category => {
+      const cards = categoryColumns[category];
+      const card = cards[row]; // May be undefined if category has fewer items
+
+      const button = document.createElement("button");
+      button.className = "jeopardy-card";
+
+      if (card && !state.usedCards.has(card.id)) {
+        button.textContent = card.points;
+        button.addEventListener("click", () => openCard(card));
+      } else if (card) {
+        // Card exists but already used
+        button.textContent = card.points;
+        button.disabled = true;
+      } else {
+        // No card in this position
+        button.textContent = "—";
+        button.disabled = true;
+      }
+
+      boardElement.appendChild(button);
+    });
+  }
+
+  const remaining = state.board.filter(
+    card => !state.usedCards.has(card.id)
+  ).length;
+
+  if (remaining === 0) {
+    statusBar.textContent = "The game is finished!";
+  } else {
+    const currentPlayer =
+      state.players[state.currentTurnIndex].name;
+
+    statusBar.textContent =
+      `${currentPlayer}'s turn — choose a card! ` +
+      `${remaining} cards remaining.`;
+  }
+}
+
+function openCard(card) {
+  const questionerIndex = state.currentTurnIndex;
+
+  let responderIndex;
+
+  do {
+    responderIndex = Math.floor(
+      Math.random() * state.players.length
+    );
+  } while (responderIndex === questionerIndex);
+
+  state.currentCard = card;
+  state.currentQuestioner = questionerIndex;
+  state.currentResponder = responderIndex;
+
+  document.getElementById("modalCategory").textContent =
+    card.category;
+
+  document.getElementById("modalPoints").textContent =
+    `${card.points} points`;
+
+  document.getElementById("modalTerm").textContent =
+    card.term;
+
+  document.getElementById("questionerName").textContent =
+    state.players[questionerIndex].name;
+
+  document.getElementById("answererName").textContent =
+    state.players[responderIndex].name;
+
+  document.getElementById("questionerYesNo").checked = false;
+  document.getElementById("questionerUncreative").checked = false;
+  document.getElementById("answererShort").checked = false;
+
+  modalBackdrop.classList.add("open");
+}
+
+function scoreRound(result) {
+  if (!state.currentCard) {
+    return;
+  }
+
+  const points = state.currentCard.points;
+
+  const questioner =
+    state.players[state.currentQuestioner];
+
+  const responder =
+    state.players[state.currentResponder];
+
+  let questionerAward = 0;
+  let responderAward = 0;
+
+  if (result === "both") {
+    questionerAward = points / 2;
+    responderAward = points / 2;
+  }
+
+  if (result === "questioner") {
+    questionerAward = points;
+  }
+
+  if (result === "responder") {
+    responderAward = points;
+  }
+
+  const questionerAskedYesNo =
+    document.getElementById("questionerYesNo").checked;
+
+  const questionerWasUncreative =
+    document.getElementById("questionerUncreative").checked;
+
+  const answererWasTooShort =
+    document.getElementById("answererShort").checked;
+
+  if (questionerAskedYesNo) {
+    questionerAward *= 0.5;
+  }
+
+  if (questionerWasUncreative) {
+    questionerAward *= 0.5;
+  }
+
+  if (answererWasTooShort) {
+    responderAward *= 0.5;
+  }
+
+  questioner.score += questionerAward;
+  responder.score += responderAward;
+
+  state.usedCards.add(state.currentCard.id);
+
+  state.currentTurnIndex =
+    (state.currentTurnIndex + 1) %
+    state.players.length;
+
+  state.currentCard = null;
+  state.currentQuestioner = null;
+  state.currentResponder = null;
+
+  closeModal();
+  renderScoreboard();
+  renderBoard();
+
+  if (state.usedCards.size === state.board.length) {
+    showWinner();
+  }
+}
+
+function restartGame() {
+  state.players.forEach(player => {
+    player.score = 0;
+  });
+
+  state.usedCards = new Set();
+  state.currentCard = null;
+  state.currentQuestioner = null;
+  state.currentResponder = null;
+  state.currentTurnIndex = 0;
+
+  renderScoreboard();
+  renderBoard();
+}
+
+function showWinner() {
+  const highestScore = Math.max(
+    ...state.players.map(player => player.score)
+  );
+
+  const winners = state.players
+    .filter(player => player.score === highestScore)
+    .map(player => player.name);
+
+  setTimeout(() => {
+    if (winners.length === 1) {
+      alert(
+        `Winner: ${winners[0]} with ` +
+        `${formatScore(highestScore)} points!`
+      );
+    } else {
+      alert(
+        `It's a tie between ${winners.join(" and ")} ` +
+        `with ${formatScore(highestScore)} points!`
+      );
+    }
+  }, 200);
+}
+
+function closeModal() {
+  modalBackdrop.classList.remove("open");
+}
+
+function returnToSetup() {
+  closeModal();
+
+  gameScreen.classList.remove("active");
+  setupScreen.classList.add("active");
+}
+
+function formatScore(score) {
+  return Number.isInteger(score)
+    ? score
+    : score.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function escapeHTML(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+</script>
+
+</body>
+</html>
