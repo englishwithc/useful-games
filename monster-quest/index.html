@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Monster Quest - Roguelike Adventure</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root {
+            --bg-dark: #0a0e27;
+            --panel-bg: rgba(15, 23, 42, 0.95);
+            --gold: #fbbf24;
+            --gold-glow: rgba(251, 191, 36, 0.4);
+            --red: #ef4444;
+            --green: #10b981;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.1) 0%, transparent 50%);
+        }
+        #game-container {
+            width: 100%;
+            max-width: 420px;
+            height: 95vh;
+            max-height: 850px;
+            background: var(--panel-bg);
+            border-radius: 24px;
+            border: 2px solid rgba(251, 191, 36, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 60px rgba(251, 191, 36, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        .status-bar {
+            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .player-mini { display: flex; align-items: center; gap: 10px; }
+        .player-avatar {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: linear-gradient(135deg, #334155, #1e293b);
+            border: 2px solid var(--gold);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; overflow: hidden;
+        }
+        .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .hp-bar-container {
+            width: 100px; height: 20px; background: #1e293b;
+            border-radius: 10px; overflow: hidden; position: relative;
+            border: 1px solid #334155;
+        }
+        .hp-fill {
+            height: 100%; background: linear-gradient(90deg, #ef4444, #f87171);
+            transition: width 0.5s ease; border-radius: 10px;
+        }
+        .hp-text {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11px; font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+        .floor-indicator { text-align: right; font-size: 12px; color: var(--text-muted); }
+        .floor-num { font-size: 20px; font-weight: bold; color: var(--gold); }
+        .screen {
+            display: none; flex: 1; flex-direction: column;
+            overflow: hidden; position: relative;
+        }
+        .screen.active { display: flex; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .bg-image {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            object-fit: cover; opacity: 0.3; z-index: 0;
+        }
+        .content-overlay {
+            position: relative; z-index: 1; flex: 1;
+            display: flex; flex-direction: column;
+            padding: 20px; overflow-y: auto;
+        }
+        h1 { font-size: 28px; text-align: center; color: var(--gold); text-shadow: 0 2px 10px var(--gold-glow); margin-bottom: 8px; }
+        h2 { font-size: 22px; text-align: center; color: var(--gold); margin-bottom: 16px; }
+        h3 { font-size: 16px; color: var(--text); }
+        .subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+        .btn {
+            background: linear-gradient(145deg, #334155, #1e293b);
+            border: 2px solid #475569; color: var(--text);
+            padding: 14px 20px; border-radius: 14px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; display: flex;
+            align-items: center; justify-content: center;
+            gap: 8px; touch-action: manipulation;
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-gold { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 20px rgba(251,191,36,0.2); }
+        .btn-gold:hover { background: linear-gradient(145deg, #475569, #334155); box-shadow: 0 0 30px rgba(251,191,36,0.4); }
+        .starter-grid { display: flex; flex-direction: column; gap: 12px; }
+        .starter-card {
+            background: rgba(30, 41, 59, 0.8); border: 2px solid #334155;
+            border-radius: 16px; padding: 16px; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center;
+            gap: 16px; position: relative; overflow: hidden;
+        }
+        .starter-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.05) 100%);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .starter-card:hover { transform: translateX(4px); border-color: var(--gold); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        .starter-card:hover::before { opacity: 1; }
+        .starter-card.selected { border-color: var(--gold); box-shadow: 0 0 30px var(--gold-glow); }
+        .starter-icon {
+            width: 70px; height: 70px; border-radius: 16px; overflow: hidden;
+            flex-shrink: 0; border: 2px solid rgba(255,255,255,0.1);
+        }
+        .starter-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .starter-info h3 { margin-bottom: 4px; }
+        .starter-info p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+        .starter-info p.signature { color: var(--gold); font-size: 12px; margin-top: 2px; }
+        .stat-badges { display: flex; gap: 6px; margin-top: 8px; }
+        .badge {
+            font-size: 11px; padding: 3px 8px; border-radius: 20px;
+            background: rgba(0,0,0,0.3); border: 1px solid #334155;
+        }
+        .map-container {
+            flex: 1; display: flex; flex-direction: column;
+            justify-content: center; gap: 16px; padding: 20px 0;
+        }
+        .path-node {
+            background: rgba(30, 41, 59, 0.9); border: 3px solid #475569;
+            border-radius: 20px; padding: 20px; cursor: pointer;
+            transition: all 0.3s; display: flex; align-items: center;
+            gap: 16px; position: relative;
+        }
+        .path-node:hover { transform: scale(1.02); border-color: var(--gold); box-shadow: 0 10px 40px rgba(251,191,36,0.2); }
+        .path-node.battle { border-color: var(--red); }
+        .path-node.battle:hover { box-shadow: 0 10px 40px rgba(239,68,68,0.3); }
+        .path-node.reward { border-color: var(--gold); }
+        .path-node.reward:hover { box-shadow: 0 10px 40px rgba(251,191,36,0.3); }
+        .path-node.puzzle { border-color: var(--purple); }
+        .path-node.puzzle:hover { box-shadow: 0 10px 40px rgba(139,92,246,0.3); }
+        .path-node.boss { border-color: #dc2626; background: rgba(127,29,29,0.3); }
+        .path-node.elite { border-color: #f97316; }
+        .node-icon {
+            width: 60px; height: 60px; border-radius: 16px;
+            background: rgba(0,0,0,0.4); display: flex;
+            align-items: center; justify-content: center;
+            font-size: 32px; flex-shrink: 0;
+        }
+        .node-info h3 { font-size: 18px; margin-bottom: 4px; }
+        .node-info p { font-size: 13px; color: var(--text-muted); }
+        .node-risk {
+            position: absolute; top: 10px; right: 10px;
+            font-size: 11px; padding: 4px 10px; border-radius: 20px;
+            background: rgba(0,0,0,0.5); text-transform: uppercase;
+            font-weight: bold; letter-spacing: 0.5px;
+        }
+        .battle-arena {
+            flex: 1; display: flex; flex-direction: column; padding: 16px; gap: 12px;
+            position: relative; z-index: 1;
+        }
+        .enemy-section { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .enemy-visual {
+            width: 120px; height: 120px; border-radius: 20px; overflow: hidden;
+            border: 3px solid var(--red); box-shadow: 0 0 30px rgba(239,68,68,0.3);
+            position: relative;
+        }
+        .enemy-visual img { width: 100%; height: 100%; object-fit: cover; }
+        .enemy-visual.boss { width: 150px; height: 150px; border-color: #dc2626; box-shadow: 0 0 50px rgba(220,38,38,0.5); }
+        .enemy-hp {
+            width: 200px; height: 24px; background: #1e293b;
+            border-radius: 12px; overflow: hidden; border: 2px solid #334155;
+            position: relative;
+        }
+        .enemy-hp-fill {
+            height: 100%; background: linear-gradient(90deg, #dc2626, #ef4444);
+            transition: width 0.5s ease;
+        }
+        .battle-log {
+            background: rgba(0,0,0,0.5); border-radius: 12px; padding: 12px;
+            min-height: 60px; font-size: 14px; text-align: center;
+            border: 1px solid #334155; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .player-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: auto; }
+        .energy-bar { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+        .energy-orb {
+            width: 24px; height: 24px; border-radius: 50%;
+            background: #1e293b; border: 2px solid #334155; transition: all 0.3s;
+        }
+        .energy-orb.full {
+            background: var(--blue); border-color: #60a5fa;
+            box-shadow: 0 0 15px rgba(59,130,246,0.6);
+        }
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .action-btn {
+            background: linear-gradient(145deg, #334155, #1e293b);
+            border: 2px solid #475569; border-radius: 14px;
+            padding: 12px 8px; cursor: pointer; transition: all 0.2s;
+            text-align: center; touch-action: manipulation; color: var(--text);
+        }
+        .action-btn:active:not(:disabled) { transform: scale(0.95); }
+        .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .action-btn .icon { font-size: 26px; display: block; margin-bottom: 2px; }
+        .action-btn .name { font-size: 13px; font-weight: 600; display: block; }
+        .action-btn .lvl { font-size: 10px; color: var(--text-muted); display: block; }
+        .action-btn .cost { font-size: 11px; color: var(--blue); display: block; margin-top: 2px; }
+        .action-btn.kind-attack { border-color: #f97316; }
+        .action-btn.kind-drain { border-color: #be123c; }
+        .action-btn.kind-guard { border-color: var(--green); }
+        .action-btn.kind-heal { border-color: #38bdf8; }
+        .action-btn.kind-armor { border-color: #84cc16; }
+        .action-btn.empty { border-style: dashed; border-color: #475569; }
+        .enemy-intent {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+            padding: 8px 16px; border-radius: 20px; font-size: 13px;
+        }
+        .shake { animation: shake 0.5s ease; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+        .float { animation: float 2s ease-in-out infinite; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .damage-popup {
+            position: absolute; font-size: 32px; font-weight: bold;
+            color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            pointer-events: none; animation: popUp 1s ease-out forwards; z-index: 100;
+        }
+        @keyframes popUp {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            20% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+            100% { transform: translateY(-60px) scale(1); opacity: 0; }
+        }
+        .hit-flash {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.4);
+            pointer-events: none; animation: flash 0.2s ease;
+        }
+        @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+        .puzzle-area {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 20px; padding: 20px;
+        }
+        .puzzle-grid { display: grid; grid-template-columns: repeat(2, 100px); gap: 16px; }
+        .puzzle-btn {
+            width: 100px; height: 100px; border-radius: 20px;
+            border: 3px solid rgba(255,255,255,0.2); cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center;
+            justify-content: center; font-size: 48px;
+        }
+        .puzzle-btn:active { transform: scale(0.95); }
+        .puzzle-btn.lit { filter: brightness(1.5); box-shadow: 0 0 40px currentColor; transform: scale(1.05); }
+        .puzzle-btn.red { background: linear-gradient(145deg, #7f1d1d, #991b1b); color: #fca5a5; }
+        .puzzle-btn.blue { background: linear-gradient(145deg, #1e3a8a, #1d4ed8); color: #93c5fd; }
+        .puzzle-btn.green { background: linear-gradient(145deg, #14532d, #166534); color: #86efac; }
+        .puzzle-btn.yellow { background: linear-gradient(145deg, #713f12, #854d0e); color: #fde047; }
+        .puzzle-status {
+            font-size: 18px; text-align: center; min-height: 30px;
+            color: var(--gold); font-weight: 600;
+        }
+        .count-display {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 10px; max-width: 280px;
+        }
+        .count-item {
+            width: 50px; height: 50px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 28px;
+        }
+        .number-pad { display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; }
+        .num-btn {
+            width: 70px; height: 60px; border-radius: 12px;
+            background: rgba(30, 41, 59, 0.9); border: 2px solid #475569;
+            color: var(--text); font-size: 24px; font-weight: bold;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .num-btn:active { transform: scale(0.95); background: var(--gold); color: #000; }
+        .reward-card {
+            background: rgba(30, 41, 59, 0.95); border: 3px solid var(--gold);
+            border-radius: 24px; padding: 30px; text-align: center; width: 100%;
+            box-shadow: 0 0 60px var(--gold-glow);
+        }
+        .reward-icon {
+            width: 100px; height: 100px; margin: 0 auto 20px;
+            border-radius: 50%; overflow: hidden; border: 3px solid var(--gold);
+        }
+        .reward-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .upgrade-options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .reward-option {
+            width: 100%; justify-content: flex-start; text-align: left;
+            gap: 14px; padding: 14px 16px;
+        }
+        .reward-option .r-icon { font-size: 28px; flex-shrink: 0; }
+        .r-body { display: flex; flex-direction: column; gap: 2px; }
+        .r-body strong { font-size: 15px; }
+        .r-body small { color: var(--text-muted); font-size: 12px; font-weight: normal; line-height: 1.3; }
+        .r-tag { font-size: 10px; font-weight: bold; letter-spacing: 1px; }
+        .r-tag.new { color: var(--gold); }
+        .r-tag.upgrade { color: #60a5fa; }
+        .r-tag.stat { color: #34d399; }
+        .r-tag.safe { color: #34d399; }
+        .r-tag.gamble { color: #f87171; }
+        .slot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .slot-card {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            padding: 12px 8px; background: rgba(30, 41, 59, 0.9);
+            border: 2px dashed #475569; border-radius: 14px;
+            color: var(--text); cursor: pointer; transition: all 0.2s;
+        }
+        .slot-card.filled { border-style: solid; border-color: #64748b; }
+        .slot-card.selected { border-color: var(--gold); box-shadow: 0 0 20px var(--gold-glow); }
+        .s-icon { font-size: 26px; }
+        .s-name { font-size: 13px; font-weight: 600; }
+        .s-lvl { font-size: 11px; color: #60a5fa; }
+        .section-label { font-size: 14px; color: var(--text-muted); margin: 18px 0 8px; text-align: center; }
+        .owned-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        .owned-row {
+            display: flex; align-items: center; gap: 12px; width: 100%;
+            padding: 10px 12px; background: rgba(30, 41, 59, 0.9);
+            border: 2px solid #475569; border-radius: 12px;
+            color: var(--text); cursor: pointer; text-align: left;
+        }
+        .owned-row.equipped { border-color: var(--green); }
+        .o-icon { font-size: 24px; flex-shrink: 0; }
+        .o-body { display: flex; flex-direction: column; flex: 1; }
+        .o-body small { color: var(--text-muted); font-size: 12px; }
+        .o-lvl { font-size: 12px; color: var(--gold); white-space: nowrap; }
+        .end-screen { align-items: center; justify-content: center; text-align: center; padding: 40px 20px; }
+        .end-icon { font-size: 80px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+        .hidden { display: none !important; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .mt-4 { margin-top: 16px; }
+        .w-full { width: 100%; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        @media (max-height: 700px) {
+            #game-container { height: 98vh; }
+            .starter-icon { width: 60px; height: 60px; }
+            .enemy-visual { width: 100px; height: 100px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+
+    <!-- STATUS BAR -->
+    <div class="status-bar hidden" id="status-bar">
+        <div class="player-mini">
+            <div class="player-avatar" id="mini-avatar">🔥</div>
+            <div>
+                <div class="hp-bar-container">
+                    <div class="hp-fill" id="mini-hp" style="width: 100%"></div>
+                    <div class="hp-text" id="mini-hp-text">30/30</div>
+                </div>
+            </div>
+        </div>
+        <div class="floor-indicator">
+            Floor <span class="floor-num" id="floor-num">1</span>/<span id="floor-max">10</span>
+        </div>
+    </div>
+
+    <!-- SCREEN: START -->
+    <div class="screen active" id="screen-start">
+        <img src="images/forest-bg-1.jpg" class="bg-image" alt="">
+        <div class="content-overlay">
+            <h1>🐉 Monster Quest</h1>
+            <p class="subtitle">Choose your companion and conquer the dungeon!</p>
+            <div class="starter-grid" id="starter-grid"></div>
+            <button class="btn btn-gold w-full mt-4" id="start-btn" disabled onclick="Game.startAdventure()">
+                ⚔️ Begin Adventure
+            </button>
+        </div>
+    </div>
+
+    <!-- SCREEN: MAP -->
+    <div class="screen" id="screen-map">
+        <img src="images/dungeon-bg-1.jpg" class="bg-image" alt="" id="map-bg">
+        <div class="content-overlay">
+            <h2 id="map-title">Choose Your Path</h2>
+            <p class="subtitle" id="map-subtitle">Where will you go?</p>
+            <div class="map-container" id="path-container"></div>
+            <button class="btn w-full" onclick="Game.openLoadout()">🎒 Loadout</button>
+        </div>
+    </div>
+
+    <!-- SCREEN: LOADOUT -->
+    <div class="screen" id="screen-loadout">
+        <img src="images/dungeon-bg-1.jpg" class="bg-image" alt="">
+        <div class="content-overlay">
+            <h2>🎒 Loadout</h2>
+            <p class="subtitle" id="loadout-msg">Tap a slot, then tap an ability to equip it.</p>
+            <div class="slot-grid" id="slot-grid"></div>
+            <div class="section-label">Your Abilities</div>
+            <div class="owned-list" id="owned-list"></div>
+            <button class="btn btn-gold w-full mt-4" onclick="Game.closeLoadout()">✅ Done</button>
+        </div>
+    </div>
+
+    <!-- SCREEN: BATTLE -->
+    <div class="screen" id="screen-battle">
+        <img src="images/dungeon-bg-2.jpg" class="bg-image" alt="" id="battle-bg">
+        <div class="battle-arena">
+            <div class="enemy-section">
+                <div class="enemy-intent" id="enemy-intent">
+                    <span>👀</span> <span id="intent-text">Enemy is thinking...</span>
+                </div>
+                <div class="enemy-visual" id="enemy-visual">
+                    <img src="images/fire-monster-1.jpg" alt="Enemy" id="enemy-img">
+                </div>
+                <div style="text-align: center;">
+                    <strong id="enemy-name">Enemy</strong>
+                </div>
+                <div class="enemy-hp">
+                    <div class="enemy-hp-fill" id="enemy-hp-fill" style="width: 100%"></div>
+                    <div class="hp-text" id="enemy-hp-text">30/30</div>
+                </div>
+            </div>
+
+            <div class="battle-log" id="battle-log">
+                Battle Start! Choose your action!
+            </div>
+
+            <div class="player-section">
+                <div class="energy-bar" id="energy-bar"></div>
+                <div class="action-grid" id="action-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN: PUZZLE -->
+    <div class="screen" id="screen-puzzle">
+        <img src="images/puzzle-bg-1.jpg" class="bg-image" alt="">
+        <div class="content-overlay">
+            <h2 id="puzzle-title">🔮 Magic Seal</h2>
+            <p class="subtitle" id="puzzle-instruction">Watch the pattern...</p>
+            <div class="puzzle-area">
+                <div class="puzzle-status" id="puzzle-status">Get ready!</div>
+                <div class="puzzle-grid hidden" id="pattern-grid">
+                    <button class="puzzle-btn red" onclick="Game.puzzleInput(0)">🔴</button>
+                    <button class="puzzle-btn blue" onclick="Game.puzzleInput(1)">🔵</button>
+                    <button class="puzzle-btn green" onclick="Game.puzzleInput(2)">🟢</button>
+                    <button class="puzzle-btn yellow" onclick="Game.puzzleInput(3)">🟡</button>
+                </div>
+                <div class="hidden" id="count-container">
+                    <div class="count-display" id="count-display"></div>
+                    <div class="number-pad" id="number-pad">
+                        <button class="num-btn" onclick="Game.countInput(1)">1</button>
+                        <button class="num-btn" onclick="Game.countInput(2)">2</button>
+                        <button class="num-btn" onclick="Game.countInput(3)">3</button>
+                        <button class="num-btn" onclick="Game.countInput(4)">4</button>
+                        <button class="num-btn" onclick="Game.countInput(5)">5</button>
+                        <button class="num-btn" onclick="Game.countInput(6)">6</button>
+                        <button class="num-btn" onclick="Game.countInput(7)">7</button>
+                        <button class="num-btn" onclick="Game.countInput(8)">8</button>
+                        <button class="num-btn" onclick="Game.countInput(9)">9</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN: REWARD -->
+    <div class="screen" id="screen-reward">
+        <img src="images/reward-bg-1.jpg" class="bg-image" alt="">
+        <div class="content-overlay items-center justify-center">
+            <div class="reward-card">
+                <div class="reward-icon">
+                    <img src="images/treasure-1.jpg" alt="Treasure" id="reward-img">
+                </div>
+                <h2 id="reward-title">🎁 Treasure Found!</h2>
+                <p class="subtitle" id="reward-desc">Choose your upgrade:</p>
+                <div class="upgrade-options" id="upgrade-options"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN: VICTORY -->
+    <div class="screen end-screen" id="screen-victory">
+        <img src="images/boss-bg-1.jpg" class="bg-image" alt="">
+        <div class="content-overlay items-center justify-center">
+            <div class="end-icon">🏆</div>
+            <h1>Victory!</h1>
+            <p class="subtitle">You defeated the Dungeon Lord!</p>
+            <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 16px; margin: 20px 0; width: 100%;">
+                <div style="display: flex; justify-content: space-around; text-align: center;">
+                    <div>
+                        <div style="font-size: 32px;">⚔️</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--gold);" id="final-floor">10</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Floors</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 32px;">❤️</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--green);" id="final-hp">20</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">HP Left</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 32px;">⭐</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--blue);" id="final-power">10</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Power</div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-gold w-full" onclick="Game.reset()">🔄 Play Again</button>
+        </div>
+    </div>
+
+    <!-- SCREEN: GAME OVER -->
+    <div class="screen end-screen" id="screen-gameover">
+        <img src="images/dungeon-bg-3.jpg" class="bg-image" alt="">
+        <div class="content-overlay items-center justify-center">
+            <div class="end-icon">💀</div>
+            <h1 style="color: var(--red);">Defeated...</h1>
+            <p class="subtitle">The dungeon claims another hero.</p>
+            <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 16px; margin: 20px 0; width: 100%; text-align: center;">
+                <div style="font-size: 14px; color: var(--text-muted);">You reached</div>
+                <div style="font-size: 48px; font-weight: bold; color: var(--gold);" id="death-floor">1</div>
+                <div style="font-size: 14px; color: var(--text-muted);">Floor</div>
+            </div>
+            <button class="btn btn-gold w-full" onclick="Game.reset()">🔄 Try Again</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+window.Game = {
+    MAX_LEVEL: 3,
+    state: null,
+
+    abilities: {
+        quick:  { name: 'Quick Hit', icon: '⚡', kind: 'attack', cost: 1, mult: 1, flat: 1, lvlBonus: 1, learnable: false, desc: 'A fast strike.', upText: '+1 damage' },
+        guard:  { name: 'Guard', icon: '🛡️', kind: 'guard', cost: 0, learnable: false, desc: 'Gain energy and halve the next hit.', upText: '+1 energy gained' },
+        burst:  { name: 'Flame Burst', icon: '🔥', kind: 'attack', cost: 2, mult: 1, flat: 3, lvlBonus: 2, learnable: true, desc: 'A fiery blast.', upText: '+2 damage' },
+        heavy:  { name: 'Power Strike', icon: '💥', kind: 'attack', cost: 3, mult: 2, flat: 0, lvlBonus: 2, learnable: true, desc: 'A heavy blow at double power.', upText: '+2 damage' },
+        double: { name: 'Double Strike', icon: '⚔️', kind: 'attack', cost: 2, mult: 0.8, flat: 0, lvlBonus: 1, hits: 2, learnable: true, desc: 'Two quick hits in one action.', upText: '+1 damage per hit' },
+        drain:  { name: 'Life Drain', icon: '🩸', kind: 'drain', cost: 2, mult: 1, flat: 1, lvlBonus: 1, learnable: true, desc: 'Hit hard and heal for half the damage dealt.', upText: '+1 damage' },
+        heal:   { name: 'Healing Wave', icon: '💧', kind: 'heal', cost: 2, amount: 6, lvlBonus: 3, learnable: true, desc: 'Restore HP.', upText: '+3 healing' },
+        armor:  { name: 'Thorn Armor', icon: '🌿', kind: 'armor', cost: 2, amount: 2, lvlBonus: 1, learnable: true, desc: 'Raise defense for the rest of the battle.', upText: '+1 defense' }
+    },
+
+    starters: [
+        { id: 'ember', name: 'Ember', emoji: '🔥', img: 'images/fire-monster-1.jpg', desc: 'A fiery spirit. High damage.', stats: { hp: 30, maxHp: 30, power: 4, defense: 2 }, signature: 'burst' },
+        { id: 'aqua', name: 'Aqua', emoji: '💧', img: 'images/water-monster-2.jpg', desc: 'A water guardian. Balanced.', stats: { hp: 36, maxHp: 36, power: 3, defense: 2 }, signature: 'heal' },
+        { id: 'terra', name: 'Terra', emoji: '🌿', img: 'images/nature-monster-1.jpg', desc: 'A nature golem. Tough.', stats: { hp: 42, maxHp: 42, power: 3, defense: 3 }, signature: 'armor' }
+    ],
+    enemies: [
+        { name: 'Slime', img: 'images/fire-monster-3.jpg', hp: 16, power: 2, type: 'normal' },
+        { name: 'Goblin', img: 'images/shadow-monster-1.jpg', hp: 20, power: 3, type: 'normal' },
+        { name: 'Wolf', img: 'images/nature-monster-2.jpg', hp: 22, power: 3, type: 'normal' },
+        { name: 'Skeleton', img: 'images/shadow-monster-2.jpg', hp: 26, power: 3, type: 'elite' },
+        { name: 'Ogre', img: 'images/fire-monster-2.jpg', hp: 32, power: 3, type: 'elite' },
+        { name: 'Dark Mage', img: 'images/shadow-monster-3.jpg', hp: 24, power: 4, type: 'elite' }
+    ],
+    boss: { name: 'Dungeon Lord', img: 'images/boss-1.jpg', hp: 70, power: 5, type: 'boss' },
+
+    newState() {
+        return {
+            player: null, floor: 1, maxFloor: 10, currentEnemy: null, battleState: null,
+            puzzleState: null, selectedStarter: null, currentPaths: [], pathHistory: [],
+            isProcessing: false, selectedSlot: null, loadoutReturn: null,
+            rewardNext: null, rewardCards: []
+        };
+    },
+
+    init() {
+        this.state = this.newState();
+        this.renderStarters();
+        document.getElementById('floor-max').textContent = this.state.maxFloor;
+    },
+
+    renderStarters() {
+        const grid = document.getElementById('starter-grid');
+        grid.innerHTML = this.starters.map(s => `
+            <div class="starter-card" onclick="Game.selectStarter('${s.id}')" id="starter-${s.id}">
+                <div class="starter-icon"><img src="${s.img}" alt="${s.name}"></div>
+                <div class="starter-info">
+                    <h3>${s.emoji} ${s.name}</h3>
+                    <p>${s.desc}</p>
+                    <p class="signature">Signature: ${this.abilities[s.signature].name}</p>
+                    <div class="stat-badges">
+                        <span class="badge">❤️ ${s.stats.hp}</span>
+                        <span class="badge">⚔️ ${s.stats.power}</span>
+                        <span class="badge">🛡️ ${s.stats.defense}</span>
+                    </div>
+                </div>
+            </div>`).join('');
+    },
+
+    selectStarter(id) {
+        document.querySelectorAll('.starter-card').forEach(c => c.classList.remove('selected'));
+        document.getElementById('starter-' + id).classList.add('selected');
+        this.state.selectedStarter = this.starters.find(s => s.id === id);
+        document.getElementById('start-btn').disabled = false;
+    },
+
+    startAdventure() {
+        const s = this.state.selectedStarter;
+        this.state.player = {
+            name: s.name,
+            img: s.img,
+            stats: { ...s.stats },
+            energy: 3,
+            maxEnergy: 3,
+            buffs: { defense: 0 },
+            owned: { quick: { lvl: 1 }, guard: { lvl: 1 }, [s.signature]: { lvl: 1 } },
+            loadout: ['quick', 'guard', s.signature, null]
+        };
+        this.state.floor = 1;
+        this.state.isProcessing = false;
+        document.getElementById('status-bar').classList.remove('hidden');
+        this.updateStatusBar();
+        this.showScreen('screen-map');
+        this.generatePaths();
+    },
+
+    updateStatusBar() {
+        const p = this.state.player;
+        document.getElementById('mini-avatar').innerHTML = '<img src="' + p.img + '" alt="">';
+        document.getElementById('floor-num').textContent = this.state.floor;
+        const hpPct = Math.max(0, (p.stats.hp / p.stats.maxHp) * 100);
+        document.getElementById('mini-hp').style.width = hpPct + '%';
+        document.getElementById('mini-hp-text').textContent = Math.max(0, p.stats.hp) + '/' + p.stats.maxHp;
+        const hpFill = document.getElementById('mini-hp');
+        if (hpPct > 50) hpFill.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+        else if (hpPct > 25) hpFill.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
+        else hpFill.style.background = 'linear-gradient(90deg, #ef4444, #f87171)';
+    },
+
+    finishNode() {
+        this.state.floor++;
+        this.updateStatusBar();
+        this.showScreen('screen-map');
+        this.generatePaths();
+    },
+
+    generatePaths() {
+        const container = document.getElementById('path-container');
+        const floor = this.state.floor;
+        const isBossFloor = floor >= this.state.maxFloor;
+        const bgs = ['images/dungeon-bg-1.jpg', 'images/forest-bg-2.jpg', 'images/dungeon-bg-2.jpg', 'images/forest-bg-3.jpg'];
+        document.getElementById('map-bg').src = isBossFloor ? 'images/boss-bg-2.jpg' : bgs[(floor - 1) % bgs.length];
+        document.getElementById('map-title').textContent = isBossFloor ? '⚠️ Final Chamber' : 'Floor ' + floor;
+        document.getElementById('map-subtitle').textContent = isBossFloor ? 'The Dungeon Lord awaits!' : 'Choose your path wisely...';
+        const numPaths = isBossFloor ? 1 : (Math.random() > 0.5 ? 2 : 3);
+        const paths = [];
+        if (isBossFloor) {
+            paths.push({ type: 'boss', title: 'Boss Battle', desc: 'Face the Dungeon Lord!', risk: 'DEADLY' });
+        } else {
+            const types = ['battle', 'puzzle', 'reward'];
+            if (floor > 1) types.push('battle');
+            const shuffled = types.sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, numPaths);
+            selected.forEach(type => {
+                if (type === 'battle') {
+                    const isElite = Math.random() > 0.7;
+                    paths.push({ type: 'battle', elite: isElite, title: isElite ? 'Elite Enemy' : 'Wild Monster', desc: isElite ? 'A powerful foe. Bigger rewards.' : 'A monster appears!', risk: isElite ? 'HARD' : 'NORMAL' });
+                } else if (type === 'puzzle') {
+                    paths.push({ type: 'puzzle', title: 'Magic Seal', desc: 'Solve the puzzle to heal and earn a reward.', risk: 'SAFE' });
+                } else {
+                    paths.push({ type: 'reward', title: 'Treasure Room', desc: 'A safe chest or a gamble chest.', risk: 'CHOICE' });
+                }
+            });
+        }
+        container.innerHTML = paths.map((p, i) => {
+            const icons = { battle: '⚔️', puzzle: '🧩', reward: '🎁', boss: '👑' };
+            const classes = { battle: 'battle', puzzle: 'puzzle', reward: 'reward', boss: 'boss' };
+            return '<div class="path-node ' + classes[p.type] + (p.elite ? ' elite' : '') + '" onclick="Game.choosePath(' + i + ')"><div class="node-icon">' + icons[p.type] + '</div><div class="node-info"><h3>' + p.title + '</h3><p>' + p.desc + '</p></div><div class="node-risk">' + p.risk + '</div></div>';
+        }).join('');
+        this.state.currentPaths = paths;
+    },
+
+    choosePath(index) {
+        const path = this.state.currentPaths[index];
+        this.state.pathHistory.push(path.type);
+        switch (path.type) {
+            case 'battle': this.startBattle(path.elite); break;
+            case 'puzzle': this.startPuzzle(); break;
+            case 'reward': this.showChest(); break;
+            case 'boss': this.startBattle(true, true); break;
+        }
+    },
+
+    // ---------- ABILITY HELPERS ----------
+
+    attackDamage(ab, lvl) {
+        return Math.max(1, Math.round(this.state.player.stats.power * ab.mult) + ab.flat + (lvl - 1) * ab.lvlBonus);
+    },
+
+    levelValue(ab, lvl) {
+        return ab.amount + (lvl - 1) * ab.lvlBonus;
+    },
+
+    describeAbility(ab, lvl) {
+        switch (ab.kind) {
+            case 'attack':
+            case 'drain': {
+                const total = this.attackDamage(ab, lvl) * (ab.hits || 1);
+                return ab.cost + ' Energy · ~' + total + ' dmg';
+            }
+            case 'guard': return '+' + lvl + ' Energy';
+            case 'heal': return ab.cost + ' Energy · +' + this.levelValue(ab, lvl) + ' HP';
+            case 'armor': return ab.cost + ' Energy · +' + this.levelValue(ab, lvl) + ' DEF';
+        }
+        return '';
+    },
+
+    shuffle(arr) {
+        return arr.sort(() => Math.random() - 0.5);
+    },
+
+    // ---------- BATTLE ----------
+
+    startBattle(isElite, isBoss) {
+        isElite = !!isElite;
+        isBoss = !!isBoss;
+        const p = this.state.player;
+        let enemy;
+        if (isBoss) {
+            enemy = { ...this.boss, maxHp: this.boss.hp };
+        } else {
+            const pool = this.enemies.filter(e => e.type === (isElite ? 'elite' : 'normal'));
+            const base = pool[Math.floor(Math.random() * pool.length)];
+            const f = this.state.floor;
+            const hpMult = 1 + (f - 1) * 0.08;
+            const bonusPower = Math.floor((f - 1) / 3);
+            const scaledHp = Math.floor(base.hp * hpMult);
+            enemy = { ...base, hp: scaledHp, maxHp: scaledHp, power: base.power + bonusPower };
+        }
+        this.state.currentEnemy = enemy;
+        this.state.battleState = { playerTurn: true, defending: false, turns: 0 };
+        this.state.isProcessing = false;
+        // Every battle starts with full energy
+        p.energy = p.maxEnergy;
+        p.buffs.defense = 0;
+        document.getElementById('enemy-img').src = enemy.img;
+        document.getElementById('enemy-name').textContent = enemy.name;
+        document.getElementById('enemy-visual').classList.toggle('boss', isBoss);
+        const bgs = ['images/dungeon-bg-1.jpg', 'images/forest-bg-1.jpg', 'images/dungeon-bg-3.jpg'];
+        document.getElementById('battle-bg').src = isBoss ? 'images/boss-bg-3.jpg' : bgs[Math.floor(Math.random() * bgs.length)];
+        this.renderActionGrid();
+        this.updateBattleUI();
+        this.showScreen('screen-battle');
+        this.log(enemy.name + ' appeared! Your turn!');
+        document.getElementById('intent-text').textContent = 'Your turn! Choose an action!';
+    },
+
+    renderActionGrid() {
+        const p = this.state.player;
+        document.getElementById('action-grid').innerHTML = p.loadout.map((id, i) => {
+            if (!id) {
+                return '<button class="action-btn empty" id="slot-btn-' + i + '" disabled><span class="icon">➕</span><span class="name">Empty Slot</span><span class="cost">Equip in Loadout</span></button>';
+            }
+            const ab = this.abilities[id];
+            const lvl = p.owned[id].lvl;
+            return '<button class="action-btn kind-' + ab.kind + '" id="slot-btn-' + i + '" onclick="Game.battleAction(' + i + ')"><span class="icon">' + ab.icon + '</span><span class="name">' + ab.name + '</span><span class="lvl">Lv ' + lvl + '</span><span class="cost" id="slot-cost-' + i + '"></span></button>';
+        }).join('');
+    },
+
+    updateBattleUI() {
+        const p = this.state.player;
+        const e = this.state.currentEnemy;
+        const canAct = this.state.battleState.playerTurn && !this.state.isProcessing;
+        const ePct = Math.max(0, (e.hp / e.maxHp) * 100);
+        document.getElementById('enemy-hp-fill').style.width = ePct + '%';
+        document.getElementById('enemy-hp-text').textContent = Math.max(0, e.hp) + '/' + e.maxHp;
+        const bar = document.getElementById('energy-bar');
+        if (bar.children.length !== p.maxEnergy) {
+            bar.innerHTML = Array.from({ length: p.maxEnergy }, () => '<div class="energy-orb"></div>').join('');
+        }
+        [...bar.children].forEach((orb, i) => orb.classList.toggle('full', i < p.energy));
+        for (let i = 0; i < p.loadout.length; i++) {
+            const btn = document.getElementById('slot-btn-' + i);
+            const id = p.loadout[i];
+            if (!btn || !id) continue;
+            const ab = this.abilities[id];
+            const lvl = p.owned[id].lvl;
+            document.getElementById('slot-cost-' + i).textContent = this.describeAbility(ab, lvl);
+            btn.disabled = !canAct || p.energy < ab.cost;
+        }
+        this.updateStatusBar();
+    },
+
+    log(msg) { document.getElementById('battle-log').textContent = msg; },
+
+    showDamage(target, amount, isHeal) {
+        isHeal = isHeal || false;
+        const el = document.createElement('div');
+        el.className = 'damage-popup';
+        el.textContent = isHeal ? '+' + amount : '-' + amount;
+        el.style.color = isHeal ? '#6ee7b7' : '#fff';
+        el.style.left = '50%';
+        el.style.top = target === 'enemy' ? '30%' : '70%';
+        el.style.transform = 'translateX(-50%)';
+        document.getElementById('screen-battle').appendChild(el);
+        setTimeout(() => el.remove(), 1000);
+        const visual = document.getElementById(target === 'enemy' ? 'enemy-visual' : 'mini-avatar');
+        const flash = document.createElement('div');
+        flash.className = 'hit-flash';
+        visual.appendChild(flash);
+        setTimeout(() => flash.remove(), 200);
+        visual.classList.add('shake');
+        setTimeout(() => visual.classList.remove('shake'), 500);
+    },
+
+    battleAction(slot) {
+        const s = this.state;
+        if (s.isProcessing || !s.battleState.playerTurn) return;
+        const p = s.player;
+        const e = s.currentEnemy;
+        const id = p.loadout[slot];
+        if (!id) return;
+        const ab = this.abilities[id];
+        const lvl = p.owned[id].lvl;
+        if (p.energy < ab.cost) return;
+
+        s.isProcessing = true;
+        s.battleState.playerTurn = false;
+        p.energy -= ab.cost;
+        let msg = '';
+
+        switch (ab.kind) {
+            case 'attack': {
+                const hits = ab.hits || 1;
+                const total = this.attackDamage(ab, lvl) * hits;
+                e.hp -= total;
+                this.showDamage('enemy', total);
+                msg = ab.icon + ' ' + ab.name + '! Dealt ' + total + ' damage' + (hits > 1 ? ' (' + hits + ' hits)' : '') + '!';
+                break;
+            }
+            case 'drain': {
+                const total = this.attackDamage(ab, lvl);
+                const heal = Math.floor(total / 2);
+                e.hp -= total;
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                this.showDamage('enemy', total);
+                this.showDamage('player', heal, true);
+                msg = ab.icon + ' Life Drain! Dealt ' + total + ' and healed ' + heal + '!';
+                break;
+            }
+            case 'guard': {
+                p.energy = Math.min(p.maxEnergy, p.energy + lvl);
+                s.battleState.defending = true;
+                msg = '🛡️ Guard up! Gained ' + lvl + ' energy, halved damage next hit!';
+                break;
+            }
+            case 'heal': {
+                const heal = this.levelValue(ab, lvl);
+                p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+                this.showDamage('player', heal, true);
+                msg = ab.icon + ' Healing Wave! Restored ' + heal + ' HP!';
+                break;
+            }
+            case 'armor': {
+                // Non-stacking: takes the higher of current and new value
+                p.buffs.defense = Math.max(p.buffs.defense, this.levelValue(ab, lvl));
+                msg = ab.icon + ' Thorn Armor! Defense is now +' + p.buffs.defense + ' for this battle!';
+                break;
+            }
+        }
+
+        this.updateBattleUI();
+        this.log(msg);
+        if (e.hp <= 0) {
+            s.isProcessing = false;
+            setTimeout(() => this.battleWin(), 800);
+            return;
+        }
+        setTimeout(() => this.enemyTurn(), 1200);
+    },
+
+    enemyTurn() {
+        const s = this.state;
+        if (!s.battleState || s.battleState.playerTurn) {
+            s.isProcessing = false;
+            return;
+        }
+        const p = s.player;
+        const e = s.currentEnemy;
+        const heavy = Math.random() > 0.7;
+        const dmg = heavy ? Math.floor(e.power * 1.5) : e.power;
+        const intentText = heavy
+            ? '💥 ' + e.name + ' is charging a heavy attack!'
+            : '⚔️ ' + e.name + ' is preparing to attack...';
+        const msg = heavy ? e.name + ' unleashes a POWERFUL strike!' : e.name + ' attacks!';
+        document.getElementById('intent-text').textContent = intentText;
+        setTimeout(() => {
+            let finalDmg = dmg;
+            let fullMsg = msg;
+            if (s.battleState.defending) {
+                finalDmg = Math.max(1, Math.floor(dmg / 2));
+                s.battleState.defending = false;
+                fullMsg += ' (Guarded! Only ' + finalDmg + ' damage!)';
+            }
+            finalDmg = Math.max(1, finalDmg - (p.stats.defense + p.buffs.defense));
+            p.stats.hp -= finalDmg;
+            this.showDamage('player', finalDmg);
+            this.log(fullMsg + ' You took ' + finalDmg + ' damage!');
+            this.updateBattleUI();
+            if (p.stats.hp <= 0) {
+                s.isProcessing = false;
+                setTimeout(() => this.gameOver(), 1000);
+                return;
+            }
+            s.battleState.playerTurn = true;
+            s.isProcessing = false;
+            // Slower passive energy regen: +1 every second player turn
+            s.battleState.turns++;
+            if (s.battleState.turns % 2 === 0) {
+                p.energy = Math.min(p.maxEnergy, p.energy + 1);
+            }
+            document.getElementById('intent-text').textContent = 'Your turn! Choose an action!';
+            this.updateBattleUI();
+        }, 1000);
+    },
+
+    battleWin() {
+        const e = this.state.currentEnemy;
+        this.state.player.buffs.defense = 0;
+        this.updateStatusBar();
+        this.log('🎉 Victory!');
+        setTimeout(() => {
+            if (e.type === 'boss') {
+                this.victory();
+            } else if (e.type === 'elite') {
+                this.showRewardPicker(4, () => this.finishNode(), 'An elite falls! Claim a strong reward.');
+            } else {
+                this.showRewardPicker(3, () => this.finishNode(), 'Monster defeated! Choose one reward.');
+            }
+        }, 1500);
+    },
+
+    gameOver() {
+        document.getElementById('death-floor').textContent = this.state.floor;
+        this.showScreen('screen-gameover');
+    },
+
+    victory() {
+        const p = this.state.player;
+        document.getElementById('final-floor').textContent = this.state.maxFloor;
+        document.getElementById('final-hp').textContent = Math.max(0, p.stats.hp);
+        document.getElementById('final-power').textContent = p.stats.power;
+        this.showScreen('screen-victory');
+    },
+
+    // ---------- PUZZLES ----------
+
+    startPuzzle() {
+        const type = Math.random() > 0.5 ? 'pattern' : 'count';
+        this.state.puzzleState = { type: type, sequence: [], playerSequence: [], targetCount: 0, showing: false };
+        document.getElementById('pattern-grid').classList.add('hidden');
+        document.getElementById('count-container').classList.add('hidden');
+        if (type === 'pattern') {
+            document.getElementById('puzzle-title').textContent = '🔮 Magic Pattern';
+            document.getElementById('puzzle-instruction').textContent = 'Watch the sequence, then repeat it!';
+            document.getElementById('pattern-grid').classList.remove('hidden');
+            this.generatePattern();
+        } else {
+            document.getElementById('puzzle-title').textContent = '🔢 Counting Challenge';
+            document.getElementById('puzzle-instruction').textContent = 'How many stars? Tap the number!';
+            document.getElementById('count-container').classList.remove('hidden');
+            this.generateCount();
+        }
+        this.showScreen('screen-puzzle');
+    },
+
+    generatePattern() {
+        const length = 3 + Math.min(this.state.floor, 3);
+        const colors = [0, 1, 2, 3];
+        this.state.puzzleState.sequence = [];
+        for (let i = 0; i < length; i++) {
+            this.state.puzzleState.sequence.push(colors[Math.floor(Math.random() * colors.length)]);
+        }
+        this.playPattern();
+    },
+
+    async playPattern() {
+        const status = document.getElementById('puzzle-status');
+        const btns = document.querySelectorAll('.puzzle-btn');
+        this.state.puzzleState.showing = true;
+        status.textContent = '👀 Watch carefully...';
+        await this.sleep(1000);
+        for (let color of this.state.puzzleState.sequence) {
+            btns[color].classList.add('lit');
+            await this.sleep(600);
+            btns[color].classList.remove('lit');
+            await this.sleep(300);
+        }
+        this.state.puzzleState.showing = false;
+        status.textContent = '👆 Your turn! Tap the pattern!';
+    },
+
+    puzzleInput(color) {
+        if (this.state.puzzleState.showing) return;
+        if (this.state.puzzleState.type !== 'pattern') return;
+        const btn = document.querySelectorAll('.puzzle-btn')[color];
+        btn.classList.add('lit');
+        setTimeout(() => btn.classList.remove('lit'), 200);
+        const ps = this.state.puzzleState;
+        ps.playerSequence.push(color);
+        const idx = ps.playerSequence.length - 1;
+        if (ps.playerSequence[idx] !== ps.sequence[idx]) {
+            document.getElementById('puzzle-status').textContent = '❌ Oops! Try again...';
+            this.state.player.stats.hp -= 5;
+            this.updateStatusBar();
+            if (this.state.player.stats.hp <= 0) { setTimeout(() => this.gameOver(), 1000); return; }
+            setTimeout(() => this.startPuzzle(), 1000);
+            return;
+        }
+        if (ps.playerSequence.length === ps.sequence.length) {
+            document.getElementById('puzzle-status').textContent = '✅ Correct!';
+            setTimeout(() => this.puzzleSuccess(), 800);
+        }
+    },
+
+    generateCount() {
+        const count = 3 + Math.floor(Math.random() * 5);
+        this.state.puzzleState.targetCount = count;
+        const display = document.getElementById('count-display');
+        display.innerHTML = '';
+        for (let i = 0; i < count; i++) {
+            const item = document.createElement('div');
+            item.className = 'count-item';
+            item.textContent = '⭐';
+            item.style.background = '#fbbf24';
+            item.style.color = '#000';
+            display.appendChild(item);
+        }
+    },
+
+    countInput(num) {
+        if (num === this.state.puzzleState.targetCount) {
+            document.getElementById('puzzle-status').textContent = '✅ Correct!';
+            setTimeout(() => this.puzzleSuccess(), 800);
+        } else {
+            document.getElementById('puzzle-status').textContent = '❌ Try again!';
+            this.state.player.stats.hp -= 3;
+            this.updateStatusBar();
+            if (this.state.player.stats.hp <= 0) { setTimeout(() => this.gameOver(), 1000); }
+        }
+    },
+
+    puzzleSuccess() {
+        const p = this.state.player;
+        // Puzzles are the only place that heal outside of abilities
+        const heal = Math.floor(p.stats.maxHp * 0.2);
+        p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
+        this.updateStatusBar();
+        this.showRewardPicker(3, () => this.finishNode(), 'Seal broken! You restored ' + heal + ' HP. Choose one reward.');
+    },
+
+    // ---------- REWARDS ----------
+
+    buildRewardPool() {
+        const p = this.state.player;
+        const abilityCards = [];
+
+        Object.keys(this.abilities).forEach(id => {
+            const ab = this.abilities[id];
+            if (!ab.learnable || p.owned[id]) return;
+            abilityCards.push({
+                tag: 'NEW ABILITY', tagClass: 'new', icon: ab.icon,
+                title: 'Learn ' + ab.name, desc: ab.desc,
+                slotMsg: ab.name + ' learned! Choose a slot for it.',
+                apply: () => {
+                    p.owned[id] = { lvl: 1 };
+                    const empty = p.loadout.indexOf(null);
+                    if (empty !== -1) { p.loadout[empty] = id; return false; }
+                    return true; // needs a slot chosen in the loadout
+                }
+            });
+        });
+
+        Object.keys(p.owned).forEach(id => {
+            const ab = this.abilities[id];
+            const lvl = p.owned[id].lvl;
+            if (lvl >= this.MAX_LEVEL) return;
+            abilityCards.push({
+                tag: 'UPGRADE', tagClass: 'upgrade', icon: ab.icon,
+                title: 'Upgrade ' + ab.name,
+                desc: 'Lv ' + lvl + ' → ' + (lvl + 1) + ': ' + ab.upText,
+                apply: () => { p.owned[id].lvl++; return false; }
+            });
+        });
+
+        const statCards = [
+            { tag: 'STAT', tagClass: 'stat', icon: '❤️', title: '+10 Max HP', desc: 'Grow your health pool.',
+              apply: () => { p.stats.maxHp += 10; return false; } },
+            { tag: 'STAT', tagClass: 'stat', icon: '⚔️', title: '+2 Power', desc: 'Every attack hits harder.',
+              apply: () => { p.stats.power += 2; return false; } },
+            { tag: 'STAT', tagClass: 'stat', icon: '🛡️', title: '+1 Defense', desc: 'Take less damage from every hit.',
+              apply: () => { p.stats.defense += 1; return false; } },
+            { tag: 'STAT', tagClass: 'stat', icon: '🔋', title: '+1 Max Energy', desc: 'Hold more energy and act more often.',
+              apply: () => { p.maxEnergy += 1; p.energy += 1; return false; } }
+        ];
+
+        return { abilityCards, statCards };
+    },
+
+    pickRewardCards(count) {
+        const pool = this.buildRewardPool();
+        const primary = this.shuffle([...pool.abilityCards]);
+        const picks = [];
+        // Guarantee at least one ability option when one exists
+        if (primary.length) picks.push(primary.shift());
+        const rest = this.shuffle([...primary, ...pool.statCards]);
+        while (picks.length < count && rest.length) picks.push(rest.shift());
+        return picks;
+    },
+
+    showRewardPicker(count, next, desc) {
+        this.state.rewardNext = next;
+        this.state.rewardCards = this.pickRewardCards(count);
+        document.getElementById('reward-title').textContent = '🎁 Choose a Reward';
+        document.getElementById('reward-desc').textContent = desc;
+        document.getElementById('upgrade-options').innerHTML = this.state.rewardCards.map((c, i) =>
+            `<button class="btn reward-option" onclick="Game.pickReward(${i})">
+                <span class="r-icon">${c.icon}</span>
+                <div class="r-body">
+                    <span class="r-tag ${c.tagClass}">${c.tag}</span>
+                    <strong>${c.title}</strong>
+                    <small>${c.desc}</small>
+                </div>
+            </button>`).join('');
+        this.showScreen('screen-reward');
+    },
+
+    pickReward(i) {
+        const card = this.state.rewardCards[i];
+        if (!card) return;
+        const next = this.state.rewardNext;
+        this.state.rewardCards = [];
+        const needsSlot = card.apply();
+        this.updateStatusBar();
+        if (needsSlot) this.openLoadout(next, card.slotMsg);
+        else next();
+    },
+
+    showChest() {
+        document.getElementById('reward-title').textContent = '🧰 Treasure Room';
+        document.getElementById('reward-desc').textContent = 'Two chests. Which one do you open?';
+        document.getElementById('upgrade-options').innerHTML = `
+            <button class="btn reward-option" onclick="Game.openSafeChest()">
+                <span class="r-icon">🧺</span>
+                <div class="r-body">
+                    <span class="r-tag safe">SAFE</span>
+                    <strong>Safe Chest</strong>
+                    <small>A guaranteed reward, pick from 2.</small>
+                </div>
+            </button>
+            <button class="btn reward-option" onclick="Game.openGambleChest()">
+                <span class="r-icon">🎲</span>
+                <div class="r-body">
+                    <span class="r-tag gamble">GAMBLE</span>
+                    <strong>Gamble Chest</strong>
+                    <small>50% chance of a pick from 4 rewards, 50% chance of a trap for 8 damage.</small>
+                </div>
+            </button>`;
+        this.showScreen('screen-reward');
+    },
+
+    openSafeChest() {
+        this.showRewardPicker(2, () => this.finishNode(), 'The safe chest held two rewards. Choose one.');
+    },
+
+    openGambleChest() {
+        const p = this.state.player;
+        if (Math.random() < 0.5) {
+            this.showRewardPicker(4, () => this.finishNode(), 'The chest was full of goodies! Choose one.');
+        } else {
+            p.stats.hp -= 8;
+            this.updateStatusBar();
+            if (p.stats.hp <= 0) { this.gameOver(); return; }
+            this.showMessage('A trap sprung! You lost 8 HP.', () => this.finishNode());
+        }
+    },
+
+    showMessage(desc, next) {
+        this.state.rewardNext = next;
+        document.getElementById('reward-title').textContent = '🧰 Treasure Room';
+        document.getElementById('reward-desc').textContent = desc;
+        document.getElementById('upgrade-options').innerHTML = '<button class="btn btn-gold w-full" onclick="Game.continueReward()">Continue</button>';
+        this.showScreen('screen-reward');
+    },
+
+    continueReward() {
+        const next = this.state.rewardNext;
+        this.state.rewardNext = null;
+        if (next) next();
+    },
+
+    // ---------- LOADOUT ----------
+
+    openLoadout(returnFn, msg) {
+        this.state.loadoutReturn = returnFn || null;
+        this.state.selectedSlot = null;
+        document.getElementById('loadout-msg').textContent = msg || 'Tap a slot, then tap an ability to equip it.';
+        this.renderLoadout();
+        this.showScreen('screen-loadout');
+    },
+
+    closeLoadout() {
+        const back = this.state.loadoutReturn;
+        this.state.loadoutReturn = null;
+        this.state.selectedSlot = null;
+        if (back) back();
+        else this.showScreen('screen-map');
+    },
+
+    selectSlot(i) {
+        this.state.selectedSlot = this.state.selectedSlot === i ? null : i;
+        this.renderLoadout();
+    },
+
+    equipAbility(id) {
+        const s = this.state;
+        const lp = s.player.loadout;
+        const msgEl = document.getElementById('loadout-msg');
+        if (s.selectedSlot === null) {
+            msgEl.textContent = 'Select a slot first, then pick an ability.';
+            return;
+        }
+        const from = lp.indexOf(id);
+        if (from !== -1 && from !== s.selectedSlot) lp[from] = lp[s.selectedSlot];
+        lp[s.selectedSlot] = id;
+        msgEl.textContent = this.abilities[id].name + ' equipped!';
+        s.selectedSlot = null;
+        this.renderLoadout();
+    },
+
+    renderLoadout() {
+        const p = this.state.player;
+        const sel = this.state.selectedSlot;
+        document.getElementById('slot-grid').innerHTML = p.loadout.map((id, i) => {
+            const selCls = sel === i ? ' selected' : '';
+            if (!id) {
+                return `<button class="slot-card${selCls}" onclick="Game.selectSlot(${i})"><span class="s-icon">➕</span><span class="s-name">Empty</span></button>`;
+            }
+            const ab = this.abilities[id];
+            return `<button class="slot-card filled${selCls}" onclick="Game.selectSlot(${i})"><span class="s-icon">${ab.icon}</span><span class="s-name">${ab.name}</span><span class="s-lvl">Lv ${p.owned[id].lvl}</span></button>`;
+        }).join('');
+        document.getElementById('owned-list').innerHTML = Object.keys(p.owned).map(id => {
+            const ab = this.abilities[id];
+            const eq = p.loadout.includes(id);
+            return `<button class="owned-row${eq ? ' equipped' : ''}" onclick="Game.equipAbility('${id}')"><span class="o-icon">${ab.icon}</span><div class="o-body"><strong>${ab.name}</strong><small>${ab.desc}</small></div><span class="o-lvl">${eq ? '✅ ' : ''}Lv ${p.owned[id].lvl}</span></button>`;
+        }).join('');
+    },
+
+    // ---------- UTILITY ----------
+
+    showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    },
+
+    sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
+
+    reset() {
+        this.state = this.newState();
+        document.getElementById('status-bar').classList.add('hidden');
+        document.getElementById('floor-max').textContent = this.state.maxFloor;
+        document.querySelectorAll('.starter-card').forEach(c => c.classList.remove('selected'));
+        document.getElementById('start-btn').disabled = true;
+        this.showScreen('screen-start');
+    }
+};
+window.addEventListener('DOMContentLoaded', () => Game.init());
+</script>
+</body>
+</html>
