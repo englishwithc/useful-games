@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌱 Garden Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    :root {
+      --sky-top: #87CEEB;
+      --sky-bottom: #E0F6FF;
+      --dirt: #8B4513;
+      --dirt-dark: #654321;
+      --grass: #4CAF50;
+      --grass-light: #8BC34A;
+      --common: #4CAF50;
+      --uncommon: #2196F3;
+      --rare: #9C27B0;
+      --epic: #FFD700;
+      --coin: #FFD700;
+      --water: #29B6F6;
+      --panel-bg: #FFF8E1;
+      --panel-border: #5D4037;
+      --text-dark: #3E2723;
+      --shadow: rgba(0,0,0,0.3);
+    }
+
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 10px;
+      line-height: 1.6;
+    }
+
+    #game-container {
+      width: 100%;
+      max-width: 420px;
+      background: var(--panel-bg);
+      border: 4px solid var(--panel-border);
+      box-shadow:
+        0 0 0 4px #fff,
+        0 0 0 8px var(--panel-border),
+        0 10px 30px var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decorative clouds */
+    .cloud {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      opacity: 0.7;
+      pointer-events: none;
+      animation: float 20s infinite ease-in-out;
+    }
+
+    .cloud::before,
+    .cloud::after {
+      content: '';
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    .cloud-1 {
+      width: 60px;
+      height: 24px;
+      top: 20px;
+      left: -80px;
+      animation-delay: 0s;
+    }
+    .cloud-1::before { width: 30px; height: 30px; top: -12px; left: 8px; }
+    .cloud-1::after { width: 24px; height: 24px; top: -8px; right: 10px; }
+
+    .cloud-2 {
+      width: 50px;
+      height: 20px;
+      top: 60px;
+      left: -60px;
+      animation-delay: -7s;
+    }
+    .cloud-2::before { width: 24px; height: 24px; top: -10px; left: 6px; }
+    .cloud-2::after { width: 20px; height: 20px; top: -6px; right: 8px; }
+
+    .cloud-3 {
+      width: 70px;
+      height: 28px;
+      top: 100px;
+      left: -100px;
+      animation-delay: -14s;
+    }
+    .cloud-3::before { width: 34px; height: 34px; top: -14px; left: 10px; }
+    .cloud-3::after { width: 28px; height: 28px; top: -10px; right: 12px; }
+
+    @keyframes float {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(calc(100vw + 200px)); }
+    }
+
+    /* Header */
+    #header {
+      background: linear-gradient(180deg, #FFE082 0%, #FFD54F 100%);
+      border-bottom: 4px solid var(--panel-border);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .stat-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 3px solid var(--panel-border);
+      padding: 6px 10px;
+      font-size: 10px;
+      color: var(--text-dark);
+    }
+
+    .coin-icon {
+      width: 20px;
+      height: 20px;
+      background: radial-gradient(circle at 35% 35%, #FFE082, var(--coin) 60%, #FFA000);
+      border-radius: 50%;
+      border: 2px solid #FFA000;
+      display: inline-block;
+      box-shadow: inset -2px -2px 0 rgba(0,0,0,0.15);
+    }
+
+    /* Water droplets */
+    .water-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #fff;
+      border: 3px solid var(--panel-border);
+      padding: 6px 10px;
+    }
+
+    .water-drop {
+      width: 16px;
+      height: 20px;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .water-drop::before {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: var(--water);
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      bottom: 0;
+      left: 2px;
+    }
+
+    .water-drop::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 10px solid var(--water);
+      top: 0;
+      left: 2px;
+    }
+
+    .water-drop.empty {
+      opacity: 0.2;
+      filter: grayscale(1);
+    }
+
+    .water-drop.empty::before,
+    .water-drop.empty::after {
+      background: #BDBDBD;
+      border-bottom-color: #BDBDBD;
+    }
+
+    .water-label {
+      font-size: 8px;
+      color: #0277BD;
+      margin-right: 2px;
+    }
+
+    .level-badge {
+      background: var(--grass);
+      color: #fff;
+      border-color: #2E7D32;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    #teacher-btn {
+      background: linear-gradient(180deg, #EF5350 0%, #C62828 100%);
+      color: #fff;
+      border: 3px solid #B71C1C;
+      padding: 8px 12px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 9px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #B71C1C;
+      transition: all 0.1s;
+      white-space: nowrap;
+    }
+
+    #teacher-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #B71C1C;
+    }
+
+    #teacher-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    #teacher-btn.pulse {
+      animation: pulseBtn 1s infinite;
+    }
+
+    @keyframes pulseBtn {
+      0%, 100% { box-shadow: 0 4px 0 #B71C1C, 0 0 0 0 rgba(239,83,80,0.7); }
+      50% { box-shadow: 0 4px 0 #B71C1C, 0 0 0 10px rgba(239,83,80,0); }
+    }
+
+    #reset-btn {
+      background: linear-gradient(180deg, #9E9E9E 0%, #616161 100%);
+      color: #fff;
+      border: 3px solid #424242;
+      padding: 8px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 9px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #424242;
+      transition: all 0.1s;
+    }
+
+    #reset-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #424242;
+    }
+
+    /* XP Bar */
+    .xp-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .xp-label {
+      font-size: 8px;
+      color: var(--text-dark);
+    }
+
+    .xp-bar {
+      flex: 1;
+      height: 16px;
+      background: #fff;
+      border: 3px solid var(--panel-border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--grass-light), var(--grass));
+      transition: width 0.5s ease;
+      position: relative;
+    }
+
+    .xp-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: rgba(255,255,255,0.3);
+    }
+
+    .xp-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 7px;
+      color: var(--text-dark);
+      text-shadow: 1px 1px 0 #fff;
+      z-index: 1;
+    }
+
+    /* Sections */
+    .section {
+      border-bottom: 4px solid var(--panel-border);
+      padding: 12px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      color: var(--text-dark);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Shop */
+    #shop {
+      background: linear-gradient(180deg, #E8F5E9 0%, #C8E6C9 100%);
+    }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .seed-card {
+      background: #fff;
+      border: 3px solid var(--panel-border);
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+      box-shadow: 0 3px 0 var(--shadow);
+    }
+
+    .seed-card:hover:not(.disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 0 var(--shadow);
+    }
+
+    .seed-card:active:not(.disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 var(--shadow);
+    }
+
+    .seed-card.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .seed-card.common { border-color: var(--common); }
+    .seed-card.uncommon { border-color: var(--uncommon); }
+    .seed-card.rare { border-color: var(--rare); }
+    .seed-card.epic { border-color: var(--epic); box-shadow: 0 0 10px var(--epic), 0 3px 0 var(--shadow); }
+
+    .seed-emoji {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 4px;
+      filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.1));
+    }
+
+    .seed-name {
+      font-size: 7px;
+      color: var(--text-dark);
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .seed-price {
+      font-size: 8px;
+      color: #B8860B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .mini-coin {
+      width: 12px;
+      height: 12px;
+      background: radial-gradient(circle at 35% 35%, #FFE082, var(--coin) 60%, #FFA000);
+      border-radius: 50%;
+      border: 1px solid #FFA000;
+      display: inline-block;
+    }
+
+    .rarity-tag {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      font-size: 6px;
+      padding: 2px 4px;
+      color: #fff;
+      border: 2px solid var(--panel-border);
+    }
+
+    .rarity-tag.common { background: var(--common); }
+    .rarity-tag.uncommon { background: var(--uncommon); }
+    .rarity-tag.rare { background: var(--rare); }
+    .rarity-tag.epic { background: var(--epic); color: var(--text-dark); }
+
+    /* Watering Section (replaces shop when water available) */
+    #watering-section {
+      background: linear-gradient(180deg, #E1F5FE 0%, #B3E5FC 100%);
+      display: none;
+    }
+
+    #watering-section.active {
+      display: block;
+    }
+
+    #watering-section.hidden {
+      display: none;
+    }
+
+    .watering-can-container {
+      text-align: center;
+      padding: 10px;
+    }
+
+    .watering-can {
+      font-size: 64px;
+      display: inline-block;
+      position: relative;
+      animation: tilt 2s ease-in-out infinite;
+    }
+
+    @keyframes tilt {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+    }
+
+    .watering-can .water-level {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      background: var(--water);
+      border-radius: 0 0 4px 4px;
+      transition: height 0.3s;
+    }
+
+    .watering-instructions {
+      font-size: 9px;
+      color: #0277BD;
+      margin-top: 8px;
+      line-height: 1.8;
+    }
+
+    .water-count-big {
+      font-size: 14px;
+      color: #0277BD;
+      margin-top: 4px;
+    }
+
+    /* Garden */
+    #garden {
+      background: linear-gradient(180deg, #A5D6A7 0%, #81C784 100%);
+    }
+
+    .garden-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 8px;
+      color: var(--text-dark);
+    }
+
+    .garden-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      justify-items: center;
+    }
+
+    .plot {
+      width: 85px;
+      height: 95px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s;
+    }
+
+    .plot:hover:not(.locked) {
+      transform: scale(1.05);
+    }
+
+    .plot:active:not(.locked) {
+      transform: scale(0.95);
+    }
+
+    .plot-inner {
+      width: 100%;
+      height: 100%;
+      border: 3px solid var(--panel-border);
+      background: #fff;
+      box-shadow: 0 3px 0 var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Rarity borders for plots */
+    .plot-inner.common { border-color: var(--common); box-shadow: 0 0 8px var(--common), 0 3px 0 var(--shadow); }
+    .plot-inner.uncommon { border-color: var(--uncommon); box-shadow: 0 0 8px var(--uncommon), 0 3px 0 var(--shadow); }
+    .plot-inner.rare { border-color: var(--rare); box-shadow: 0 0 8px var(--rare), 0 3px 0 var(--shadow); }
+    .plot-inner.epic { border-color: var(--epic); box-shadow: 0 0 12px var(--epic), 0 3px 0 var(--shadow); }
+
+    .plot canvas {
+      width: 100%;
+      height: 65px;
+      display: block;
+    }
+
+    .plot-info {
+      padding: 4px;
+      text-align: center;
+      background: rgba(255,255,255,0.9);
+      border-top: 2px solid var(--panel-border);
+    }
+
+    .plot-emoji {
+      font-size: 16px;
+      display: block;
+    }
+
+    .plot-name {
+      font-size: 6px;
+      color: var(--text-dark);
+      display: block;
+      margin-top: 2px;
+    }
+
+    .plot-status {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+      margin-top: 3px;
+    }
+
+    .growth-dot {
+      width: 8px;
+      height: 8px;
+      border: 2px solid var(--panel-border);
+      background: #E0E0E0;
+    }
+
+    .growth-dot.filled {
+      background: var(--water);
+    }
+
+    .growth-dot.ready {
+      background: var(--epic);
+      animation: blink 0.5s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .thirsty-icon {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      font-size: 12px;
+      animation: bounce 1s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    .plot.locked {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .plot.locked .plot-inner {
+      background: #BDBDBD;
+    }
+
+    .plot .lock-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      z-index: 1;
+    }
+
+    .plot.ready .plot-inner {
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.7); }
+      50% { box-shadow: 0 0 0 8px rgba(255,215,0,0); }
+    }
+
+    /* Water pour animation */
+    .water-pour {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      pointer-events: none;
+      animation: pour 0.8s ease-in forwards;
+      z-index: 10;
+    }
+
+    @keyframes pour {
+      0% { transform: translateX(-50%) translateY(0) rotate(0deg); opacity: 1; }
+      50% { transform: translateX(-50%) translateY(20px) rotate(20deg); opacity: 1; }
+      100% { transform: translateX(-50%) translateY(40px) rotate(40deg); opacity: 0; }
+    }
+
+    .water-splash {
+      position: absolute;
+      font-size: 16px;
+      pointer-events: none;
+      animation: splash 0.5s ease-out forwards;
+      z-index: 10;
+    }
+
+    @keyframes splash {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    /* Coin fly animation */
+    .coin-fly {
+      position: absolute;
+      font-size: 16px;
+      pointer-events: none;
+      animation: coinFly 0.8s ease-out forwards;
+      z-index: 10;
+    }
+
+    @keyframes coinFly {
+      0% { transform: translate(0, 0) scale(1); opacity: 1; }
+      50% { transform: translate(0, -30px) scale(1.3); opacity: 1; }
+      100% { transform: translate(0, -60px) scale(0.5); opacity: 0; }
+    }
+
+    /* Goal Section */
+    #goal {
+      background: linear-gradient(180deg, #FFF3E0 0%, #FFE0B2 100%);
+      border-bottom: none;
+    }
+
+    .goal-container {
+      text-align: center;
+    }
+
+    .goal-title {
+      font-size: 10px;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+
+    .goal-bar {
+      height: 24px;
+      background: #fff;
+      border: 3px solid var(--panel-border);
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .goal-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #FFB74D, var(--coin), #FFB74D);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+      transition: width 0.5s ease;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    .goal-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 9px;
+      color: var(--text-dark);
+      text-shadow: 1px 1px 0 #fff;
+      z-index: 1;
+    }
+
+    .goal-trophy {
+      font-size: 32px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .goal-trophy.show {
+      display: block;
+      animation: bounce 0.5s ease;
+    }
+
+    /* Status message */
+    #status {
+      text-align: center;
+      padding: 8px;
+      font-size: 8px;
+      color: var(--text-dark);
+      min-height: 30px;
+      background: rgba(255,255,255,0.5);
+    }
+
+    #status.success { color: #2E7D32; }
+    #status.error { color: #C62828; }
+    #status.info { color: #1565C0; }
+    #status.water { color: #0277BD; }
+
+    /* Win overlay */
+    #win-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #win-overlay.show {
+      display: flex;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .win-content {
+      background: var(--panel-bg);
+      border: 4px solid var(--epic);
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 0 30px var(--epic);
+      animation: popIn 0.5s ease;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0); }
+      80% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    .win-emoji {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .win-title {
+      font-size: 16px;
+      color: var(--text-dark);
+      margin-bottom: 12px;
+    }
+
+    .win-stats {
+      font-size: 10px;
+      color: var(--text-dark);
+      margin-bottom: 20px;
+      line-height: 2;
+    }
+
+    #play-again-btn {
+      background: linear-gradient(180deg, var(--grass-light) 0%, var(--grass) 100%);
+      color: #fff;
+      border: 3px solid #2E7D32;
+      padding: 12px 24px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #2E7D32;
+      transition: all 0.1s;
+    }
+
+    #play-again-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #2E7D32;
+    }
+
+    /* Reset confirm overlay */
+    #reset-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    #reset-overlay.show {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .reset-content {
+      background: var(--panel-bg);
+      border: 4px solid #C62828;
+      padding: 24px;
+      text-align: center;
+      max-width: 300px;
+    }
+
+    .reset-title {
+      font-size: 12px;
+      color: #C62828;
+      margin-bottom: 16px;
+    }
+
+    .reset-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .reset-confirm-btn {
+      background: linear-gradient(180deg, #EF5350 0%, #C62828 100%);
+      color: #fff;
+      border: 3px solid #B71C1C;
+      padding: 10px 16px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 9px;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #B71C1C;
+    }
+
+    .reset-cancel-btn {
+      background: linear-gradient(180deg, #9E9E9E 0%, #616161 100%);
+      color: #fff;
+      border: 3px solid #424242;
+      padding: 10px 16px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 9px;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #424242;
+    }
+
+    /* Confetti */
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      pointer-events: none;
+      z-index: 99;
+      animation: confettiFall 3s ease-in forwards;
+    }
+
+    @keyframes confettiFall {
+      0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Level up animation */
+    .level-up-text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      color: var(--epic);
+      text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
+      pointer-events: none;
+      z-index: 50;
+      animation: levelUp 1.5s ease forwards;
+    }
+
+    @keyframes levelUp {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+      20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+      80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
+    }
+
+    /* Floating reward text */
+    .float-text {
+      position: absolute;
+      font-size: 12px;
+      pointer-events: none;
+      animation: floatUp 1s ease-out forwards;
+      z-index: 20;
+      white-space: nowrap;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-40px); opacity: 0; }
+    }
+
+    /* Responsive */
+    @media (max-width: 380px) {
+      .plot { width: 75px; height: 85px; }
+      .seed-emoji { font-size: 24px; }
+      .stats-row { gap: 4px; }
+      .stat-box { padding: 4px 6px; font-size: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <!-- Decorative clouds -->
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+    <div class="cloud cloud-3"></div>
+
+    <!-- Header -->
+    <div id="header">
+      <div class="stats-row">
+        <div class="stat-box">
+          <span class="coin-icon"></span>
+          <span id="coin-display">10</span>
+        </div>
+        <div class="water-container" id="water-container">
+          <span class="water-label">💧</span>
+          <span id="water-drops"></span>
+        </div>
+        <div class="stat-box level-badge">
+          LV <span id="level-display">1</span>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="btn-group" style="flex: 1;">
+          <button id="teacher-btn">+ TASK</button>
+        </div>
+        <button id="reset-btn">🔄</button>
+      </div>
+      <div class="xp-container">
+        <span class="xp-label">XP</span>
+        <div class="xp-bar">
+          <div class="xp-fill" id="xp-fill" style="width: 0%"></div>
+          <span class="xp-text" id="xp-text">0/50</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Watering Section (replaces shop when water > 0) -->
+    <div id="watering-section" class="section">
+      <div class="section-title">💧 WATERING MODE</div>
+      <div class="watering-can-container">
+        <div class="watering-can">
+          🚿
+          <div class="water-level" id="can-water-level" style="height: 20px;"></div>
+        </div>
+        <div class="water-count-big" id="water-count-big">3 / 3</div>
+        <div class="watering-instructions">
+          Click a plant<br>to water it!
+        </div>
+      </div>
+    </div>
+
+    <!-- Shop -->
+    <div id="shop" class="section">
+      <div class="section-title">🛒 SHOP</div>
+      <div class="shop-grid" id="shop-grid"></div>
+    </div>
+
+    <!-- Garden -->
+    <div id="garden" class="section">
+      <div class="garden-info">
+        <span>🌱 MY GARDEN</span>
+        <span id="plots-info">0/4 PLOTS</span>
+      </div>
+      <div class="garden-grid" id="garden-grid"></div>
+    </div>
+
+    <!-- Goal -->
+    <div id="goal" class="section">
+      <div class="goal-container">
+        <div class="goal-title">🏆 GOAL: 400 COINS</div>
+        <div class="goal-bar">
+          <div class="goal-fill" id="goal-fill" style="width: 2.5%"></div>
+          <span class="goal-text" id="goal-text">10/400</span>
+        </div>
+        <div class="goal-trophy" id="goal-trophy">🏆</div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div id="status">Click a seed in the SHOP to plant it!</div>
+  </div>
+
+  <!-- Win Overlay -->
+  <div id="win-overlay">
+    <div class="win-content">
+      <div class="win-emoji">🌟🏆🌟</div>
+      <div class="win-title">YOU WIN!</div>
+      <div class="win-stats" id="win-stats"></div>
+      <button id="play-again-btn">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <!-- Reset Confirm Overlay -->
+  <div id="reset-overlay">
+    <div class="reset-content">
+      <div class="reset-title">RESET GAME?</div>
+      <p style="font-size: 8px; margin-bottom: 16px; color: var(--text-dark);">All progress will be lost!</p>
+      <div class="reset-buttons">
+        <button class="reset-confirm-btn" id="confirm-reset">YES</button>
+        <button class="reset-cancel-btn" id="cancel-reset">NO</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // PIXEL ART SPRITES (16x16)
+    // ============================================
+    const COLORS = {
+      '.': null,
+      'b': '#8B4513', // brown dirt
+      'd': '#654321', // dark brown (seed)
+      'g': '#228B22', // green stem
+      'l': '#90EE90', // light green leaves
+      'w': '#FFFFFF', // white sparkle
+      's': '#87CEEB', // sky (for locked plots)
+      'L': '#9E9E9E', // lock gray
+    };
+
+    const SPRITES = {
+      empty: [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "....bbbbbb......",
+        "...bbbbbbbb.....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "...bbbbbbbbb...."
+      ],
+      seed: [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        ".......d........",
+        "......ddd.......",
+        "....bbbbbb......",
+        "...bbbbbbbb.....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "...bbbbbbbbb...."
+      ],
+      sprout: [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        ".......g........",
+        "......ggg.......",
+        ".....gggg.......",
+        "....ggggg.......",
+        "...gggggg.......",
+        "....bbbbbb......",
+        "...bbbbbbbb.....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "...bbbbbbbbb...."
+      ],
+      growing: [
+        "................",
+        "................",
+        "......ll........",
+        ".....llll.......",
+        "....llllll......",
+        ".....llll.......",
+        "....llllll......",
+        "...ggggggg......",
+        "..ggggggggg.....",
+        "...ggggggg......",
+        "....bbbbbb......",
+        "...bbbbbbbb.....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "...bbbbbbbbb...."
+      ],
+      ready: [
+        ".......FF.......",
+        "....w..FF..w....",
+        "......FFFF......",
+        "...w.FFFFFF.w...",
+        "....FFFFFFFF....",
+        "..w...FF......w.",
+        "......gggg......",
+        ".....ggggg......",
+        "....ggggggg.....",
+        "...ggggggggg....",
+        "....bbbbbb......",
+        "...bbbbbbbb.....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "...bbbbbbbbb...."
+      ],
+      locked: [
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "................",
+        "......LL........",
+        ".....LLLL.......",
+        "....LL..LL......",
+        "....LL..LL......",
+        "....LLLLLL......",
+        ".....LLLL.......",
+        "......LL........",
+        ".....LLLL.......",
+        "....LL..LL......",
+        "...LL....LL....."
+      ],
+      wilted: [
+        "................",
+        "................",
+        "................",
+        "................",
+        "......gg........",
+        ".....ggg........",
+        "....gggg........",
+        "...ggggg........",
+        "....gggg.........",
+        ".....ggg........",
+        "....bbbbbb......",
+        "...bbbbbbbb.....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "..bbbbbbbbbb....",
+        "...bbbbbbbbb...."
+      ]
+    };
+
+    // ============================================
+    // PLANT DATABASE
+    // ============================================
+    const PLANTS = {
+      carrot: {
+        name: 'CARROT',
+        emoji: '🥕',
+        fruitColor: '#FF8C00',
+        rarity: 'common',
+        cost: 5,
+        sell: 15,
+        watersNeeded: 2,
+        stages: 3,
+        xp: 5
+      },
+      lettuce: {
+        name: 'LETTUCE',
+        emoji: '🥬',
+        fruitColor: '#8BC34A',
+        rarity: 'common',
+        cost: 5,
+        sell: 15,
+        watersNeeded: 2,
+        stages: 3,
+        xp: 5
+      },
+      tomato: {
+        name: 'TOMATO',
+        emoji: '🍅',
+        fruitColor: '#F44336',
+        rarity: 'uncommon',
+        cost: 12,
+        sell: 40,
+        watersNeeded: 2,
+        stages: 3,
+        xp: 12
+      },
+      flower: {
+        name: 'FLOWER',
+        emoji: '🌸',
+        fruitColor: '#E91E63',
+        rarity: 'uncommon',
+        cost: 12,
+        sell: 40,
+        watersNeeded: 2,
+        stages: 3,
+        xp: 12
+      },
+      sunflower: {
+        name: 'SUNFLOWER',
+        emoji: '🌻',
+        fruitColor: '#FFC107',
+        rarity: 'rare',
+        cost: 35,
+        sell: 120,
+        watersNeeded: 3,
+        stages: 4,
+        xp: 35
+      },
+      pumpkin: {
+        name: 'PUMPKIN',
+        emoji: '🎃',
+        fruitColor: '#FF9800',
+        rarity: 'rare',
+        cost: 35,
+        sell: 120,
+        watersNeeded: 3,
+        stages: 4,
+        xp: 35
+      },
+      goldtree: {
+        name: 'GOLD TREE',
+        emoji: '🍎',
+        fruitColor: '#FFD700',
+        rarity: 'epic',
+        cost: 100,
+        sell: 350,
+        watersNeeded: 3,
+        stages: 4,
+        xp: 100
+      }
+    };
+
+    // ============================================
+    // LEVEL CONFIGURATION
+    // ============================================
+    const LEVELS = [
+      { level: 1, plots: 4, xpNeeded: 0, waterBonus: 0 },
+      { level: 2, plots: 6, xpNeeded: 30, waterBonus: 1 },
+      { level: 3, plots: 9, xpNeeded: 80, waterBonus: 2 },
+      { level: 4, plots: 12, xpNeeded: 180, waterBonus: 3 },
+    ];
+
+    const GOAL_COINS = 400;
+    const BASE_WATER = 4; // Starting water capacity
+
+    // ============================================
+    // GAME STATE
+    // ============================================
+    const state = {
+      coins: 10,
+      xp: 0,
+      level: 1,
+      water: 2, // Start with some water so students can try immediately
+      maxWater: BASE_WATER,
+      plots: [],
+      won: false,
+      totalTasks: 0,
+      totalPlantsGrown: 0,
+    };
+
+    // ============================================
+    // AUDIO (Web Audio API - simple beeps)
+    // ============================================
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioContext();
+      }
+    }
+
+    function playTone(frequency, duration, type = 'sine', volume = 0.3) {
+      if (!audioCtx) return;
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.frequency.value = frequency;
+      oscillator.type = type;
+      gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + duration);
+    }
+
+    function playCoinSound() {
+      playTone(880, 0.1, 'sine', 0.3);
+      setTimeout(() => playTone(1320, 0.15, 'sine', 0.3), 80);
+    }
+
+    function playWaterSound() {
+      playTone(400, 0.1, 'sine', 0.2);
+      setTimeout(() => playTone(300, 0.1, 'sine', 0.2), 60);
+      setTimeout(() => playTone(350, 0.1, 'sine', 0.2), 120);
+    }
+
+    function playTaskSound() {
+      playTone(523, 0.1, 'sine', 0.3);
+      setTimeout(() => playTone(659, 0.1, 'sine', 0.3), 80);
+      setTimeout(() => playTone(784, 0.15, 'sine', 0.3), 160);
+    }
+
+    function playHarvestSound() {
+      playTone(523, 0.1, 'sine', 0.3);
+      setTimeout(() => playTone(659, 0.1, 'sine', 0.3), 80);
+      setTimeout(() => playTone(784, 0.15, 'sine', 0.3), 160);
+      setTimeout(() => playTone(1047, 0.2, 'sine', 0.3), 240);
+    }
+
+    function playLevelUpSound() {
+      const notes = [523, 659, 784, 1047, 1319];
+      notes.forEach((note, i) => {
+        setTimeout(() => playTone(note, 0.2, 'square', 0.25), i * 100);
+      });
+    }
+
+    function playErrorSound() {
+      playTone(200, 0.2, 'sawtooth', 0.2);
+    }
+
+    function playWinSound() {
+      const melody = [523, 587, 659, 784, 880, 1047, 1319, 1568];
+      melody.forEach((note, i) => {
+        setTimeout(() => playTone(note, 0.3, 'square', 0.3), i * 120);
+      });
+    }
+
+    // ============================================
+    // PIXEL ART RENDERING
+    // ============================================
+    function drawSprite(ctx, spriteName, fruitColor, scale = 3, offsetX = 2, offsetY = 2) {
+      const sprite = SPRITES[spriteName];
+      if (!sprite) return;
+
+      const colors = { ...COLORS };
+      if (fruitColor) {
+        colors['F'] = fruitColor;
+      }
+
+      sprite.forEach((row, y) => {
+        row.split('').forEach((char, x) => {
+          const color = colors[char];
+          if (color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(
+              (x + offsetX) * scale,
+              (y + offsetY) * scale,
+              scale,
+              scale
+            );
+          }
+        });
+      });
+    }
+
+    function drawPlot(canvas, plot, isLocked) {
+      const ctx = canvas.getContext('2d');
+      const width = 81;
+      const height = 63;
+      canvas.width = width;
+      canvas.height = height;
+      ctx.clearRect(0, 0, width, height);
+
+      if (isLocked) {
+        ctx.fillStyle = '#E0E0E0';
+        ctx.fillRect(0, 0, width, height);
+        drawSprite(ctx, 'locked', null, 3, 5, 4);
+        return;
+      }
+
+      if (!plot || !plot.plant) {
+        // Empty plot
+        ctx.fillStyle = '#E8F5E9';
+        ctx.fillRect(0, 0, width, height);
+        drawSprite(ctx, 'empty', null, 3, 5, 4);
+        return;
+      }
+
+      const plant = PLANTS[plot.plant];
+      ctx.fillStyle = '#E8F5E9';
+      ctx.fillRect(0, 0, width, height);
+
+      // Determine sprite based on growth stage
+      let spriteName;
+      const maxStage = plant.stages;
+      const isFullyWatered = plot.waterCount >= plant.watersNeeded;
+
+      switch (plot.stage) {
+        case 1:
+          spriteName = 'seed';
+          break;
+        case 2:
+          spriteName = 'sprout';
+          break;
+        case 3:
+          // Stage 3: ready (if 3-stage plant and fully watered) or growing
+          spriteName = (maxStage === 3 && isFullyWatered) ? 'ready' : 'growing';
+          break;
+        case 4:
+          spriteName = 'ready';
+          break;
+        default:
+          spriteName = 'empty';
+      }
+
+      drawSprite(ctx, spriteName, plant.fruitColor, 3, 5, 4);
+    }
+
+    // ============================================
+    // GAME LOGIC
+    // ============================================
+    function getCurrentLevel() {
+      return LEVELS.find(l => l.level === state.level) || LEVELS[0];
+    }
+
+    function getXpForNextLevel() {
+      const nextLevel = LEVELS.find(l => l.level === state.level + 1);
+      return nextLevel ? nextLevel.xpNeeded : Infinity;
+    }
+
+    function getMaxPlots() {
+      return getCurrentLevel().plots;
+    }
+
+    function updateMaxWater() {
+      const currentLevel = getCurrentLevel();
+      state.maxWater = BASE_WATER + currentLevel.waterBonus;
+    }
+
+    function initGarden() {
+      const maxPlots = getMaxPlots();
+      state.plots = [];
+      for (let i = 0; i < maxPlots; i++) {
+        state.plots.push(null);
+      }
+      // Add locked plots up to 12 (max)
+      while (state.plots.length < 12) {
+        state.plots.push('locked');
+      }
+    }
+
+    function expandGarden() {
+      const maxPlots = getMaxPlots();
+      // Unlock plots up to maxPlots
+      for (let i = 0; i < maxPlots && i < state.plots.length; i++) {
+        if (state.plots[i] === 'locked') {
+          state.plots[i] = null;
+        }
+      }
+    }
+
+    function findEmptyPlot() {
+      return state.plots.findIndex(p => p === null);
+    }
+
+    function completeTask() {
+      // Variable ratio reinforcement: random coins and water (more generous for faster pacing)
+      const coinAmounts = [5, 10, 10, 15, 15, 20, 20];
+      const waterAmounts = [2, 3, 3, 4, 4, 5, 5];
+      const coins = coinAmounts[Math.floor(Math.random() * coinAmounts.length)];
+      const water = waterAmounts[Math.floor(Math.random() * waterAmounts.length)];
+
+      state.totalTasks++;
+      state.coins += coins;
+
+      // Add water, capped at maxWater
+      const oldWater = state.water;
+      state.water = Math.min(state.water + water, state.maxWater);
+      const waterGained = state.water - oldWater;
+
+      playTaskSound();
+
+      // Show floating text
+      showFloatText(`+${coins} 🪙 +${waterGained} 💧`, '#2E7D32');
+
+      if (waterGained === 0) {
+        showStatus(`Task done! +${coins} coins. Water full!`, 'success');
+      } else {
+        showStatus(`Task done! +${coins} coins, +${waterGained} water!`, 'success');
+      }
+
+      // Pulse the teacher button when out of water
+      updateTeacherButton();
+      render();
+      saveGame();
+    }
+
+    function updateTeacherButton() {
+      const btn = document.getElementById('teacher-btn');
+      const hasThirstyPlants = state.plots.some(p =>
+        p && typeof p === 'object' && p.waterCount < PLANTS[p.plant].watersNeeded
+      );
+
+      if (state.water === 0 && hasThirstyPlants) {
+        btn.classList.add('pulse');
+        btn.textContent = '+ TASK 💧';
+      } else if (state.water < state.maxWater) {
+        btn.classList.remove('pulse');
+        btn.textContent = '+ TASK';
+      } else {
+        btn.classList.remove('pulse');
+        btn.textContent = '+ TASK';
+      }
+    }
+
+    function showFloatText(text, color) {
+      const el = document.createElement('div');
+      el.className = 'float-text';
+      el.textContent = text;
+      el.style.color = color;
+      el.style.top = '80px';
+      el.style.left = '50%';
+      el.style.transform = 'translateX(-50%)';
+      document.getElementById('game-container').appendChild(el);
+      setTimeout(() => el.remove(), 1000);
+    }
+
+    function buyAndPlant(plantKey) {
+      const plant = PLANTS[plantKey];
+
+      if (state.coins < plant.cost) {
+        playErrorSound();
+        showStatus(`Not enough coins! Need ${plant.cost}`, 'error');
+        return;
+      }
+
+      const emptyIndex = findEmptyPlot();
+      if (emptyIndex === -1) {
+        playErrorSound();
+        showStatus('Garden is full! Harvest plants first.', 'error');
+        return;
+      }
+
+      state.coins -= plant.cost;
+      state.plots[emptyIndex] = {
+        plant: plantKey,
+        stage: 1,
+        waterCount: 0
+      };
+
+      playCoinSound();
+      showStatus(`Planted ${plant.name}! Water it to grow!`, 'info');
+      updateTeacherButton();
+      render();
+      saveGame();
+    }
+
+    function waterPlot(index) {
+      const plot = state.plots[index];
+      if (!plot || plot === 'locked' || typeof plot !== 'object') return;
+
+      const plant = PLANTS[plot.plant];
+      const maxStage = plant.stages;
+
+      // Check if plant is ready to harvest
+      if (plot.waterCount >= plant.watersNeeded) {
+        harvestPlot(index);
+        return;
+      }
+
+      // Check if we have water
+      if (state.water <= 0) {
+        playErrorSound();
+        showStatus('No water! Complete a task! 💧', 'error');
+        document.getElementById('teacher-btn').classList.add('pulse');
+        return;
+      }
+
+      // Water the plant
+      state.water--;
+      plot.waterCount++;
+      plot.stage = Math.min(1 + plot.waterCount, maxStage);
+
+      playWaterSound();
+
+      // Water pour animation
+      const plotEl = document.querySelector(`[data-plot-index="${index}"]`);
+      if (plotEl) {
+        const pour = document.createElement('div');
+        pour.className = 'water-pour';
+        pour.textContent = '🚿';
+        plotEl.appendChild(pour);
+        setTimeout(() => pour.remove(), 800);
+
+        // Splash effect
+        setTimeout(() => {
+          const splash = document.createElement('div');
+          splash.className = 'water-splash';
+          splash.textContent = '💧';
+          splash.style.top = '40px';
+          splash.style.left = '50%';
+          splash.style.transform = 'translateX(-50%)';
+          plotEl.appendChild(splash);
+          setTimeout(() => splash.remove(), 500);
+        }, 300);
+      }
+
+      if (plot.waterCount >= plant.watersNeeded) {
+        showStatus(`${plant.name} is ready! Click to harvest!`, 'success');
+      } else {
+        showStatus(`Watered! ${plot.waterCount}/${plant.watersNeeded}`, 'water');
+      }
+
+      updateTeacherButton();
+      render();
+      saveGame();
+    }
+
+    function harvestPlot(index) {
+      const plot = state.plots[index];
+      if (!plot || plot === 'locked' || typeof plot !== 'object') return;
+
+      const plant = PLANTS[plot.plant];
+
+      // Check if ready (water count must meet requirement)
+      if (plot.waterCount < plant.watersNeeded) {
+        // Not ready, try to water instead
+        waterPlot(index);
+        return;
+      }
+
+      // Harvest!
+      state.coins += plant.sell;
+      state.xp += plant.xp;
+      state.totalPlantsGrown++;
+      state.plots[index] = null;
+
+      playHarvestSound();
+
+      // Coin fly animation
+      const plotEl = document.querySelector(`[data-plot-index="${index}"]`);
+      if (plotEl) {
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const coin = document.createElement('div');
+            coin.className = 'coin-fly';
+            coin.textContent = '🪙';
+            coin.style.left = '50%';
+            coin.style.top = '50%';
+            plotEl.appendChild(coin);
+            setTimeout(() => coin.remove(), 800);
+          }, i * 100);
+        }
+      }
+
+      showFloatText(`+${plant.sell} 🪙`, '#B8860B');
+      showStatus(`Harvested ${plant.name}! +${plant.sell} coins, +${plant.xp} XP`, 'success');
+
+      // Check level up
+      checkLevelUp();
+      checkWin();
+      updateTeacherButton();
+      render();
+      saveGame();
+    }
+
+    function checkLevelUp() {
+      const nextLevel = LEVELS.find(l => l.level === state.level + 1);
+      if (nextLevel && state.xp >= nextLevel.xpNeeded) {
+        const oldMaxWater = state.maxWater;
+        state.level = nextLevel.level;
+        updateMaxWater();
+        const waterBonus = state.maxWater - oldMaxWater;
+        state.water = Math.min(state.water + waterBonus, state.maxWater);
+        expandGarden();
+        playLevelUpSound();
+
+        // Level up animation
+        const levelUpText = document.createElement('div');
+        levelUpText.className = 'level-up-text';
+        levelUpText.textContent = `LEVEL ${state.level}!`;
+        document.body.appendChild(levelUpText);
+        setTimeout(() => levelUpText.remove(), 1500);
+
+        let msg = `LEVEL UP! Garden expanded to ${getMaxPlots()} plots!`;
+        if (waterBonus > 0) {
+          msg += ` +${waterBonus} max water!`;
+        }
+        showStatus(msg, 'success');
+      }
+    }
+
+    function checkWin() {
+      if (state.coins >= GOAL_COINS && !state.won) {
+        state.won = true;
+        playWinSound();
+        setTimeout(() => showWinScreen(), 500);
+      }
+    }
+
+    function showWinScreen() {
+      createConfetti();
+      const overlay = document.getElementById('win-overlay');
+      const stats = document.getElementById('win-stats');
+      stats.innerHTML = `
+        Coins: ${state.coins} 🪙<br>
+        Level: ${state.level}<br>
+        Tasks: ${state.totalTasks}<br>
+        Plants: ${state.totalPlantsGrown} 🌱
+      `;
+      overlay.classList.add('show');
+      document.getElementById('goal-trophy').classList.add('show');
+    }
+
+    function createConfetti() {
+      const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+      for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * 100 + '%';
+          confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.animationDelay = Math.random() * 0.5 + 's';
+          confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+          document.body.appendChild(confetti);
+          setTimeout(() => confetti.remove(), 4000);
+        }, i * 30);
+      }
+    }
+
+    function showStatus(message, type = 'info') {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = message;
+      statusEl.className = type;
+    }
+
+    // ============================================
+    // RENDERING
+    // ============================================
+    function render() {
+      renderHeader();
+      renderWateringSection();
+      renderShop();
+      renderGarden();
+      renderGoal();
+      updateTeacherButton();
+    }
+
+    function renderHeader() {
+      document.getElementById('coin-display').textContent = state.coins;
+      document.getElementById('level-display').textContent = state.level;
+
+      // Render water drops
+      const waterDropsEl = document.getElementById('water-drops');
+      waterDropsEl.innerHTML = '';
+      for (let i = 0; i < state.maxWater; i++) {
+        const drop = document.createElement('span');
+        drop.className = 'water-drop' + (i < state.water ? '' : ' empty');
+        waterDropsEl.appendChild(drop);
+      }
+
+      const xpForNext = getXpForNextLevel();
+      const currentLevel = getCurrentLevel();
+      const xpInCurrentLevel = state.xp - currentLevel.xpNeeded;
+      const xpNeeded = xpForNext - currentLevel.xpNeeded;
+      const xpPercent = Math.min((xpInCurrentLevel / xpNeeded) * 100, 100);
+
+      document.getElementById('xp-fill').style.width = xpPercent + '%';
+      document.getElementById('xp-text').textContent = `${xpInCurrentLevel}/${xpNeeded}`;
+    }
+
+    function renderWateringSection() {
+      const section = document.getElementById('watering-section');
+      const shop = document.getElementById('shop');
+
+      // Show watering section when we have water and there are plants that need water
+      const hasThirstyPlants = state.plots.some(p =>
+        p && typeof p === 'object' && p.waterCount < PLANTS[p.plant].watersNeeded
+      );
+
+      if (state.water > 0 && hasThirstyPlants) {
+        section.classList.add('active');
+        section.classList.remove('hidden');
+        shop.style.display = 'none';
+
+        // Update watering can visual
+        const waterPercent = (state.water / state.maxWater) * 100;
+        document.getElementById('water-count-big').textContent = `${state.water} / ${state.maxWater}`;
+        document.getElementById('can-water-level').style.height = (20 * state.water / state.maxWater) + 'px';
+      } else {
+        section.classList.remove('active');
+        section.classList.add('hidden');
+        shop.style.display = 'block';
+      }
+    }
+
+    function renderShop() {
+      const shopGrid = document.getElementById('shop-grid');
+      shopGrid.innerHTML = '';
+
+      Object.entries(PLANTS).forEach(([key, plant]) => {
+        const card = document.createElement('div');
+        card.className = `seed-card ${plant.rarity}`;
+        if (state.coins < plant.cost) {
+          card.classList.add('disabled');
+        }
+        card.innerHTML = `
+          <span class="rarity-tag ${plant.rarity}">${plant.rarity[0].toUpperCase()}</span>
+          <span class="seed-emoji">${plant.emoji}</span>
+          <div class="seed-name">${plant.name}</div>
+          <div class="seed-price"><span class="mini-coin"></span>${plant.cost}</div>
+        `;
+        card.addEventListener('click', () => {
+          initAudio();
+          buyAndPlant(key);
+        });
+        shopGrid.appendChild(card);
+      });
+    }
+
+    function renderGarden() {
+      const gardenGrid = document.getElementById('garden-grid');
+      gardenGrid.innerHTML = '';
+
+      const maxPlots = getMaxPlots();
+      let usedPlots = 0;
+      let thirstyPlots = 0;
+
+      state.plots.forEach((plot, index) => {
+        const plotEl = document.createElement('div');
+        plotEl.className = 'plot';
+        plotEl.setAttribute('data-plot-index', index);
+
+        const isLocked = plot === 'locked';
+        const plotInner = document.createElement('div');
+        plotInner.className = 'plot-inner';
+
+        if (isLocked) {
+          plotEl.classList.add('locked');
+          plotInner.innerHTML = '<span class="lock-icon">🔒</span>';
+        } else {
+          if (plot && typeof plot === 'object') {
+            usedPlots++;
+            const plant = PLANTS[plot.plant];
+            plotInner.classList.add(plant.rarity);
+
+            // Check if ready to harvest
+            const isReady = plot.waterCount >= plant.watersNeeded;
+            if (isReady) {
+              plotEl.classList.add('ready');
+            }
+
+            // Check if thirsty (needs water)
+            const isThirsty = plot.waterCount < plant.watersNeeded;
+            if (isThirsty) {
+              thirstyPlots++;
+            }
+
+            // Canvas for plant
+            const canvas = document.createElement('canvas');
+            drawPlot(canvas, plot, false);
+            plotInner.appendChild(canvas);
+
+            // Plant info
+            const info = document.createElement('div');
+            info.className = 'plot-info';
+            info.innerHTML = `
+              <span class="plot-emoji">${plant.emoji}</span>
+              <span class="plot-name">${plant.name}</span>
+              <div class="plot-status">
+                ${Array.from({length: plant.watersNeeded}, (_, i) =>
+                  `<span class="growth-dot ${i < plot.waterCount ? (isReady ? 'ready' : 'filled') : ''}"></span>`
+                ).join('')}
+              </div>
+            `;
+            plotInner.appendChild(info);
+
+            // Thirsty indicator
+            if (isThirsty) {
+              const thirsty = document.createElement('span');
+              thirsty.className = 'thirsty-icon';
+              thirsty.textContent = '💧';
+              plotInner.appendChild(thirsty);
+            }
+          } else {
+            // Empty plot
+            const canvas = document.createElement('canvas');
+            drawPlot(canvas, null, false);
+            plotInner.appendChild(canvas);
+
+            const info = document.createElement('div');
+            info.className = 'plot-info';
+            info.innerHTML = '<span class="plot-name">EMPTY</span>';
+            plotInner.appendChild(info);
+          }
+        }
+
+        plotEl.appendChild(plotInner);
+
+        plotEl.addEventListener('click', () => {
+          initAudio();
+          if (isLocked) {
+            playErrorSound();
+            const unlockLevel = LEVELS.find(l => l.plots > index);
+            showStatus(`Reach Level ${unlockLevel ? unlockLevel.level : '?'} to unlock!`, 'error');
+            return;
+          }
+          if (!plot || typeof plot !== 'object') {
+            showStatus('Buy a seed from the SHOP first!', 'info');
+            return;
+          }
+          // Try to water or harvest
+          const plant = PLANTS[plot.plant];
+          if (plot.waterCount >= plant.watersNeeded) {
+            harvestPlot(index);
+          } else {
+            waterPlot(index);
+          }
+        });
+
+        gardenGrid.appendChild(plotEl);
+      });
+
+      let infoText = `${usedPlots}/${maxPlots} PLOTS`;
+      if (thirstyPlots > 0) {
+        infoText += ` • ${thirstyPlots} THIRSTY`;
+      }
+      document.getElementById('plots-info').textContent = infoText;
+    }
+
+    function renderGoal() {
+      const percent = Math.min((state.coins / GOAL_COINS) * 100, 100);
+      document.getElementById('goal-fill').style.width = percent + '%';
+      document.getElementById('goal-text').textContent = `${state.coins}/${GOAL_COINS}`;
+    }
+
+    // ============================================
+    // SAVE / LOAD
+    // ============================================
+    function saveGame() {
+      localStorage.setItem('gardenSimulatorV3', JSON.stringify(state));
+    }
+
+    function loadGame() {
+      const saved = localStorage.getItem('gardenSimulatorV3');
+      if (saved) {
+        const loaded = JSON.parse(saved);
+        Object.assign(state, loaded);
+        updateMaxWater();
+        expandGarden();
+        return true;
+      }
+      return false;
+    }
+
+    function resetGame() {
+      localStorage.removeItem('gardenSimulatorV3');
+      state.coins = 10;
+      state.xp = 0;
+      state.level = 1;
+      state.water = 2; // Start with some water
+      state.maxWater = BASE_WATER;
+      state.won = false;
+      state.totalTasks = 0;
+      state.totalPlantsGrown = 0;
+      initGarden();
+      document.getElementById('win-overlay').classList.remove('show');
+      document.getElementById('goal-trophy').classList.remove('show');
+      showStatus('Click a seed in the SHOP to plant it!');
+      render();
+    }
+
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+    document.getElementById('teacher-btn').addEventListener('click', () => {
+      initAudio();
+      completeTask();
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      document.getElementById('reset-overlay').classList.add('show');
+    });
+
+    document.getElementById('confirm-reset').addEventListener('click', () => {
+      initAudio();
+      document.getElementById('reset-overlay').classList.remove('show');
+      resetGame();
+    });
+
+    document.getElementById('cancel-reset').addEventListener('click', () => {
+      document.getElementById('reset-overlay').classList.remove('show');
+    });
+
+    document.getElementById('play-again-btn').addEventListener('click', () => {
+      initAudio();
+      resetGame();
+    });
+
+    // ============================================
+    // INITIALIZE
+    // ============================================
+    function init() {
+      // Clear old save data from previous versions
+      localStorage.removeItem('gardenSimulator');
+      localStorage.removeItem('gardenSimulatorV2');
+
+      const loaded = loadGame();
+      if (!loaded) {
+        initGarden();
+        updateMaxWater();
+      }
+      render();
+    }
+
+    init();
+  </script>
+</body>
+</html>
