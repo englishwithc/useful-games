@@ -41,6 +41,48 @@
             text-align: center;
         }
 
+        .settings {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .setting-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .setting-label {
+            font-weight: bold;
+            margin-right: 4px;
+        }
+
+        .option-btn {
+            cursor: pointer;
+            padding: 6px 12px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 2px solid var(--sand-yellow);
+            background: transparent;
+            color: white;
+            font-family: inherit;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .option-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .option-btn.active {
+            background: var(--sand-yellow);
+            color: #000;
+        }
+
         .mode-toggle {
             cursor: pointer;
             padding: 10px 20px;
@@ -65,7 +107,7 @@
         #status {
             font-size: 1.5rem;
             height: 2rem;
-            margin-bottom: 10px;
+            margin: 10px 0;
             font-weight: bold;
         }
 
@@ -119,6 +161,23 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
+        .card-front.number-marker {
+            font-size: 2.6rem;
+        }
+
+        .card-front.color-marker {
+            flex-direction: row;
+            gap: 8px;
+        }
+
+        .color-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
         .card-back {
             transform: rotateY(180deg);
             background: white;
@@ -139,17 +198,140 @@
             animation: celebrate 0.5s infinite;
         }
 
+        /* Intro screen */
+        .intro-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 30, 60, 0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .intro-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid var(--sand-yellow);
+            border-radius: 15px;
+            padding: 20px 30px;
+            max-width: 480px;
+            text-align: center;
+        }
+
+        .intro-box h2 {
+            color: var(--sand-yellow);
+            margin-top: 0;
+            font-size: 2.2rem;
+            text-shadow: 3px 3px 0px #000;
+        }
+
+        .chest-scene {
+            position: relative;
+            width: 220px;
+            height: 150px;
+            margin: 10px auto;
+        }
+
+        .chest {
+            position: absolute;
+            left: 10px;
+            top: 30px;
+            width: 200px;
+            height: 120px;
+        }
+
+        .intro-card {
+            position: absolute;
+            left: 65px;
+            top: 0;
+            width: 90px;
+            height: 120px;
+            background: var(--card-back);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px);
+            border: 4px solid #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            transform: rotate(-4deg);
+        }
+
+        .intro-text {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        .intro-steps {
+            text-align: left;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin: 15px 0 20px 0;
+        }
+
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
+    <div id="intro" class="intro-overlay">
+        <div class="intro-box">
+            <h2>Ahoy, Matey! 🏴‍☠️</h2>
+
+            <div class="chest-scene">
+                <svg class="chest" viewBox="0 0 200 120" aria-hidden="true">
+                    <rect x="20" y="50" width="160" height="66" rx="6" fill="#8b4513" stroke="#4a2600" stroke-width="4"/>
+                    <path d="M20 50 Q20 12 100 12 Q180 12 180 50 Z" fill="#a0522d" stroke="#4a2600" stroke-width="4"/>
+                    <rect x="20" y="46" width="160" height="10" fill="#ffd700" stroke="#4a2600" stroke-width="3"/>
+                    <rect x="20" y="82" width="160" height="6" fill="#ffd700" stroke="#4a2600" stroke-width="3"/>
+                    <rect x="86" y="52" width="28" height="26" rx="4" fill="#ffd700" stroke="#4a2600" stroke-width="3"/>
+                    <circle cx="100" cy="63" r="4" fill="#4a2600"/>
+                </svg>
+                <div class="intro-card">?</div>
+            </div>
+
+            <p class="intro-text">The treasure is hiding behind one of the cards!</p>
+
+            <ol class="intro-steps">
+                <li>👀 Look at the marker on a card and call it out.</li>
+                <li>👆 Tap the card to flip it over.</li>
+                <li>💰 Find the gold and you win!</li>
+                <li>💨 Empty? Keep looking, matey!</li>
+                <li>🏴‍☠️ Pirate? Oh no! The cards come back and the treasure moves!</li>
+            </ol>
+
+            <button id="startBtn" class="mode-toggle">Start Game ⚓</button>
+        </div>
+    </div>
+
     <h1>🏴‍☠️ Pirate's Plunder 🏴‍☠️</h1>
 
     <div class="game-controls">
+        <div class="settings">
+            <div class="setting-row">
+                <span class="setting-label">Card Markers:</span>
+                <button class="option-btn active" data-style="letters">Letters</button>
+                <button class="option-btn" data-style="colors">Colors</button>
+                <button class="option-btn" data-style="numbers">Numbers</button>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">Board Size:</span>
+                <button class="option-btn active" data-rows="5">25 Cards</button>
+                <button class="option-btn" data-rows="4">20 Cards</button>
+                <button class="option-btn" data-rows="3">15 Cards</button>
+            </div>
+        </div>
+
         <button id="modeBtn" class="mode-toggle">Mode: Classic</button>
         <div id="status">Find the Treasure!</div>
         <button id="resetBtn" class="mode-toggle" style="background: #fff;">Restart Game</button>
+        <button id="howToBtn" class="option-btn" style="margin-left: 10px;">How to Play 📜</button>
     </div>
 
     <div class="game-board" id="board"></div>
@@ -159,37 +341,67 @@
         const statusElement = document.getElementById('status');
         const modeBtn = document.getElementById('modeBtn');
         const resetBtn = document.getElementById('resetBtn');
+        const howToBtn = document.getElementById('howToBtn');
+        const startBtn = document.getElementById('startBtn');
+        const introElement = document.getElementById('intro');
+
+        const COLS = 5;
+        const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+        const COLORS = [
+            { name: 'Red', hex: '#e74c3c' },
+            { name: 'Blue', hex: '#2e86de' },
+            { name: 'Green', hex: '#27ae60' },
+            { name: 'Yellow', hex: '#f1c40f' },
+            { name: 'Orange', hex: '#e67e22' }
+        ];
 
         let isCursedMode = false;
+        let markerStyle = 'letters';
+        let rowCount = 5;
         let treasureIndex = -1;
         let pirates = [];
         let cards = [];
         let gameActive = true;
 
+        function getMarkerHTML(i, row, col) {
+            if (markerStyle === 'colors') {
+                return `<span class="color-dot" style="background:${COLORS[row].hex}" title="${COLORS[row].name}"></span>` +
+                       `<span class="color-dot" style="background:${COLORS[col].hex}" title="${COLORS[col].name}"></span>`;
+            }
+            if (markerStyle === 'numbers') {
+                return `${i + 1}`;
+            }
+            return `${LETTERS[row]}${LETTERS[col]}`;
+        }
+
         function initGame() {
             gameActive = true;
             boardElement.innerHTML = '';
+            boardElement.classList.remove('winner-anim');
             statusElement.innerText = "Find the Treasure!";
             statusElement.style.color = "white";
             cards = [];
-            
-            const letters = ['A', 'B', 'C', 'D', 'E'];
-            
-            for (let i = 0; i < 25; i++) {
-                // Calculate Coordinate (e.g., 0 = AA, 1 = AB, 5 = BA)
-                const row = letters[Math.floor(i / 5)];
-                const col = letters[i % 5];
-                const coord = row + col;
+
+            const totalCards = COLS * rowCount;
+
+            for (let i = 0; i < totalCards; i++) {
+                // Coordinates: row and column, e.g. 0 = AA, 1 = AB, 5 = BA
+                const row = Math.floor(i / COLS);
+                const col = i % COLS;
+
+                const frontClasses = ['card-face', 'card-front'];
+                if (markerStyle === 'numbers') frontClasses.push('number-marker');
+                if (markerStyle === 'colors') frontClasses.push('color-marker');
 
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.dataset.index = i;
-                
+
                 card.innerHTML = `
-                    <div class="card-face card-front">${coord}</div>
+                    <div class="${frontClasses.join(' ')}">${getMarkerHTML(i, row, col)}</div>
                     <div class="card-face card-back"></div>
                 `;
-                
+
                 card.addEventListener('click', () => handleCardClick(i));
                 boardElement.appendChild(card);
                 cards.push({ element: card, type: 'empty', isVisible: true });
@@ -200,14 +412,14 @@
 
         function setupPositions() {
             cards.forEach(c => c.type = 'empty');
-            
-            treasureIndex = Math.floor(Math.random() * 25);
+
+            treasureIndex = Math.floor(Math.random() * cards.length);
             cards[treasureIndex].type = 'treasure';
 
             pirates = [];
             const pirateCount = isCursedMode ? 3 : 1;
             while (pirates.length < pirateCount) {
-                let pIdx = Math.floor(Math.random() * 25);
+                let pIdx = Math.floor(Math.random() * cards.length);
                 if (pIdx !== treasureIndex && !pirates.includes(pIdx)) {
                     pirates.push(pIdx);
                     cards[pIdx].type = 'pirate';
@@ -247,13 +459,13 @@
         function triggerPirateEvent() {
             statusElement.innerText = "OH NO! A PIRATE! Cards returned & Treasure moved!";
             statusElement.style.color = "var(--pirate-red)";
-            
-            gameActive = false; 
+
+            gameActive = false;
 
             setTimeout(() => {
                 const fadedCards = cards.filter(c => c.element.classList.contains('faded'));
                 const restoreCount = Math.min(5, fadedCards.length);
-                
+
                 for (let i = 0; i < restoreCount; i++) {
                     const randomFaded = fadedCards[Math.floor(Math.random() * fadedCards.length)];
                     randomFaded.element.classList.remove('flipped', 'faded');
@@ -265,8 +477,8 @@
                     .filter(i => i !== -1);
 
                 const newTreasureIdx = visibleIndices[Math.floor(Math.random() * visibleIndices.length)];
-                
-                cards.forEach(c => { if(c.type === 'treasure') c.type = 'empty'; });
+
+                cards.forEach(c => { if (c.type === 'treasure') c.type = 'empty'; });
                 cards[newTreasureIdx].type = 'treasure';
 
                 statusElement.innerText = "Keep hunting, matey!";
@@ -282,6 +494,28 @@
             boardElement.classList.add('winner-anim');
         }
 
+        function setActiveButton(selector, activeBtn) {
+            document.querySelectorAll(selector).forEach(b => {
+                b.classList.toggle('active', b === activeBtn);
+            });
+        }
+
+        document.querySelectorAll('[data-style]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                markerStyle = btn.dataset.style;
+                setActiveButton('[data-style]', btn);
+                initGame();
+            });
+        });
+
+        document.querySelectorAll('[data-rows]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                rowCount = parseInt(btn.dataset.rows, 10);
+                setActiveButton('[data-rows]', btn);
+                initGame();
+            });
+        });
+
         modeBtn.addEventListener('click', () => {
             isCursedMode = !isCursedMode;
             modeBtn.innerText = isCursedMode ? "Mode: CURSED 💀" : "Mode: Classic";
@@ -290,8 +524,15 @@
         });
 
         resetBtn.addEventListener('click', () => {
-            boardElement.classList.remove('winner-anim');
             initGame();
+        });
+
+        howToBtn.addEventListener('click', () => {
+            introElement.classList.remove('hidden');
+        });
+
+        startBtn.addEventListener('click', () => {
+            introElement.classList.add('hidden');
         });
 
         initGame();
