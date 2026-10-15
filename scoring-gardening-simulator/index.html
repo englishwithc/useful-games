@@ -1008,7 +1008,7 @@
     <!-- Goal -->
     <div id="goal" class="section">
       <div class="goal-container">
-        <div class="goal-title">🏆 GOAL: 400 COINS</div>
+      <div class="goal-title" id="goal-title">🏆 GOAL: ??? COINS</div>
         <div class="goal-bar">
           <div class="goal-fill" id="goal-fill" style="width: 2.5%"></div>
           <span class="goal-text" id="goal-text">10/400</span>
@@ -1197,8 +1197,8 @@
         fruitColor: '#FF8C00',
         rarity: 'common',
         cost: 5,
-        sell: 15,
-        watersNeeded: 2,
+      sell: 7,
+        watersNeeded: 3,
         stages: 3,
         xp: 5
       },
@@ -1208,8 +1208,8 @@
         fruitColor: '#8BC34A',
         rarity: 'common',
         cost: 5,
-        sell: 15,
-        watersNeeded: 2,
+      sell: 7,
+        watersNeeded: 3,
         stages: 3,
         xp: 5
       },
@@ -1219,8 +1219,8 @@
         fruitColor: '#F44336',
         rarity: 'uncommon',
         cost: 12,
-        sell: 40,
-        watersNeeded: 2,
+      sell: 17,
+        watersNeeded: 3,
         stages: 3,
         xp: 12
       },
@@ -1230,8 +1230,8 @@
         fruitColor: '#E91E63',
         rarity: 'uncommon',
         cost: 12,
-        sell: 40,
-        watersNeeded: 2,
+      sell: 17,
+        watersNeeded: 3,
         stages: 3,
         xp: 12
       },
@@ -1241,8 +1241,8 @@
         fruitColor: '#FFC107',
         rarity: 'rare',
         cost: 35,
-        sell: 120,
-        watersNeeded: 3,
+      sell: 48,
+        watersNeeded: 4,
         stages: 4,
         xp: 35
       },
@@ -1252,8 +1252,8 @@
         fruitColor: '#FF9800',
         rarity: 'rare',
         cost: 35,
-        sell: 120,
-        watersNeeded: 3,
+      sell: 48,
+        watersNeeded: 4,
         stages: 4,
         xp: 35
       },
@@ -1263,8 +1263,8 @@
         fruitColor: '#FFD700',
         rarity: 'epic',
         cost: 100,
-        sell: 350,
-        watersNeeded: 3,
+      sell: 120,
+        watersNeeded: 4,
         stages: 4,
         xp: 100
       }
@@ -1280,7 +1280,7 @@
       { level: 4, plots: 12, xpNeeded: 180, waterBonus: 3 },
     ];
 
-    const GOAL_COINS = 400;
+    const GOAL_COINS = 1000;
     const BASE_WATER = 4; // Starting water capacity
 
     // ============================================
@@ -1296,6 +1296,7 @@
       won: false,
       totalTasks: 0,
       totalPlantsGrown: 0,
+      taskRound: 0,
     };
 
     // ============================================
@@ -1471,12 +1472,8 @@
     function initGarden() {
       const maxPlots = getMaxPlots();
       state.plots = [];
-      for (let i = 0; i < maxPlots; i++) {
-        state.plots.push(null);
-      }
-      // Add locked plots up to 12 (max)
-      while (state.plots.length < 12) {
-        state.plots.push('locked');
+    for (let i = 0; i < 12; i++) {
+      state.plots.push(i < maxPlots ? null : 'locked');
       }
     }
 
@@ -1497,11 +1494,12 @@
     function completeTask() {
       // Variable ratio reinforcement: random coins and water (more generous for faster pacing)
       const coinAmounts = [5, 10, 10, 15, 15, 20, 20];
-      const waterAmounts = [2, 3, 3, 4, 4, 5, 5];
+    const waterAmounts = [0, 1, 1, 1, 2];
       const coins = coinAmounts[Math.floor(Math.random() * coinAmounts.length)];
       const water = waterAmounts[Math.floor(Math.random() * waterAmounts.length)];
 
       state.totalTasks++;
+      state.taskRound++;
       state.coins += coins;
 
       // Add water, capped at maxWater
@@ -1522,15 +1520,14 @@
 
       // Pulse the teacher button when out of water
       updateTeacherButton();
+    checkWin();
       render();
       saveGame();
     }
 
     function updateTeacherButton() {
       const btn = document.getElementById('teacher-btn');
-      const hasThirstyPlants = state.plots.some(p =>
-        p && typeof p === 'object' && p.waterCount < PLANTS[p.plant].watersNeeded
-      );
+    const hasThirstyPlants = state.plots.some(canWaterPlot);
 
       if (state.water === 0 && hasThirstyPlants) {
         btn.classList.add('pulse');
@@ -1576,7 +1573,8 @@
       state.plots[emptyIndex] = {
         plant: plantKey,
         stage: 1,
-        waterCount: 0
+        waterCount: 0,
+      lastWaterTaskRound: null
       };
 
       playCoinSound();
@@ -1591,14 +1589,18 @@
       if (!plot || plot === 'locked' || typeof plot !== 'object') return;
 
       const plant = PLANTS[plot.plant];
-      const maxStage = plant.stages;
 
-      // Check if plant is ready to harvest
       if (plot.waterCount >= plant.watersNeeded) {
         harvestPlot(index);
         return;
       }
 
+    // Only one watering per plant per task round
+    if (plot.lastWaterTaskRound === state.taskRound) {
+      playErrorSound();
+      showStatus('Already watered! Complete a new task first!', 'info');
+      return;
+    }
       // Check if we have water
       if (state.water <= 0) {
         playErrorSound();
@@ -1610,7 +1612,8 @@
       // Water the plant
       state.water--;
       plot.waterCount++;
-      plot.stage = Math.min(1 + plot.waterCount, maxStage);
+    plot.stage = Math.min(1 + plot.waterCount, plant.stages);
+    plot.lastWaterTaskRound = state.taskRound;
 
       playWaterSound();
 
@@ -1768,6 +1771,12 @@
     // ============================================
     // RENDERING
     // ============================================
+   function canWaterPlot(plot) {
+     return plot && typeof plot === 'object' &&
+       plot.waterCount < PLANTS[plot.plant].watersNeeded &&
+       plot.lastWaterTaskRound !== state.taskRound;
+   }
+
     function render() {
       renderHeader();
       renderWateringSection();
@@ -1805,9 +1814,7 @@
       const shop = document.getElementById('shop');
 
       // Show watering section when we have water and there are plants that need water
-      const hasThirstyPlants = state.plots.some(p =>
-        p && typeof p === 'object' && p.waterCount < PLANTS[p.plant].watersNeeded
-      );
+    const hasThirstyPlants = state.plots.some(canWaterPlot);
 
       if (state.water > 0 && hasThirstyPlants) {
         section.classList.add('active');
@@ -1963,17 +1970,19 @@
       const percent = Math.min((state.coins / GOAL_COINS) * 100, 100);
       document.getElementById('goal-fill').style.width = percent + '%';
       document.getElementById('goal-text').textContent = `${state.coins}/${GOAL_COINS}`;
+     document.getElementById('goal-title').textContent =
+       `🏆 GOAL: ${GOAL_COINS} COINS`;
     }
 
     // ============================================
     // SAVE / LOAD
     // ============================================
     function saveGame() {
-      localStorage.setItem('gardenSimulatorV3', JSON.stringify(state));
+    localStorage.setItem('gardenSimulatorV4', JSON.stringify(state));
     }
 
     function loadGame() {
-      const saved = localStorage.getItem('gardenSimulatorV3');
+    const saved = localStorage.getItem('gardenSimulatorV4');
       if (saved) {
         const loaded = JSON.parse(saved);
         Object.assign(state, loaded);
@@ -1985,13 +1994,14 @@
     }
 
     function resetGame() {
-      localStorage.removeItem('gardenSimulatorV3');
+    localStorage.removeItem('gardenSimulatorV4');
       state.coins = 10;
       state.xp = 0;
       state.level = 1;
       state.water = 2; // Start with some water
       state.maxWater = BASE_WATER;
       state.won = false;
+      state.taskRound = 0;
       state.totalTasks = 0;
       state.totalPlantsGrown = 0;
       initGarden();
