@@ -41,6 +41,8 @@
             display: flex;
             gap: 20px;
             align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .btn {
@@ -49,7 +51,7 @@
             border-radius: 50px;
             font-size: 1.2rem;
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: transform 0.1s, background-color 0.2s;
             font-family: 'Fredoka One', cursive;
         }
 
@@ -57,6 +59,26 @@
         .btn-upload { background-color: var(--secondary-color); color: white; }
         .btn-dice { background-color: var(--primary-color); color: white; }
         .btn-clear { background-color: #aaa; color: white; font-size: 0.9rem; padding: 8px 16px; }
+        .btn-brush { background-color: #bbb; color: white; font-size: 1rem; padding: 10px 18px; }
+        .btn-brush.on { background-color: #6BCB77; }
+
+        .brush-banner {
+            display: none;
+            background: #FFD93D;
+            color: #5a4300;
+            border: 4px solid #F9731B;
+            border-radius: 16px;
+            padding: 10px 18px;
+            margin-bottom: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.05rem;
+            text-align: center;
+            box-shadow: 0 6px 0 #F9731B;
+            max-width: 90vw;
+        }
+
+        .brush-banner.visible { display: block; }
+        .brush-banner strong { font-family: 'Fredoka One', cursive; font-weight: normal; font-size: 1.2rem; }
 
         #game-container {
             position: relative;
@@ -124,6 +146,50 @@
             pointer-events: none;
         }
 
+        .pdf-nav {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-left: 10px;
+        }
+
+        .pdf-nav.visible { display: flex; }
+
+        .pdf-nav .btn { padding: 6px 14px; font-size: 1rem; }
+
+        #page-indicator {
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.85rem;
+            color: #888;
+            white-space: nowrap;
+        }
+
+        .piece-type-selector {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .piece-btn {
+            width: 36px;
+            height: 36px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s, border-color 0.2s;
+        }
+
+        .piece-btn:hover { transform: scale(1.1); }
+        .piece-btn.active { border-color: var(--primary-color); background: #fff3f3; }
+
         #dice-display {
             font-size: 80px;
             width: 120px;
@@ -160,21 +226,34 @@
     <div class="controls">
         <input type="file" id="upload" accept="image/*,application/pdf" style="display:none;">
         <button class="btn btn-upload" onclick="document.getElementById('upload').click()">1. Upload Board (Image or PDF)</button>
+        <div class="pdf-nav" id="pdf-nav">
+            <button class="btn btn-clear" onclick="prevPdfPage()" style="font-size:1rem;padding:8px 14px;">◀</button>
+            <span id="page-indicator">Page 1 / 1</span>
+            <button class="btn btn-clear" onclick="nextPdfPage()" style="font-size:1rem;padding:8px 14px;">▶</button>
+        </div>
+        <button class="btn btn-brush" id="brush-toggle" onclick="toggleBrushMode()">🖌️ Brush: OFF</button>
+        <div class="piece-type-selector" id="piece-type-selector"></div>
         <button class="btn btn-dice" onclick="rollDice()">2. Roll Dice</button>
         <div id="dice-display">?</div>
         <span id="status-msg"></span>
         <button class="btn btn-clear" onclick="clearBoard()">Clear Board</button>
     </div>
 
+    <div class="brush-banner" id="brush-banner">
+        <strong>🖌️ BRUSH MODE IS ON</strong><br>
+        Pick a shape at the top, then <b>click</b> any piece to change it into that shape.<br>
+        Pieces will NOT move while this is on. Press <b>Brush: ON</b> to turn it off and move pieces.
+    </div>
+
     <div id="game-container">
         <canvas id="board-canvas"></canvas>
         <div class="drop-hint" id="drop-hint">
-            <span class="big">📄🖼️</span>
+            <span class="big">📄🗺️</span>
             <span>Drag &amp; drop a board image or PDF here,<br>or use the Upload Board button</span>
         </div>
     </div>
 
-    <div class="instructions">Drop a PDF or image board onto the area above, then click &amp; drag the colored circles!</div>
+    <div class="instructions">Drop a PDF or image board onto the area above. Turn on Brush mode and pick a shape to change pieces. With Brush off, drag pieces to move them.</div>
 
     <script>
         // PDF.js worker (required to render PDFs)
@@ -184,6 +263,7 @@
         const container = document.getElementById('game-container');
         const canvas = document.getElementById('board-canvas');
         const ctx = canvas.getContext('2d');
+        const pdfNav = document.getElementById('pdf-nav');
         const diceDisplay = document.getElementById('dice-display');
         const uploadInput = document.getElementById('upload');
         const dropHint = document.getElementById('drop-hint');
@@ -217,23 +297,40 @@
                 const h = img.height * scale;
                 ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h);
                 dropHint.style.display = 'none';
-                setStatus('Image board loaded ✔');
+                setStatus('Image board loaded ✓');
             };
             img.src = dataUrl;
         }
 
-        // Render the first page of a PDF file onto the canvas
-        async function renderPdf(arrayBuffer) {
-            setStatus('Rendering PDF…');
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const page = await pdf.getPage(1); // first page as the board
+        // Render a specific page of a PDF file onto the canvas
+        let lastPdfBuffer = null;
+        let pdfTotalPages = 1;
+        let currentPdfPage = 1;
+        let pdfDocPromise = null;
+
+        function nextPdfPage() {
+            if (currentPdfPage >= pdfTotalPages || !lastPdfBuffer) return;
+            currentPdfPage++;
+            renderPdfPage(currentPdfPage);
+        }
+
+        function prevPdfPage() {
+            if (currentPdfPage <= 1 || !lastPdfBuffer) return;
+            currentPdfPage--;
+            renderPdfPage(currentPdfPage);
+        }
+
+        async function renderPdfPage(pageNum) {
+            const pdf = await pdfDocPromise;
+            if (!pdf) return;
+            const page = await pdf.getPage(pageNum);
             const { width, height } = fitCanvasToContainer();
 
             const baseViewport = page.getViewport({ scale: 1 });
             const scale = Math.min(width / baseViewport.width, height / baseViewport.height);
             const viewport = page.getViewport({ scale });
 
-            // Temporarily resize the backing canvas for the PDF render
+            // Resize canvas for this page render
             const dpr = window.devicePixelRatio || 1;
             canvas.width = Math.round(viewport.width * dpr);
             canvas.height = Math.round(viewport.height * dpr);
@@ -245,14 +342,38 @@
             canvas.style.left = Math.round((width - viewport.width) / 2) + 'px';
             canvas.style.top = Math.round((height - viewport.height) / 2) + 'px';
 
+            setStatus(`Rendering page ${pageNum} of ${pdf.numPages}…`);
+
             await page.render({
                 canvasContext: ctx,
-                viewport: viewport,
-                transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null
+                viewport: viewport
             }).promise;
 
             dropHint.style.display = 'none';
-            setStatus(`PDF loaded (page 1 of ${pdf.numPages}) ✔ — multi-page PDFs: only page 1 is shown`);
+
+            // Update navigation buttons
+            pdfNav.classList.add('visible');
+            document.getElementById('page-indicator').textContent =
+                `Page ${pageNum} / ${pdf.numPages}`;
+        }
+
+        async function renderPdf(arrayBuffer) {
+            setStatus('Rendering PDF…');
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            lastPdfBuffer = arrayBuffer;
+            pdfTotalPages = pdf.numPages;
+            currentPdfPage = 1;
+            pdfDocPromise = Promise.resolve(pdf);
+
+            // Show PDF navigation if multipage
+            if (pdf.numPages > 1) {
+                pdfNav.classList.add('visible');
+                document.getElementById('page-indicator').textContent = `Page 1 / ${pdf.numPages}`;
+            } else {
+                pdfNav.classList.remove('visible');
+            }
+
+            await renderPdfPage(1);
         }
 
         function resetCanvasSizing() {
@@ -299,7 +420,7 @@
             uploadInput.value = ''; // allow re-uploading the same file
         });
 
-        // Drag & drop onto the game container (and the whole page as fallback)
+        // Drag & drop onto the game container
         ['dragenter', 'dragover'].forEach(evt =>
             container.addEventListener(evt, (e) => {
                 e.preventDefault();
@@ -318,19 +439,21 @@
             handleFile(file);
         });
 
-        // Re-render image board on window resize
+        // Re-render board on window resize
         let lastImageData = null;
         const origRenderImage = renderImage;
+        const origRenderPdf = renderPdf;
         window.addEventListener('resize', () => {
             if (lastImageData) renderImage(lastImageData);
-            else if (lastPdfBuffer) renderPdf(lastPdfBuffer);
+            else if (lastPdfBuffer && pdfDocPromise) {
+                pdfDocPromise.then(() => {
+                    renderPdfPage(currentPdfPage);
+                });
+            }
         });
 
-        let lastPdfBuffer = null;
-        const origRenderPdf = renderPdf;
-
         // Wrap renderers to remember the source for resize handling
-        renderImage = function(dataUrl) { lastImageData = dataUrl; lastPdfBuffer = null; origRenderImage(dataUrl); };
+        renderImage = function(dataUrl) { lastImageData = dataUrl; lastPdfBuffer = null; pdfDocPromise = null; origRenderImage(dataUrl); };
         renderPdf = async function(buf) { lastPdfBuffer = buf; lastImageData = null; return origRenderPdf(buf); };
 
         // ---------- Simple persistence (survives reloads on the same device) ----------
@@ -352,7 +475,7 @@
                 const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
                 if (saved && saved.kind === 'image' && saved.dataUrl) {
                     renderImage(saved.dataUrl);
-                    setStatus('Restored your board from last session ✔');
+                    setStatus('Restored your board from last session ✓');
                 } else if (saved && saved.kind === 'pdf') {
                     setStatus(`Last board was PDF "${saved.name}" — please drop it again to continue.`);
                 }
@@ -363,38 +486,163 @@
             localStorage.removeItem(STORAGE_KEY);
             lastImageData = null;
             lastPdfBuffer = null;
+            pdfDocPromise = null;
+            pdfTotalPages = 1;
+            currentPdfPage = 1;
             resetCanvasSizing();
             dropHint.style.display = 'flex';
             setStatus('Board cleared.');
         }
 
-        // ---------- Game pieces (drag with mouse + touch) ----------
+        // ---------- Piece types (the "brush" shapes) ----------
 
-        const colors = ['#FF6B6B', '#4EC0CA', '#FFD93D', '#6BCB77'];
-        const icons = ['🦊', '🐰', '🐻', '🦁'];
+        const animalEmojis = ['🦊', '🐳', '🐻', '🦁', '🐼', '🐰', '🦄', '🐲'];
+        const colors = ['#FF6B6B', '#4EC0CA', '#FFD93D', '#6BCB77', '#A855F7', '#F9731B', '#3B82F6', '#EC4899'];
+
+        let activePieceType = 0;
+        let brushMode = false; // when false, clicking a piece never changes it
+
+        const pieceTypes = [
+            { name: 'Circles', icon: '●', style: 'circle' },
+            { name: "X's", icon: '✕', style: 'cross' },
+            { name: "O's", icon: '○', style: 'oval' },
+            { name: 'Stars', icon: '★', style: 'star' },
+            { name: 'Diamonds', icon: '◆', style: 'diamond' },
+            { name: 'Triangles', icon: '▲', style: 'triangle' },
+            { name: 'Hexagons', icon: '⬢', style: 'hexagon' },
+            { name: 'Animals', icon: '🦊', style: 'animal' },
+        ];
+
+        // Apply the chosen shape/icon to one piece's inner element.
+        function applyTypeToPiece(piece) {
+            const inner = piece.querySelector('.piece-inner');
+            const type = pieceTypes[activePieceType];
+            const baseColor = inner.dataset.color;
+
+            // Reset to defaults before applying this type's styling
+            inner.style.borderRadius = '50%';
+            inner.style.transform = 'none';
+            inner.style.fontSize = '30px';
+            inner.style.backgroundColor = baseColor;
+            inner.style.borderColor = 'white';
+            inner.style.borderWidth = '4px';
+            inner.style.color = '#222';
+
+            if (type.style === 'animal') {
+                const randomAnimal = animalEmojis[Math.floor(Math.random() * animalEmojis.length)];
+                inner.textContent = randomAnimal;
+            } else {
+                inner.textContent = type.icon;
+            }
+
+            switch (type.style) {
+                case 'cross':
+                    inner.style.borderRadius = '8px';
+                    inner.style.fontSize = '28px';
+                    inner.style.color = 'white';
+                    break;
+                case 'oval':
+                    // Hollow ring look so O's differ from Circles
+                    inner.style.backgroundColor = 'transparent';
+                    inner.style.borderColor = baseColor;
+                    inner.style.borderWidth = '7px';
+                    inner.style.color = baseColor;
+                    inner.style.fontSize = '34px';
+                    break;
+                case 'star':
+                    inner.style.color = 'white';
+                    break;
+                case 'diamond':
+                    inner.style.transform = 'rotate(45deg)';
+                    inner.style.borderRadius = '6px';
+                    break;
+                case 'triangle':
+                    inner.style.borderRadius = '6px';
+                    break;
+                case 'hexagon':
+                    inner.style.borderRadius = '6px';
+                    break;
+            }
+        }
+
+        // ---------- Brush mode on/off ----------
+
+        function updateBrushUI() {
+            const btn = document.getElementById('brush-toggle');
+            const banner = document.getElementById('brush-banner');
+            btn.textContent = brushMode ? '🖌️ Brush: ON' : '🖌️ Brush: OFF';
+            btn.classList.toggle('on', brushMode);
+            banner.classList.toggle('visible', brushMode);
+            buildPieceTypeSelector();
+        }
+
+        function setBrushMode(on) {
+            brushMode = on;
+            updateBrushUI();
+            if (on) {
+                setStatus(`Brush on: ${pieceTypes[activePieceType].name}. Click a piece to change it.`);
+            } else {
+                setStatus('Brush off. Drag pieces to move them.');
+            }
+        }
+
+        function toggleBrushMode() {
+            setBrushMode(!brushMode);
+        }
+
+        // ---------- Piece type selector ----------
+
+        function buildPieceTypeSelector() {
+            const sel = document.getElementById('piece-type-selector');
+            sel.innerHTML = '';
+            pieceTypes.forEach((type, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'piece-btn' + (brushMode && idx === activePieceType ? ' active' : '');
+                btn.title = type.name;
+                btn.textContent = type.icon;
+                btn.onclick = () => selectPieceType(idx);
+                sel.appendChild(btn);
+            });
+        }
+
+        function selectPieceType(idx) {
+            activePieceType = idx;
+            // Picking a shape switches brush mode on so the next click applies it
+            setBrushMode(true);
+        }
+
+        // ---------- Game pieces (8 pieces with drag + click + touch) ----------
+
+        const DRAG_THRESHOLD = 4; // pixels of movement before a press counts as a drag
 
         function createPieces() {
             if (container.querySelectorAll('.piece').length > 0) return;
 
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 8; i++) {
                 const piece = document.createElement('div');
                 piece.className = 'piece';
-                piece.style.left = (50 + i * 100) % 80 + 'px';
-                piece.style.top = (100 + i * 50) % 80 + 'px';
+                piece.style.left = (20 + i * 70) + 'px';
+                piece.style.top = (20 + (i % 2) * 70) + 'px';
 
                 const inner = document.createElement('div');
                 inner.className = 'piece-inner';
+                inner.dataset.color = colors[i];
                 inner.style.backgroundColor = colors[i];
-                inner.innerHTML = icons[i];
+                inner.textContent = animalEmojis[i];
 
                 piece.appendChild(inner);
                 container.appendChild(piece);
 
+                let hasMoved = false;   // true only once the pointer travels past the threshold
                 let isDragging = false;
-                let offsetX, offsetY;
+                let startX = 0, startY = 0;
+                let offsetX = 0, offsetY = 0;
 
                 function startDrag(clientX, clientY) {
                     isDragging = true;
+                    hasMoved = false;
+                    startX = clientX;
+                    startY = clientY;
                     piece.style.zIndex = 1000;
                     const rect = piece.getBoundingClientRect();
                     offsetX = clientX - rect.left;
@@ -403,6 +651,13 @@
 
                 function moveDrag(clientX, clientY) {
                     if (!isDragging) return;
+                    if (!hasMoved) {
+                        const dx = clientX - startX;
+                        const dy = clientY - startY;
+                        if (Math.hypot(dx, dy) > DRAG_THRESHOLD) hasMoved = true;
+                    }
+                    if (!hasMoved) return; // still a possible click, don't move yet
+
                     const rect = container.getBoundingClientRect();
                     let x = clientX - rect.left - offsetX;
                     let y = clientY - rect.top - offsetY;
@@ -413,7 +668,14 @@
                 }
 
                 function endDrag() {
+                    if (!isDragging) return;
                     isDragging = false;
+
+                    // Only a short press with brush mode on changes the piece
+                    if (!hasMoved && brushMode) {
+                        applyTypeToPiece(piece);
+                    }
+
                     piece.style.zIndex = 10;
                 }
 
@@ -453,6 +715,7 @@
         // ---------- Init ----------
 
         createPieces();
+        updateBrushUI();
         restoreFromStorage();
     </script>
 </body>
