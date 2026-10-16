@@ -313,6 +313,51 @@
       box-shadow: 0 0 0 #424242;
     }
 
+    #export-btn, #import-btn {
+      background: linear-gradient(180deg, #64B5F6 0%, #1976D2 100%);
+      color: #fff;
+      border: 3px solid #1565C0;
+      padding: 8px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 9px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #1565C0;
+      transition: all 0.1s;
+    }
+
+    #export-btn:active, #import-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #1565C0;
+    }
+
+    #export-name-input {
+      width: 100%;
+      padding: 8px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 9px;
+      border: 3px solid var(--panel-border);
+      background: #fff;
+      color: var(--text-dark);
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+
+    .import-warn-text {
+      font-size: 8px;
+      color: var(--text-dark);
+      margin-bottom: 12px;
+      line-height: 1.8;
+    }
+
+    #import-unsaved-warning {
+      display: none;
+      color: #C62828;
+    }
+
+    #import-unsaved-warning.show {
+      display: block;
+    }
+
     /* XP Bar */
     .xp-container {
       display: flex;
@@ -1071,6 +1116,25 @@
       box-shadow: 0 3px 0 #424242;
     }
 
+    /* Export and Import overlays */
+    #export-overlay, #import-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    #export-overlay.show, #import-overlay.show {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
     /* Confetti */
     .confetti {
       position: fixed;
@@ -1161,7 +1225,11 @@
           <button id="teacher-btn">+ TASK</button>
           <button id="compost-btn">🧺 0</button>
         </div>
-        <button id="reset-btn">🔄</button>
+        <div class="btn-group">
+          <button id="export-btn" title="Export save file">💾</button>
+          <button id="import-btn" title="Import save file">📂</button>
+          <button id="reset-btn">🔄</button>
+        </div>
       </div>
       <div class="xp-container">
         <span class="xp-label">XP</span>
@@ -1241,6 +1309,38 @@
       </div>
     </div>
   </div>
+
+  <!-- Export Naming Overlay -->
+  <div id="export-overlay">
+    <div class="reset-content" style="border-color: #1976D2;">
+      <div class="reset-title" style="color: #1976D2;">💾 EXPORT SAVE</div>
+      <p class="import-warn-text">Name your save file:</p>
+      <input id="export-name-input" type="text" maxlength="60" spellcheck="false">
+      <div class="reset-buttons">
+        <button class="reset-confirm-btn" id="confirm-export" style="background: linear-gradient(180deg, #64B5F6 0%, #1976D2 100%); border-color: #1565C0; box-shadow: 0 3px 0 #1565C0;">EXPORT</button>
+        <button class="reset-cancel-btn" id="cancel-export">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Warning Overlay -->
+  <div id="import-overlay">
+    <div class="reset-content" style="max-width: 320px; border-color: #E65100;">
+      <div class="reset-title" style="color: #E65100;">📂 IMPORT SAVE?</div>
+      <p class="import-warn-text">⚠️ Importing will REPLACE your current garden!</p>
+      <p class="import-warn-text" id="import-unsaved-warning">
+        💾 Your current progress hasn't been exported yet! Export it first so you can switch back later.
+      </p>
+      <div class="reset-buttons">
+        <button class="reset-confirm-btn" id="import-export-first" style="background: linear-gradient(180deg, #64B5F6 0%, #1976D2 100%); border-color: #1565C0; box-shadow: 0 3px 0 #1565C0;">EXPORT FIRST</button>
+        <button class="reset-confirm-btn" id="import-confirm">IMPORT</button>
+        <button class="reset-cancel-btn" id="import-cancel">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input for import -->
+  <input type="file" id="import-file-input" accept=".json,application/json" style="display: none;">
 
   <script>
     // ============================================
@@ -2493,11 +2593,12 @@
     // SAVE / LOAD
     // ============================================
     function saveGame() {
-      localStorage.setItem('gardenSimulatorV6', JSON.stringify(state));
+      localStorage.setItem('gardenSimulator', JSON.stringify(state));
+      unsavedSinceExport = true; // progress exists that isn't in any exported file
     }
 
     function loadGame() {
-      const saved = localStorage.getItem('gardenSimulatorV6');
+      const saved = localStorage.getItem('gardenSimulator');
       if (saved) {
         Object.assign(state, JSON.parse(saved));
         state.maxWater = MAX_WATER;
@@ -2515,7 +2616,7 @@
     }
 
     function resetGame() {
-      localStorage.removeItem('gardenSimulatorV6');
+      localStorage.removeItem('gardenSimulator');
       state.coins = 10;
       state.xp = 0;
       state.level = 1;
@@ -2534,6 +2635,118 @@
       document.getElementById('goal-trophy').classList.remove('show');
       showStatus('Tap a seed in the SHOP, then tap a plot to plant it!');
       render();
+    }
+
+    // ============================================
+    // SAVE EXPORT / IMPORT
+    // ============================================
+    let unsavedSinceExport = false; // true once progress changed after last export/load
+    let pendingImport = null;       // validated save object waiting for confirmation
+
+    function defaultFileName() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `GardenSave_L${state.level}_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+
+    function sanitizeFileName(name) {
+      return name.replace(/[\\/:*?"<>|]/g, '').trim();
+    }
+
+    function exportSave(name) {
+      const clean = { ...state };
+      delete clean.plantingMode; // runtime-only
+      delete clean.compostMode;  // runtime-only
+
+      const data = JSON.stringify(clean, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name.toLowerCase().endsWith('.json') ? name : name + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      unsavedSinceExport = false;
+      showStatus(`Save exported as ${a.download}! 💾`, 'success');
+    }
+
+    function openExportDialog(afterExport) {
+      const overlay = document.getElementById('export-overlay');
+      const input = document.getElementById('export-name-input');
+      input.value = defaultFileName();
+      overlay.dataset.afterExport = afterExport ? 'true' : 'false';
+      overlay.classList.add('show');
+      setTimeout(() => { input.focus(); input.select(); }, 50);
+    }
+
+    function validateSaveObject(obj) {
+      if (!obj || typeof obj !== 'object') return false;
+      if (typeof obj.coins !== 'number' || typeof obj.level !== 'number') return false;
+      if (!Array.isArray(obj.plots) || obj.plots.length === 0) return false;
+
+      // Light check of plot contents
+      for (const p of obj.plots) {
+        if (p === null) continue;
+        if (p === 'locked') continue;
+        if (typeof p === 'object' && PLANTS[p.plant]) continue;
+        return false;
+      }
+      return true;
+    }
+
+    function applyImportedSave(obj) {
+      Object.assign(state, obj);
+      state.maxWater = MAX_WATER;
+      state.water = Math.min(state.water, MAX_WATER);
+      if (!Array.isArray(state.compostedColumns) ||
+          state.compostedColumns.length !== COLUMNS) {
+        state.compostedColumns = [false, false, false];
+      }
+      state.compostMode = false;
+      state.plantingMode = null;
+      expandGarden();
+
+      // Persist to localStorage without flagging "unsaved" (this save
+      // came from a file, so the exported-file baseline is already set)
+      localStorage.setItem('gardenSimulator', JSON.stringify(state));
+      render();
+      showStatus(
+        `Save imported! 💼 ${obj.plots.filter(p => p && p !== 'locked').length} plant(s), ` +
+        `L${state.level}, ${state.coins} 🪙`,
+        'success'
+      );
+    }
+
+    function readImportFile(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        let obj;
+        try {
+          obj = JSON.parse(reader.result);
+        } catch (e) {
+          playErrorSound();
+          showStatus('Import failed: not a valid save file! ❌', 'error');
+          return;
+        }
+        if (!validateSaveObject(obj)) {
+          playErrorSound();
+          showStatus('Import failed: file is not a Garden Simulator save! ❌', 'error');
+          return;
+        }
+        pendingImport = obj;
+        // Show the warning popup; highlight the "not exported yet" warning if needed
+        document.getElementById('import-unsaved-warning')
+          .classList.toggle('show', unsavedSinceExport);
+        document.getElementById('import-overlay').classList.add('show');
+      };
+      reader.onerror = () => {
+        playErrorSound();
+        showStatus('Import failed: could not read the file! ❌', 'error');
+      };
+      reader.readAsText(file);
     }
 
     // ============================================
@@ -2578,6 +2791,68 @@
     document.getElementById('play-again-btn').addEventListener('click', () => {
       initAudio();
       resetGame();
+    });
+
+    // ============================================
+    // EXPORT / IMPORT LISTENERS
+    // ============================================
+    document.getElementById('export-btn').addEventListener('click', () => {
+      initAudio();
+      openExportDialog(false);
+    });
+
+    document.getElementById('cancel-export').addEventListener('click', () => {
+      document.getElementById('export-overlay').classList.remove('show');
+    });
+
+    document.getElementById('confirm-export').addEventListener('click', () => {
+      initAudio();
+      const overlay = document.getElementById('export-overlay');
+      const name = sanitizeFileName(
+        document.getElementById('export-name-input').value || defaultFileName()
+      );
+      overlay.classList.remove('show');
+      exportSave(name);
+
+      // If this export was triggered by "EXPORT FIRST" in the import dialog,
+      // continue with the pending import now.
+      if (overlay.dataset.afterExport === 'true' && pendingImport) {
+        applyImportedSave(pendingImport);
+        pendingImport = null;
+      }
+      overlay.dataset.afterExport = 'false';
+    });
+
+    document.getElementById('import-btn').addEventListener('click', () => {
+      initAudio();
+      document.getElementById('import-file-input').click();
+    });
+
+    document.getElementById('import-file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      e.target.value = ''; // allow re-importing the same file
+      if (file) readImportFile(file);
+    });
+
+    document.getElementById('import-cancel').addEventListener('click', () => {
+      pendingImport = null;
+      document.getElementById('import-overlay').classList.remove('show');
+    });
+
+    document.getElementById('import-confirm').addEventListener('click', () => {
+      initAudio();
+      document.getElementById('import-overlay').classList.remove('show');
+      if (pendingImport) {
+        applyImportedSave(pendingImport);
+        pendingImport = null;
+      }
+    });
+
+    document.getElementById('import-export-first').addEventListener('click', () => {
+      initAudio();
+      document.getElementById('import-overlay').classList.remove('show');
+      // Keep pendingImport; open export dialog with a flag to import after saving
+      openExportDialog(true);
     });
 
     // ============================================
