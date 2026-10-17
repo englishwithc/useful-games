@@ -3,23 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monster Quest - Roguelike Adventure</title>
+    <title>Monster Quest - Pixel Adventure</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         :root {
-            --bg-dark: #0a0e27;
-            --panel-bg: rgba(15, 23, 42, 0.95);
-            --gold: #fbbf24;
-            --gold-glow: rgba(251, 191, 36, 0.4);
+            --bg-dark: #0d1030;
+            --panel-bg: rgba(13, 16, 48, 0.96);
+            --gold: #f8d030;
+            --gold-glow: rgba(248, 208, 48, 0.4);
+            --poke-red: #e3350d;
             --red: #ef4444;
-            --green: #10b981;
+            --green: #38d95c;
             --blue: #3b82f6;
             --purple: #8b5cf6;
             --text: #f1f5f9;
             --text-muted: #94a3b8;
         }
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
             background: var(--bg-dark);
             color: var(--text);
             min-height: 100vh;
@@ -27,9 +32,6 @@
             justify-content: center;
             align-items: center;
             padding: 10px;
-            background-image:
-                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.1) 0%, transparent 50%);
         }
         #game-container {
             width: 100%;
@@ -37,49 +39,54 @@
             height: 95vh;
             max-height: 850px;
             background: var(--panel-bg);
-            border-radius: 24px;
-            border: 2px solid rgba(251, 191, 36, 0.3);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 60px rgba(251, 191, 36, 0.1);
+            border: 4px solid var(--gold);
+            border-radius: 8px;
+            box-shadow: 0 0 0 4px #101028, 0 18px 40px rgba(0,0,0,0.8), 0 0 60px rgba(248,208,48,0.12);
             display: flex;
             flex-direction: column;
             overflow: hidden;
             position: relative;
         }
+        /* subtle CRT scanlines */
+        #game-container::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 50;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 4px);
+        }
         .status-bar {
-            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 100%);
-            padding: 12px 16px;
+            background: #101028;
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 10;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 3px solid #2a2a4a;
         }
         .player-mini { display: flex; align-items: center; gap: 10px; }
         .player-avatar {
-            width: 40px; height: 40px; border-radius: 12px;
-            background: linear-gradient(135deg, #334155, #1e293b);
-            border: 2px solid var(--gold);
+            width: 40px; height: 40px;
+            background: #1a1a34;
+            border: 3px solid var(--gold);
+            border-radius: 6px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; overflow: hidden;
+            font-size: 22px;
         }
-        .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .hp-bar-container {
-            width: 100px; height: 20px; background: #1e293b;
-            border-radius: 10px; overflow: hidden; position: relative;
-            border: 1px solid #334155;
+            width: 110px; height: 16px; background: #1a1a34;
+            border: 2px solid #3a3a5a; position: relative;
         }
         .hp-fill {
-            height: 100%; background: linear-gradient(90deg, #ef4444, #f87171);
-            transition: width 0.5s ease; border-radius: 10px;
+            height: 100%; background: linear-gradient(90deg, #2fbf4f, #38d95c);
+            transition: width 0.5s ease;
         }
         .hp-text {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 11px; font-weight: bold;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            font-size: 8px; font-weight: bold;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+            font-family: 'Press Start 2P', monospace;
         }
-        .floor-indicator { text-align: right; font-size: 12px; color: var(--text-muted); }
-        .floor-num { font-size: 20px; font-weight: bold; color: var(--gold); }
+        .floor-indicator { text-align: right; font-size: 8px; color: var(--text-muted); line-height: 1.8; }
+        .floor-num { font-size: 14px; font-weight: bold; color: var(--gold); }
         .screen {
             display: none; flex: 1; flex-direction: column;
             overflow: hidden; position: relative;
@@ -89,154 +96,198 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .bg-image {
+        .bg-canvas {
             position: absolute; inset: 0; width: 100%; height: 100%;
-            object-fit: cover; opacity: 0.3; z-index: 0;
+            image-rendering: pixelated; z-index: 0; opacity: 0.55;
         }
         .content-overlay {
             position: relative; z-index: 1; flex: 1;
             display: flex; flex-direction: column;
             padding: 20px; overflow-y: auto;
         }
-        h1 { font-size: 28px; text-align: center; color: var(--gold); text-shadow: 0 2px 10px var(--gold-glow); margin-bottom: 8px; }
-        h2 { font-size: 22px; text-align: center; color: var(--gold); margin-bottom: 16px; }
-        h3 { font-size: 16px; color: var(--text); }
-        .subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
-        .btn {
-            background: linear-gradient(145deg, #334155, #1e293b);
-            border: 2px solid #475569; color: var(--text);
-            padding: 14px 20px; border-radius: 14px;
-            font-size: 16px; font-weight: 600; cursor: pointer;
-            transition: all 0.2s; display: flex;
-            align-items: center; justify-content: center;
-            gap: 8px; touch-action: manipulation;
+        h1 {
+            font-size: 20px; text-align: center; color: var(--gold);
+            text-shadow: 2px 2px 0 #b8860b, 4px 4px 0 #4a2a00, 0 0 24px var(--gold-glow);
+            margin-bottom: 12px; line-height: 1.5;
         }
-        .btn:active { transform: scale(0.96); }
+        h2 {
+            font-size: 14px; text-align: center; color: var(--gold);
+            text-shadow: 2px 2px 0 #4a2a00; margin-bottom: 14px; line-height: 1.5;
+        }
+        h3 { font-size: 11px; color: var(--text); line-height: 1.5; }
+        .subtitle { text-align: center; color: var(--text-muted); font-size: 9px; margin-bottom: 18px; line-height: 1.8; }
+        .soft { font-family: 'Segoe UI', system-ui, sans-serif; }
+        .btn {
+            background: linear-gradient(180deg, #3a3a5c 0%, #26264a 100%);
+            border: 3px solid #5a5a8a; color: var(--text);
+            padding: 13px 16px; border-radius: 6px;
+            box-shadow: inset 2px 2px 0 rgba(255,255,255,0.15), inset -2px -2px 0 rgba(0,0,0,0.4), 0 4px 0 #16162e;
+            font-size: 10px; font-family: 'Press Start 2P', monospace;
+            cursor: pointer; transition: all 0.15s;
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; touch-action: manipulation; line-height: 1.6;
+        }
+        .btn:active:not(:disabled) { transform: translateY(3px); box-shadow: inset 2px 2px 0 rgba(255,255,255,0.15), 0 1px 0 #16162e; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-gold { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 20px rgba(251,191,36,0.2); }
-        .btn-gold:hover { background: linear-gradient(145deg, #475569, #334155); box-shadow: 0 0 30px rgba(251,191,36,0.4); }
+        .btn-gold { border-color: var(--gold); color: var(--gold); box-shadow: inset 2px 2px 0 rgba(255,255,255,0.15), inset -2px -2px 0 rgba(0,0,0,0.4), 0 4px 0 #6b4a00, 0 0 20px rgba(248,208,48,0.25); }
         .starter-grid { display: flex; flex-direction: column; gap: 12px; }
         .starter-card {
-            background: rgba(30, 41, 59, 0.8); border: 2px solid #334155;
-            border-radius: 16px; padding: 16px; cursor: pointer;
-            transition: all 0.3s; display: flex; align-items: center;
-            gap: 16px; position: relative; overflow: hidden;
+            background: rgba(20, 22, 56, 0.92); border: 3px solid #3a3a5c;
+            border-radius: 8px; padding: 14px; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center;
+            gap: 14px; position: relative; overflow: hidden;
         }
-        .starter-card::before {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.05) 100%);
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .starter-card:hover { transform: translateX(4px); border-color: var(--gold); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
-        .starter-card:hover::before { opacity: 1; }
-        .starter-card.selected { border-color: var(--gold); box-shadow: 0 0 30px var(--gold-glow); }
+        .starter-card:hover { transform: translateX(4px); border-color: var(--gold); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        .starter-card.selected { border-color: var(--gold); box-shadow: 0 0 24px var(--gold-glow); background: rgba(40, 34, 10, 0.92); }
         .starter-icon {
-            width: 70px; height: 70px; border-radius: 16px; overflow: hidden;
-            flex-shrink: 0; border: 2px solid rgba(255,255,255,0.1);
+            width: 64px; height: 64px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 38px; background: rgba(0,0,0,0.4);
+            border: 3px solid #5a5a8a; border-radius: 8px;
         }
-        .starter-icon img { width: 100%; height: 100%; object-fit: cover; }
-        .starter-info h3 { margin-bottom: 4px; }
-        .starter-info p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
-        .starter-info p.signature { color: var(--gold); font-size: 12px; margin-top: 2px; }
-        .stat-badges { display: flex; gap: 6px; margin-top: 8px; }
+        .starter-card.selected .starter-icon { border-color: var(--gold); }
+        .starter-info h3 { margin-bottom: 6px; }
+        .starter-info p { font-size: 10px; color: var(--text-muted); line-height: 1.5; }
+        .starter-info p.signature { color: var(--gold); font-size: 8px; margin-top: 4px; }
+        .stat-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
         .badge {
-            font-size: 11px; padding: 3px 8px; border-radius: 20px;
-            background: rgba(0,0,0,0.3); border: 1px solid #334155;
+            font-size: 7px; padding: 4px 7px;
+            background: rgba(0,0,0,0.4); border: 2px solid #3a3a5c;
+            line-height: 1.4;
         }
         .map-container {
             flex: 1; display: flex; flex-direction: column;
-            justify-content: center; gap: 16px; padding: 20px 0;
+            justify-content: center; gap: 14px; padding: 16px 0;
         }
         .path-node {
-            background: rgba(30, 41, 59, 0.9); border: 3px solid #475569;
-            border-radius: 20px; padding: 20px; cursor: pointer;
-            transition: all 0.3s; display: flex; align-items: center;
-            gap: 16px; position: relative;
+            background: rgba(20, 22, 56, 0.92); border: 3px solid #5a5a8a;
+            border-radius: 8px; padding: 16px; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center;
+            gap: 14px; position: relative;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.4);
         }
-        .path-node:hover { transform: scale(1.02); border-color: var(--gold); box-shadow: 0 10px 40px rgba(251,191,36,0.2); }
-        .path-node.battle { border-color: var(--red); }
-        .path-node.battle:hover { box-shadow: 0 10px 40px rgba(239,68,68,0.3); }
+        .path-node:hover { transform: translateY(-2px); border-color: var(--gold); box-shadow: 0 6px 0 rgba(0,0,0,0.4), 0 0 24px rgba(248,208,48,0.2); }
+        .path-node.battle { border-color: var(--poke-red); }
         .path-node.reward { border-color: var(--gold); }
-        .path-node.reward:hover { box-shadow: 0 10px 40px rgba(251,191,36,0.3); }
         .path-node.puzzle { border-color: var(--purple); }
-        .path-node.puzzle:hover { box-shadow: 0 10px 40px rgba(139,92,246,0.3); }
-        .path-node.boss { border-color: #dc2626; background: rgba(127,29,29,0.3); }
+        .path-node.boss { border-color: #dc2626; background: rgba(60, 10, 20, 0.9); box-shadow: 0 0 30px rgba(220,38,38,0.35); }
         .path-node.elite { border-color: #f97316; }
         .node-icon {
-            width: 60px; height: 60px; border-radius: 16px;
-            background: rgba(0,0,0,0.4); display: flex;
+            width: 54px; height: 54px;
+            background: rgba(0,0,0,0.45); display: flex;
             align-items: center; justify-content: center;
-            font-size: 32px; flex-shrink: 0;
+            font-size: 30px; flex-shrink: 0;
+            border: 2px solid #3a3a5c; border-radius: 6px;
         }
-        .node-info h3 { font-size: 18px; margin-bottom: 4px; }
-        .node-info p { font-size: 13px; color: var(--text-muted); }
+        .node-info h3 { font-size: 11px; margin-bottom: 6px; }
+        .node-info p { font-size: 8px; color: var(--text-muted); line-height: 1.6; font-family: 'Segoe UI', system-ui, sans-serif; }
         .node-risk {
-            position: absolute; top: 10px; right: 10px;
-            font-size: 11px; padding: 4px 10px; border-radius: 20px;
-            background: rgba(0,0,0,0.5); text-transform: uppercase;
-            font-weight: bold; letter-spacing: 0.5px;
+            position: absolute; top: -8px; right: 10px;
+            font-size: 7px; padding: 4px 8px;
+            background: #101028; border: 2px solid #3a3a5c;
+            text-transform: uppercase; font-weight: bold;
         }
+        /* ---------- POKEMON-STYLE BATTLE ---------- */
         .battle-arena {
-            flex: 1; display: flex; flex-direction: column; padding: 16px; gap: 12px;
+            flex: 1; display: flex; flex-direction: column; padding: 14px; gap: 10px;
             position: relative; z-index: 1;
         }
-        .enemy-section { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .enemy-visual {
-            width: 120px; height: 120px; border-radius: 20px; overflow: hidden;
-            border: 3px solid var(--red); box-shadow: 0 0 30px rgba(239,68,68,0.3);
+        .enemy-intent {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: rgba(227, 53, 13, 0.15); border: 2px solid rgba(227, 53, 13, 0.4);
+            padding: 7px 12px; font-size: 8px; line-height: 1.6;
+            color: #fca5a5; margin: 0 auto;
+        }
+        .pk-row { display: flex; align-items: center; gap: 12px; }
+        .enemy-row { justify-content: flex-start; }
+        .player-row { justify-content: flex-end; }
+        .pk-sprite {
+            width: 108px; height: 108px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 62px;
+            background: rgba(0,0,0,0.35);
+            border: 3px solid var(--poke-red); border-radius: 8px;
+            box-shadow: 0 0 24px rgba(227,53,13,0.3);
             position: relative;
         }
-        .enemy-visual img { width: 100%; height: 100%; object-fit: cover; }
-        .enemy-visual.boss { width: 150px; height: 150px; border-color: #dc2626; box-shadow: 0 0 50px rgba(220,38,38,0.5); }
-        .enemy-hp {
-            width: 200px; height: 24px; background: #1e293b;
-            border-radius: 12px; overflow: hidden; border: 2px solid #334155;
-            position: relative;
+        .pk-sprite.elite { border-color: #f97316; box-shadow: 0 0 24px rgba(249,115,22,0.35); }
+        .pk-sprite.boss {
+            width: 132px; height: 132px; font-size: 82px;
+            border-color: #dc2626; box-shadow: 0 0 40px rgba(220,38,38,0.55);
         }
-        .enemy-hp-fill {
-            height: 100%; background: linear-gradient(90deg, #dc2626, #ef4444);
-            transition: width 0.5s ease;
+        .pk-sprite.small {
+            width: 84px; height: 84px; font-size: 44px;
+            border-color: var(--gold); box-shadow: 0 0 18px rgba(248,208,48,0.3);
         }
+        .pk-plate {
+            flex: 1; min-width: 0;
+            background: rgba(16, 18, 44, 0.92);
+            border: 3px solid #5a5a8a; border-radius: 6px;
+            padding: 9px 10px;
+            box-shadow: inset 2px 2px 0 rgba(255,255,255,0.08), 0 3px 0 rgba(0,0,0,0.5);
+        }
+        .pk-plate.player-plate { border-color: var(--gold); }
+        .pk-plate-top {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 9px; margin-bottom: 7px; gap: 6px;
+        }
+        .pk-plate-top strong { color: var(--gold); }
+        .pk-lvl { font-size: 8px; color: var(--text-muted); white-space: nowrap; }
+        .pk-hp-track { display: flex; align-items: center; gap: 5px; }
+        .hp-tag {
+            font-size: 7px; color: #ffd23f; border: 1px solid #ffd23f;
+            padding: 1px 3px; flex-shrink: 0;
+        }
+        .pk-hp-rail { flex: 1; height: 10px; background: #1a1a34; border: 2px solid #3a3a5a; overflow: hidden; }
+        .pk-hp-fill {
+            height: 100%; width: 100%;
+            background: var(--green); transition: width 0.5s ease, background 0.5s ease;
+        }
+        .pk-hp-nums { text-align: right; font-size: 8px; color: var(--text-muted); margin-top: 5px; }
         .battle-log {
-            background: rgba(0,0,0,0.5); border-radius: 12px; padding: 12px;
-            min-height: 60px; font-size: 14px; text-align: center;
-            border: 1px solid #334155; display: flex;
-            align-items: center; justify-content: center;
+            background: #f8f0d8; color: #3a2a1a;
+            border: 3px solid #7a5a2a; border-radius: 6px;
+            box-shadow: inset 0 0 0 2px #f8f0d8, inset 0 0 0 4px #c8a850;
+            padding: 11px 10px; min-height: 58px;
+            font-size: 9px; line-height: 1.7; text-align: center;
+            display: flex; align-items: center; justify-content: center;
         }
-        .player-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: auto; }
+        .player-battle { margin-top: auto; display: flex; flex-direction: column; gap: 9px; }
+        .what-will {
+            text-align: center; font-size: 8px; color: var(--gold);
+            text-shadow: 1px 1px 0 #000; line-height: 1.6;
+        }
         .energy-bar { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
         .energy-orb {
-            width: 24px; height: 24px; border-radius: 50%;
-            background: #1e293b; border: 2px solid #334155; transition: all 0.3s;
+            width: 20px; height: 20px;
+            background: #1a1a34; border: 2px solid #3a3a5a;
+            transition: all 0.3s;
         }
         .energy-orb.full {
-            background: var(--blue); border-color: #60a5fa;
-            box-shadow: 0 0 15px rgba(59,130,246,0.6);
+            background: var(--blue); border-color: #93c5fd;
+            box-shadow: 0 0 10px rgba(59,130,246,0.7), inset 1px 1px 0 rgba(255,255,255,0.5);
         }
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; width: 100%; }
         .action-btn {
-            background: linear-gradient(145deg, #334155, #1e293b);
-            border: 2px solid #475569; border-radius: 14px;
-            padding: 12px 8px; cursor: pointer; transition: all 0.2s;
+            background: linear-gradient(180deg, #3a3a5c 0%, #26264a 100%);
+            border: 3px solid #5a5a8a; border-radius: 6px;
+            box-shadow: inset 2px 2px 0 rgba(255,255,255,0.12), 0 4px 0 #16162e;
+            padding: 10px 6px; cursor: pointer; transition: all 0.15s;
             text-align: center; touch-action: manipulation; color: var(--text);
+            font-family: 'Press Start 2P', monospace;
         }
-        .action-btn:active:not(:disabled) { transform: scale(0.95); }
+        .action-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: inset 2px 2px 0 rgba(255,255,255,0.12), 0 1px 0 #16162e; }
         .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .action-btn .icon { font-size: 26px; display: block; margin-bottom: 2px; }
-        .action-btn .name { font-size: 13px; font-weight: 600; display: block; }
-        .action-btn .lvl { font-size: 10px; color: var(--text-muted); display: block; }
-        .action-btn .cost { font-size: 11px; color: var(--blue); display: block; margin-top: 2px; }
+        .action-btn .icon { font-size: 22px; display: block; margin-bottom: 4px; }
+        .action-btn .name { font-size: 8px; font-weight: bold; display: block; line-height: 1.5; }
+        .action-btn .lvl { font-size: 7px; color: var(--text-muted); display: block; margin-top: 2px; }
+        .action-btn .cost { font-size: 7px; color: #93c5fd; display: block; margin-top: 3px; line-height: 1.6; font-family: 'Segoe UI', system-ui, sans-serif; }
         .action-btn.kind-attack { border-color: #f97316; }
         .action-btn.kind-drain { border-color: #be123c; }
         .action-btn.kind-guard { border-color: var(--green); }
         .action-btn.kind-heal { border-color: #38bdf8; }
         .action-btn.kind-armor { border-color: #84cc16; }
-        .action-btn.empty { border-style: dashed; border-color: #475569; }
-        .enemy-intent {
-            display: flex; align-items: center; gap: 8px;
-            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
-            padding: 8px 16px; border-radius: 20px; font-size: 13px;
-        }
+        .action-btn.empty { border-style: dashed; border-color: #475569; box-shadow: none; }
         .shake { animation: shake 0.5s ease; }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -248,11 +299,12 @@
         .float { animation: float 2s ease-in-out infinite; }
         @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-8px); }
         }
         .damage-popup {
-            position: absolute; font-size: 32px; font-weight: bold;
-            color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            position: absolute; font-size: 24px; font-weight: bold;
+            font-family: 'Press Start 2P', monospace;
+            color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
             pointer-events: none; animation: popUp 1s ease-out forwards; z-index: 100;
         }
         @keyframes popUp {
@@ -269,91 +321,127 @@
             flex: 1; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 20px; padding: 20px;
         }
-        .puzzle-grid { display: grid; grid-template-columns: repeat(2, 100px); gap: 16px; }
+        .puzzle-grid { display: grid; grid-template-columns: repeat(2, 96px); gap: 14px; }
         .puzzle-btn {
-            width: 100px; height: 100px; border-radius: 20px;
-            border: 3px solid rgba(255,255,255,0.2); cursor: pointer;
-            transition: all 0.2s; display: flex; align-items: center;
-            justify-content: center; font-size: 48px;
+            width: 96px; height: 96px;
+            border: 3px solid rgba(255,255,255,0.25); border-radius: 8px;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.5);
+            cursor: pointer; transition: all 0.15s;
+            display: flex; align-items: center; justify-content: center; font-size: 44px;
         }
-        .puzzle-btn:active { transform: scale(0.95); }
-        .puzzle-btn.lit { filter: brightness(1.5); box-shadow: 0 0 40px currentColor; transform: scale(1.05); }
+        .puzzle-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
+        .puzzle-btn.lit { filter: brightness(1.6); box-shadow: 0 0 34px currentColor; transform: scale(1.05); }
         .puzzle-btn.red { background: linear-gradient(145deg, #7f1d1d, #991b1b); color: #fca5a5; }
         .puzzle-btn.blue { background: linear-gradient(145deg, #1e3a8a, #1d4ed8); color: #93c5fd; }
         .puzzle-btn.green { background: linear-gradient(145deg, #14532d, #166534); color: #86efac; }
         .puzzle-btn.yellow { background: linear-gradient(145deg, #713f12, #854d0e); color: #fde047; }
         .puzzle-status {
-            font-size: 18px; text-align: center; min-height: 30px;
-            color: var(--gold); font-weight: 600;
+            font-size: 10px; text-align: center; min-height: 24px;
+            color: var(--gold); line-height: 1.7;
         }
         .count-display {
             display: flex; flex-wrap: wrap; justify-content: center;
-            gap: 10px; max-width: 280px;
+            gap: 8px; max-width: 280px;
         }
         .count-item {
-            width: 50px; height: 50px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center; font-size: 28px;
+            width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            background: rgba(0,0,0,0.4); border: 2px solid var(--gold);
         }
-        .number-pad { display: grid; grid-template-columns: repeat(3, 70px); gap: 10px; }
+        .number-pad { display: grid; grid-template-columns: repeat(4, 64px); gap: 8px; justify-content: center; }
         .num-btn {
-            width: 70px; height: 60px; border-radius: 12px;
-            background: rgba(30, 41, 59, 0.9); border: 2px solid #475569;
-            color: var(--text); font-size: 24px; font-weight: bold;
-            cursor: pointer; transition: all 0.2s;
+            width: 64px; height: 52px;
+            background: linear-gradient(180deg, #3a3a5c, #26264a);
+            border: 3px solid #5a5a8a;
+            box-shadow: inset 2px 2px 0 rgba(255,255,255,0.12), 0 4px 0 #16162e;
+            color: var(--text); font-size: 14px; font-family: 'Press Start 2P', monospace;
+            cursor: pointer; transition: all 0.1s; padding: 0;
         }
-        .num-btn:active { transform: scale(0.95); background: var(--gold); color: #000; }
+        .num-btn.ok { border-color: var(--green); color: var(--green); }
+        .num-btn:active { transform: translateY(3px); box-shadow: inset 2px 2px 0 rgba(255,255,255,0.12); background: var(--gold); color: #000; }
         .reward-card {
-            background: rgba(30, 41, 59, 0.95); border: 3px solid var(--gold);
-            border-radius: 24px; padding: 30px; text-align: center; width: 100%;
-            box-shadow: 0 0 60px var(--gold-glow);
+            background: rgba(20, 22, 56, 0.96); border: 3px solid var(--gold);
+            border-radius: 8px; padding: 24px 18px; text-align: center; width: 100%;
+            box-shadow: 0 0 40px var(--gold-glow), inset 0 0 0 4px rgba(248,208,48,0.2);
         }
         .reward-icon {
-            width: 100px; height: 100px; margin: 0 auto 20px;
-            border-radius: 50%; overflow: hidden; border: 3px solid var(--gold);
+            width: 84px; height: 84px; margin: 0 auto 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 52px; border: 3px solid var(--gold); border-radius: 8px;
+            background: rgba(0,0,0,0.35);
+            animation: float 3s ease-in-out infinite;
         }
-        .reward-icon img { width: 100%; height: 100%; object-fit: cover; }
-        .upgrade-options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .upgrade-options { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
         .reward-option {
             width: 100%; justify-content: flex-start; text-align: left;
-            gap: 14px; padding: 14px 16px;
+            gap: 12px; padding: 12px 14px;
         }
-        .reward-option .r-icon { font-size: 28px; flex-shrink: 0; }
-        .r-body { display: flex; flex-direction: column; gap: 2px; }
-        .r-body strong { font-size: 15px; }
-        .r-body small { color: var(--text-muted); font-size: 12px; font-weight: normal; line-height: 1.3; }
-        .r-tag { font-size: 10px; font-weight: bold; letter-spacing: 1px; }
+        .reward-option .r-icon { font-size: 24px; flex-shrink: 0; }
+        .r-body { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+        .r-body strong { font-size: 9px; line-height: 1.5; }
+        .r-body small { color: var(--text-muted); font-size: 11px; font-weight: normal; line-height: 1.4; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .r-tag { font-size: 7px; letter-spacing: 1px; }
         .r-tag.new { color: var(--gold); }
         .r-tag.upgrade { color: #60a5fa; }
         .r-tag.stat { color: #34d399; }
         .r-tag.safe { color: #34d399; }
         .r-tag.gamble { color: #f87171; }
+        .r-tag.potion { color: #c084fc; }
+        .battle-extras { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .potion-slots { display: flex; gap: 6px; }
+        .potion-slot {
+            width: 34px; height: 34px; font-size: 18px;
+            background: #1a1a34; border: 2px solid #7c5cbf; border-radius: 6px;
+            color: var(--text); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; padding: 0; font-family: 'Press Start 2P', monospace;
+        }
+        .potion-slot:disabled { opacity: 0.4; cursor: not-allowed; }
+        .potion-slot.empty { border-style: dashed; border-color: #3a3a5a; opacity: 0.5; cursor: default; }
+        .count-item.wide { width: auto; padding: 8px 20px; font-size: 16px; font-family: 'Press Start 2P', monospace; color: var(--gold); min-height: 44px; }
+        .puzzle-board { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+        .btn-row { display: flex; gap: 10px; }
+        .btn-row .btn { flex: 1; }
+        .odd-grid { display: grid; gap: 10px; justify-content: center; }
+        .odd-grid.cols-3 { grid-template-columns: repeat(3, 84px); }
+        .odd-grid.cols-4 { grid-template-columns: repeat(4, 62px); }
+        .odd-cell {
+            border: 3px solid #5a5a8a; border-radius: 8px; background: rgba(0,0,0,0.35);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.5); padding: 0; transition: transform 0.1s;
+        }
+        .odd-grid.cols-3 .odd-cell { width: 84px; height: 84px; font-size: 40px; }
+        .odd-grid.cols-4 .odd-cell { width: 62px; height: 62px; font-size: 28px; }
+        .odd-cell:active { transform: translateY(2px); }
         .slot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
         .slot-card {
-            display: flex; flex-direction: column; align-items: center; gap: 2px;
-            padding: 12px 8px; background: rgba(30, 41, 59, 0.9);
-            border: 2px dashed #475569; border-radius: 14px;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            padding: 12px 8px; background: rgba(20, 22, 56, 0.92);
+            border: 3px dashed #4a4a70; border-radius: 8px;
             color: var(--text); cursor: pointer; transition: all 0.2s;
+            font-family: 'Press Start 2P', monospace;
         }
         .slot-card.filled { border-style: solid; border-color: #64748b; }
         .slot-card.selected { border-color: var(--gold); box-shadow: 0 0 20px var(--gold-glow); }
-        .s-icon { font-size: 26px; }
-        .s-name { font-size: 13px; font-weight: 600; }
-        .s-lvl { font-size: 11px; color: #60a5fa; }
-        .section-label { font-size: 14px; color: var(--text-muted); margin: 18px 0 8px; text-align: center; }
+        .s-icon { font-size: 24px; }
+        .s-name { font-size: 8px; line-height: 1.5; text-align: center; }
+        .s-lvl { font-size: 7px; color: #93c5fd; }
+        .section-label { font-size: 9px; color: var(--text-muted); margin: 16px 0 10px; text-align: center; }
         .owned-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
         .owned-row {
             display: flex; align-items: center; gap: 12px; width: 100%;
-            padding: 10px 12px; background: rgba(30, 41, 59, 0.9);
-            border: 2px solid #475569; border-radius: 12px;
+            padding: 10px 12px; background: rgba(20, 22, 56, 0.92);
+            border: 3px solid #4a4a70; border-radius: 8px;
             color: var(--text); cursor: pointer; text-align: left;
+            font-family: 'Press Start 2P', monospace;
         }
         .owned-row.equipped { border-color: var(--green); }
-        .o-icon { font-size: 24px; flex-shrink: 0; }
-        .o-body { display: flex; flex-direction: column; flex: 1; }
-        .o-body small { color: var(--text-muted); font-size: 12px; }
-        .o-lvl { font-size: 12px; color: var(--gold); white-space: nowrap; }
+        .o-icon { font-size: 22px; flex-shrink: 0; }
+        .o-body { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+        .o-body strong { font-size: 9px; line-height: 1.4; }
+        .o-body small { color: var(--text-muted); font-size: 11px; font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.35; }
+        .o-lvl { font-size: 7px; color: var(--gold); white-space: nowrap; }
         .end-screen { align-items: center; justify-content: center; text-align: center; padding: 40px 20px; }
-        .end-icon { font-size: 80px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+        .end-icon { font-size: 72px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
         .hidden { display: none !important; }
         .items-center { align-items: center; }
         .justify-center { justify-content: center; }
@@ -361,11 +449,11 @@
         .w-full { width: 100%; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #3a3a5c; }
         @media (max-height: 700px) {
             #game-container { height: 98vh; }
-            .starter-icon { width: 60px; height: 60px; }
-            .enemy-visual { width: 100px; height: 100px; }
+            .pk-sprite { width: 88px; height: 88px; font-size: 50px; }
+            .pk-sprite.boss { width: 104px; height: 104px; font-size: 64px; }
         }
     </style>
 </head>
@@ -385,64 +473,62 @@
             </div>
         </div>
         <div class="floor-indicator">
-            Floor <span class="floor-num" id="floor-num">1</span>/<span id="floor-max">10</span>
+            FLOOR <span class="floor-num" id="floor-num">1</span>/<span id="floor-max">10</span>
         </div>
     </div>
 
     <!-- SCREEN: START -->
     <div class="screen active" id="screen-start">
-        <img src="images/forest-bg-1.jpg" class="bg-image" alt="">
+        <canvas class="bg-canvas" id="bg-start"></canvas>
         <div class="content-overlay">
-            <h1>🐉 Monster Quest</h1>
-            <p class="subtitle">Choose your companion and conquer the dungeon!</p>
+            <h1>MONSTER<br>QUEST</h1>
+            <p class="subtitle">Choose your partner and conquer the dungeon!</p>
             <div class="starter-grid" id="starter-grid"></div>
             <button class="btn btn-gold w-full mt-4" id="start-btn" disabled onclick="Game.startAdventure()">
-                ⚔️ Begin Adventure
+                ⚔️ BEGIN ADVENTURE
             </button>
+            <button class="btn w-full mt-4" onclick="Game.importSaveClick()">📂 LOAD SAVED RUN</button>
         </div>
     </div>
 
     <!-- SCREEN: MAP -->
     <div class="screen" id="screen-map">
-        <img src="images/dungeon-bg-1.jpg" class="bg-image" alt="" id="map-bg">
+        <canvas class="bg-canvas" id="map-bg"></canvas>
         <div class="content-overlay">
             <h2 id="map-title">Choose Your Path</h2>
             <p class="subtitle" id="map-subtitle">Where will you go?</p>
             <div class="map-container" id="path-container"></div>
-            <button class="btn w-full" onclick="Game.openLoadout()">🎒 Loadout</button>
+            <button class="btn w-full" onclick="Game.openLoadout()">🎒 LOADOUT</button>
         </div>
     </div>
 
     <!-- SCREEN: LOADOUT -->
     <div class="screen" id="screen-loadout">
-        <img src="images/dungeon-bg-1.jpg" class="bg-image" alt="">
+        <canvas class="bg-canvas" id="bg-loadout"></canvas>
         <div class="content-overlay">
-            <h2>🎒 Loadout</h2>
+            <h2>🎒 LOADOUT</h2>
             <p class="subtitle" id="loadout-msg">Tap a slot, then tap an ability to equip it.</p>
             <div class="slot-grid" id="slot-grid"></div>
-            <div class="section-label">Your Abilities</div>
+            <div class="section-label">YOUR ABILITIES</div>
             <div class="owned-list" id="owned-list"></div>
-            <button class="btn btn-gold w-full mt-4" onclick="Game.closeLoadout()">✅ Done</button>
+            <button class="btn btn-gold w-full mt-4" onclick="Game.closeLoadout()">✅ DONE</button>
         </div>
     </div>
 
     <!-- SCREEN: BATTLE -->
     <div class="screen" id="screen-battle">
-        <img src="images/dungeon-bg-2.jpg" class="bg-image" alt="" id="battle-bg">
+        <canvas class="bg-canvas" id="battle-bg"></canvas>
         <div class="battle-arena">
-            <div class="enemy-section">
-                <div class="enemy-intent" id="enemy-intent">
-                    <span>👀</span> <span id="intent-text">Enemy is thinking...</span>
-                </div>
-                <div class="enemy-visual" id="enemy-visual">
-                    <img src="images/fire-monster-1.jpg" alt="Enemy" id="enemy-img">
-                </div>
-                <div style="text-align: center;">
-                    <strong id="enemy-name">Enemy</strong>
-                </div>
-                <div class="enemy-hp">
-                    <div class="enemy-hp-fill" id="enemy-hp-fill" style="width: 100%"></div>
-                    <div class="hp-text" id="enemy-hp-text">30/30</div>
+            <div class="enemy-intent" id="enemy-intent">
+                <span id="intent-icon">👀</span> <span id="intent-text">Enemy is thinking...</span>
+            </div>
+
+            <div class="pk-row enemy-row">
+                <div class="pk-sprite float" id="enemy-visual"><span id="enemy-emoji">🟢</span></div>
+                <div class="pk-plate">
+                    <div class="pk-plate-top"><strong id="enemy-name">Enemy</strong><span class="pk-lvl" id="enemy-lvl">Lv1</span></div>
+                    <div class="pk-hp-track"><span class="hp-tag">HP</span><div class="pk-hp-rail"><div class="pk-hp-fill" id="enemy-hp-fill"></div></div></div>
+                    <div class="pk-hp-nums" id="enemy-hp-text">16/16</div>
                 </div>
             </div>
 
@@ -450,8 +536,20 @@
                 Battle Start! Choose your action!
             </div>
 
-            <div class="player-section">
-                <div class="energy-bar" id="energy-bar"></div>
+            <div class="player-battle">
+                <div class="pk-row player-row">
+                    <div class="pk-plate player-plate">
+                        <div class="pk-plate-top"><strong id="player-name">Ember</strong><span class="pk-lvl" id="player-lvl">Lv1</span></div>
+                        <div class="pk-hp-track"><span class="hp-tag">HP</span><div class="pk-hp-rail"><div class="pk-hp-fill" id="player-hp-fill"></div></div></div>
+                        <div class="pk-hp-nums" id="player-hp-text">30/30</div>
+                    </div>
+                    <div class="pk-sprite small" id="player-sprite">🔥</div>
+                </div>
+                <div class="what-will" id="what-will">What will EMBER do?</div>
+                <div class="battle-extras">
+                    <div class="potion-slots" id="potion-bar"></div>
+                    <div class="energy-bar" id="energy-bar"></div>
+                </div>
                 <div class="action-grid" id="action-grid"></div>
             </div>
         </div>
@@ -459,7 +557,7 @@
 
     <!-- SCREEN: PUZZLE -->
     <div class="screen" id="screen-puzzle">
-        <img src="images/puzzle-bg-1.jpg" class="bg-image" alt="">
+        <canvas class="bg-canvas" id="bg-puzzle"></canvas>
         <div class="content-overlay">
             <h2 id="puzzle-title">🔮 Magic Seal</h2>
             <p class="subtitle" id="puzzle-instruction">Watch the pattern...</p>
@@ -473,7 +571,7 @@
                 </div>
                 <div class="hidden" id="count-container">
                     <div class="count-display" id="count-display"></div>
-                    <div class="number-pad" id="number-pad">
+                    <div class="number-pad" id="number-pad" style="margin-top: 16px;">
                         <button class="num-btn" onclick="Game.countInput(1)">1</button>
                         <button class="num-btn" onclick="Game.countInput(2)">2</button>
                         <button class="num-btn" onclick="Game.countInput(3)">3</button>
@@ -483,6 +581,9 @@
                         <button class="num-btn" onclick="Game.countInput(7)">7</button>
                         <button class="num-btn" onclick="Game.countInput(8)">8</button>
                         <button class="num-btn" onclick="Game.countInput(9)">9</button>
+                        <button class="num-btn" onclick="Game.countInput(0)">0</button>
+                        <button class="num-btn" onclick="Game.countClear()">C</button>
+                        <button class="num-btn" onclick="Game.countSubmit()">✔</button>
                     </div>
                 </div>
             </div>
@@ -491,13 +592,11 @@
 
     <!-- SCREEN: REWARD -->
     <div class="screen" id="screen-reward">
-        <img src="images/reward-bg-1.jpg" class="bg-image" alt="">
+        <canvas class="bg-canvas" id="bg-reward"></canvas>
         <div class="content-overlay items-center justify-center">
             <div class="reward-card">
-                <div class="reward-icon">
-                    <img src="images/treasure-1.jpg" alt="Treasure" id="reward-img">
-                </div>
-                <h2 id="reward-title">🎁 Treasure Found!</h2>
+                <div class="reward-icon">🎁</div>
+                <h2 id="reward-title">Treasure Found!</h2>
                 <p class="subtitle" id="reward-desc">Choose your upgrade:</p>
                 <div class="upgrade-options" id="upgrade-options"></div>
             </div>
@@ -506,53 +605,207 @@
 
     <!-- SCREEN: VICTORY -->
     <div class="screen end-screen" id="screen-victory">
-        <img src="images/boss-bg-1.jpg" class="bg-image" alt="">
+        <canvas class="bg-canvas" id="bg-victory"></canvas>
         <div class="content-overlay items-center justify-center">
             <div class="end-icon">🏆</div>
-            <h1>Victory!</h1>
-            <p class="subtitle">You defeated the Dungeon Lord!</p>
-            <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 16px; margin: 20px 0; width: 100%;">
+            <h1>VICTORY!</h1>
+            <p class="subtitle" id="victory-msg">You defeated the final boss!</p>
+            <div style="background: rgba(0,0,0,0.55); padding: 20px; border: 3px solid #3a3a5c; margin: 20px 0; width: 100%;">
                 <div style="display: flex; justify-content: space-around; text-align: center;">
                     <div>
-                        <div style="font-size: 32px;">⚔️</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--gold);" id="final-floor">10</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">Floors</div>
+                        <div style="font-size: 26px;">⚔️</div>
+                        <div style="font-size: 16px; font-weight: bold; color: var(--gold); margin-top: 6px;" id="final-floor">10</div>
+                        <div style="font-size: 7px; color: var(--text-muted); margin-top: 4px;">FLOORS</div>
                     </div>
                     <div>
-                        <div style="font-size: 32px;">❤️</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--green);" id="final-hp">20</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">HP Left</div>
+                        <div style="font-size: 26px;">❤️</div>
+                        <div style="font-size: 16px; font-weight: bold; color: var(--green); margin-top: 6px;" id="final-hp">20</div>
+                        <div style="font-size: 7px; color: var(--text-muted); margin-top: 4px;">HP LEFT</div>
                     </div>
                     <div>
-                        <div style="font-size: 32px;">⭐</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--blue);" id="final-power">10</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">Power</div>
+                        <div style="font-size: 26px;">⭐</div>
+                        <div style="font-size: 16px; font-weight: bold; color: var(--blue); margin-top: 6px;" id="final-power">10</div>
+                        <div style="font-size: 7px; color: var(--text-muted); margin-top: 4px;">POWER</div>
                     </div>
                 </div>
             </div>
-            <button class="btn btn-gold w-full" onclick="Game.reset()">🔄 Play Again</button>
+            <button class="btn btn-gold w-full" onclick="Game.reset()">🔄 PLAY AGAIN</button>
         </div>
     </div>
 
     <!-- SCREEN: GAME OVER -->
     <div class="screen end-screen" id="screen-gameover">
-        <img src="images/dungeon-bg-3.jpg" class="bg-image" alt="">
+        <canvas class="bg-canvas" id="bg-gameover"></canvas>
         <div class="content-overlay items-center justify-center">
             <div class="end-icon">💀</div>
-            <h1 style="color: var(--red);">Defeated...</h1>
+            <h1 style="color: var(--poke-red);">DEFEATED...</h1>
             <p class="subtitle">The dungeon claims another hero.</p>
-            <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 16px; margin: 20px 0; width: 100%; text-align: center;">
-                <div style="font-size: 14px; color: var(--text-muted);">You reached</div>
-                <div style="font-size: 48px; font-weight: bold; color: var(--gold);" id="death-floor">1</div>
-                <div style="font-size: 14px; color: var(--text-muted);">Floor</div>
+            <div style="background: rgba(0,0,0,0.55); padding: 20px; border: 3px solid #3a3a5c; margin: 20px 0; width: 100%; text-align: center;">
+                <div style="font-size: 8px; color: var(--text-muted);">YOU REACHED</div>
+                <div style="font-size: 34px; font-weight: bold; color: var(--gold); margin: 10px 0;" id="death-floor">1</div>
+                <div style="font-size: 8px; color: var(--text-muted);">FLOOR</div>
             </div>
-            <button class="btn btn-gold w-full" onclick="Game.reset()">🔄 Try Again</button>
+            <button class="btn btn-gold w-full" onclick="Game.reset()">🔄 TRY AGAIN</button>
         </div>
     </div>
 
 </div>
 
 <script>
+// ================= PIXEL BACKGROUND GENERATOR =================
+// Draws pixel-art scenes (dungeon bricks, forests, castles, boss lairs,
+// treasure vaults) directly onto canvases - no image files needed!
+window.PixelBG = {
+    W: 66, H: 112,
+    draw(scene, canvasId) {
+        const c = document.getElementById(canvasId);
+        if (!c) return;
+        c.width = this.W;
+        c.height = this.H;
+        const ctx = c.getContext('2d');
+        let seed = Math.floor(Math.random() * 2147483647);
+        const R = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+        const P = (x, y, w, h, col, a) => {
+            if (a !== undefined) ctx.globalAlpha = a;
+            ctx.fillStyle = col;
+            ctx.fillRect(Math.floor(x), Math.floor(y), Math.round(w), Math.round(h));
+            if (a !== undefined) ctx.globalAlpha = 1;
+        };
+        this[scene](ctx, R, P);
+    },
+
+    torch(P, x, y, col) {
+        P(x, y, 2, 7, '#6b4423');
+        P(x - 3, y - 6, 8, 8, col || '#ff8c00', 0.14);   // glow
+        P(x, y - 3, 3, 4, col || '#ff8c00');
+        P(x, y - 4, 2, 2, '#ffd23f');
+    },
+
+    tree(P, R, x, base) {
+        const h = 10 + Math.floor(R() * 14);
+        P(x, base - 3, 2, 3, '#3d2814');
+        for (let i = 0; i < h; i++) {
+            const w = Math.max(1, Math.floor(i * 1.3));
+            P(x + 1 - w / 2, base - 3 - i, w, 1, i > h * 0.7 ? '#2f6b2f' : '#1f4d20');
+        }
+    },
+
+    nightSky(P, R) {
+        P(0, 0, 66, 112, '#0b1030');
+        P(0, 0, 66, 22, '#12184a');
+        P(0, 22, 66, 14, '#0e1440');
+        for (let i = 0; i < 45; i++) {
+            P(Math.floor(R() * 66), Math.floor(R() * 70), 1, 1, '#fff', 0.2 + R() * 0.6);
+        }
+        // moon
+        P(50, 6, 9, 9, '#f2eecb');
+        P(50, 6, 2, 2, '#0b1030'); P(57, 6, 2, 2, '#0b1030');
+        P(50, 13, 2, 2, '#0b1030'); P(57, 13, 2, 2, '#0b1030');
+        P(52, 9, 2, 2, '#d8d3a8');
+    },
+
+    ground(P, R) {
+        P(0, 94, 66, 18, '#182a14');
+        P(0, 94, 66, 2, '#223a1c');
+        for (let i = 0; i < 14; i++) P(Math.floor(R() * 64), 96 + Math.floor(R() * 14), 2, 1, '#223a1c');
+    },
+
+    dungeon(ctx, R, P) {
+        P(0, 0, 66, 112, '#241a35');
+        for (let y = 0; y < 100; y += 10) {
+            const off = (y / 10) % 2 ? 6 : 0;
+            for (let x = -8; x < 70; x += 12) {
+                const r = R();
+                const col = r < 0.12 ? '#2c2040' : (r < 0.6 ? '#3a2b52' : '#332549');
+                P(x + off, y, 11, 9, col);
+                P(x + off, y, 11, 2, '#443160');
+            }
+        }
+        for (let i = 0; i < 5; i++) P(Math.floor(R() * 60), Math.floor(R() * 92), 2, 1, '#191126');
+        this.torch(P, 10, 30);
+        this.torch(P, 54, 42);
+        this.torch(P, 32, 62, '#ff5a2a');
+        P(0, 100, 66, 12, '#150f20');
+        for (let x = 0; x < 66; x += 8) P(x, 100, 1, 12, '#221835');
+    },
+
+    forest(ctx, R, P) {
+        this.nightSky(P, R);
+        // mountains
+        const mt = (cx, h) => {
+            for (let i = 0; i < h; i++) {
+                const w = i * 2 + 1;
+                P(cx - (w - 1) / 2, 88 - i, w, 1, i > h - 5 ? '#283368' : '#1a2350');
+            }
+        };
+        mt(8, 26); mt(30, 34); mt(54, 22);
+        // treeline
+        for (let x = 0; x < 66; x += 7) this.tree(P, R, x, 94);
+        this.ground(P, R);
+    },
+
+    castle(ctx, R, P) {
+        this.nightSky(P, R);
+        // castle keep
+        P(16, 50, 34, 44, '#3d3a5c');
+        for (let x = 16; x < 50; x += 4) P(x, 46, 3, 5, '#3d3a5c');
+        // towers
+        [8, 46].forEach(tx => {
+            P(tx, 34, 12, 60, '#474366');
+            for (let i = 0; i < 6; i++) P(tx + i, 27 + i, 12 - i * 2, 1, '#5a3b6e');
+            P(tx + 5, 42, 3, 5, '#ffd23f');
+        });
+        // windows + gate
+        P(22, 58, 3, 5, '#ffd23f'); P(36, 58, 3, 5, '#ffd23f');
+        P(22, 68, 3, 5, '#ffd23f'); P(36, 68, 3, 5, '#ffd23f');
+        P(28, 76, 10, 18, '#241a35');
+        P(30, 72, 6, 4, '#241a35');
+        this.torch(P, 24, 82); this.torch(P, 38, 82);
+        // path + trees
+        P(29, 94, 8, 18, '#4a3a2a');
+        this.tree(P, R, 2, 94); this.tree(P, R, 58, 94);
+        this.ground(P, R);
+    },
+
+    boss(ctx, R, P) {
+        P(0, 0, 66, 112, '#170510');
+        P(13, 20, 40, 60, '#dc2626', 0.14);
+        P(20, 30, 26, 40, '#dc2626', 0.16);
+        // pillars
+        [2, 54].forEach(px => {
+            P(px, 0, 10, 100, '#3a2233');
+            for (let y = 10; y < 100; y += 12) P(px, y, 10, 2, '#4d2e44');
+            P(px - 2, 0, 14, 4, '#55334c');
+        });
+        // skull emblem
+        P(29, 14, 8, 7, '#e5e7eb');
+        P(31, 16, 2, 2, '#170510'); P(34, 16, 2, 2, '#170510');
+        P(31, 21, 1, 2, '#e5e7eb'); P(35, 21, 1, 2, '#e5e7eb');
+        // red torches
+        this.torch(P, 7, 30, '#ff2a2a');
+        this.torch(P, 55, 44, '#ff2a2a');
+        P(0, 100, 66, 12, '#2a0f1a');
+        for (let x = 0; x < 66; x += 8) P(x, 100, 1, 12, '#33131f');
+    },
+
+    treasure(ctx, R, P) {
+        P(0, 0, 66, 112, '#2b1d12');
+        for (let y = 0; y < 100; y += 10) P(0, y, 66, 1, '#3a2a1a');
+        for (let i = 0; i < 4; i++) P(Math.floor(R() * 60), 10 + Math.floor(R() * 70), 8, 4, '#241708', 0.35);
+        // gold mound
+        const mound = [[3, 110, 60], [10, 106, 46], [18, 103, 30], [24, 101, 18]];
+        mound.forEach(([x, y, w]) => { P(x, y, w, 112 - y, '#d4a017'); P(x, y, w, 1, '#f5c542'); });
+        // chest
+        P(22, 82, 22, 6, '#8f5a26');
+        P(24, 88, 18, 10, '#7a4a1f');
+        P(24, 91, 18, 2, '#f5c542');
+        P(32, 86, 2, 12, '#f5c542');
+        // sparkles
+        for (let i = 0; i < 10; i++) P(Math.floor(R() * 60) + 3, 80 + Math.floor(R() * 26), 1, 1, '#fff', 0.6 + R() * 0.4);
+    }
+};
+
+// ================= GAME =================
 window.Game = {
     MAX_LEVEL: 3,
     state: null,
@@ -563,25 +816,60 @@ window.Game = {
         burst:  { name: 'Flame Burst', icon: '🔥', kind: 'attack', cost: 2, mult: 1, flat: 3, lvlBonus: 2, learnable: true, desc: 'A fiery blast.', upText: '+2 damage' },
         heavy:  { name: 'Power Strike', icon: '💥', kind: 'attack', cost: 3, mult: 2, flat: 0, lvlBonus: 2, learnable: true, desc: 'A heavy blow at double power.', upText: '+2 damage' },
         double: { name: 'Double Strike', icon: '⚔️', kind: 'attack', cost: 2, mult: 0.8, flat: 0, lvlBonus: 1, hits: 2, learnable: true, desc: 'Two quick hits in one action.', upText: '+1 damage per hit' },
-        drain:  { name: 'Life Drain', icon: '🩸', kind: 'drain', cost: 2, mult: 1, flat: 1, lvlBonus: 1, learnable: true, desc: 'Hit hard and heal for half the damage dealt.', upText: '+1 damage' },
+        drain:  { name: 'Life Drain', icon: '🩸', kind: 'drain', cost: 2, mult: 1, flat: 0, lvlBonus: 1, learnable: true, desc: 'Hit and restore a little HP.', upText: '+1 damage & healing' },
         heal:   { name: 'Healing Wave', icon: '💧', kind: 'heal', cost: 2, amount: 6, lvlBonus: 3, learnable: true, desc: 'Restore HP.', upText: '+3 healing' },
-        armor:  { name: 'Thorn Armor', icon: '🌿', kind: 'armor', cost: 2, amount: 2, lvlBonus: 1, learnable: true, desc: 'Raise defense for the rest of the battle.', upText: '+1 defense' }
+        armor:  { name: 'Thorn Armor', icon: '🌵', kind: 'armor', cost: 2, amount: 2, lvlBonus: 1, learnable: true, desc: 'Reflect damage back at attackers.', upText: '+1 reflected damage' },
+        stun:   { name: 'Thunder Clash', icon: '🌩️', kind: 'stun', cost: 2, mult: 0.8, flat: 1, lvlBonus: 1, learnable: true, desc: 'Hit and the enemy loses its next turn!', upText: '+1 damage' },
+        poison: { name: 'Venom Bite', icon: '🐍', kind: 'poison', cost: 2, mult: 0.5, flat: 1, lvlBonus: 1, learnable: true, desc: 'Poisons the enemy: 3 dmg every turn.', upText: '+1 poison damage/turn' },
+        weaken: { name: 'Hypnotic Gaze', icon: '🌀', kind: 'weaken', cost: 1, mult: 0.5, flat: 1, lvlBonus: 1, learnable: true, desc: 'Hit; enemy deals half damage on its next turn.', upText: '+1 damage' },
+        execute:{ name: 'Reaper Cut', icon: '🗡️', kind: 'execute', cost: 2, mult: 1, flat: 2, lvlBonus: 1, execBonus: 3, learnable: true, desc: 'Bonus damage that grows as enemy HP drops.', upText: '+3 max bonus dmg' }
     },
 
+    // Signature moves stay exclusive to starters - they are NOT offered
+    // as rewards (Learn Flame Burst / Double Strike removed from the pool).
+    SIGNATURE_IDS: ['burst', 'double'],
+
+    // ---------- POTIONS ----------
+    // Consumed on use, do NOT cost a turn or energy, max 2 carried.
+    potions: {
+        minorHeal: { name: 'Healing Draught', icon: '🧪', desc: 'Restore 10 HP, instantly.', apply: p => { const h = Math.min(10, p.stats.maxHp - p.stats.hp); p.stats.hp += h; return 'Restored ' + h + ' HP!'; } },
+        bigHeal:   { name: 'Elixir of Life', icon: '⚗️', desc: 'Restore 25 HP, instantly.', apply: p => { const h = Math.min(25, p.stats.maxHp - p.stats.hp); p.stats.hp += h; return 'Restored ' + h + ' HP!'; } },
+        stoneSkin: { name: 'Stoneskin Brew', icon: '🪨', desc: 'Block 3 damage from every hit for this battle.', apply: p => { p.buffs.defense = (p.buffs.defense || 0) + 3; return 'Stoneskin! -3 damage from every hit this battle!'; } },
+        might:     { name: 'Might Tonic', icon: '🍺', desc: '+3 Power for the rest of this battle.', apply: p => { p.stats.power += 3; p.tempPower = (p.tempPower || 0) + 3; return 'Might surges! +3 Power this battle!'; } },
+        energy:    { name: 'Star Candy', icon: '🍬', desc: 'Instantly refill all energy.', apply: p => { p.energy = p.maxEnergy; return 'Energy fully restored!'; } },
+        bomb:      { name: 'Bomb', icon: '💣', desc: 'Throw for 12 damage, instantly.', apply: () => { const e = this.state.currentEnemy; e.hp -= 12; return 'BOOM! 12 damage to ' + e.name + '!'; } }
+    },
+    POTION_MAX: 2,
+
     starters: [
-        { id: 'ember', name: 'Ember', emoji: '🔥', img: 'images/fire-monster-1.jpg', desc: 'A fiery spirit. High damage.', stats: { hp: 30, maxHp: 30, power: 4, defense: 2 }, signature: 'burst' },
-        { id: 'aqua', name: 'Aqua', emoji: '💧', img: 'images/water-monster-2.jpg', desc: 'A water guardian. Balanced.', stats: { hp: 36, maxHp: 36, power: 3, defense: 2 }, signature: 'heal' },
-        { id: 'terra', name: 'Terra', emoji: '🌿', img: 'images/nature-monster-1.jpg', desc: 'A nature golem. Tough.', stats: { hp: 42, maxHp: 42, power: 3, defense: 3 }, signature: 'armor' }
+        { id: 'ember', name: 'Ember', emoji: '🔥', desc: 'A fiery spirit. High damage.', stats: { hp: 30, maxHp: 30, power: 4, defense: 2 }, signature: 'burst' },
+        { id: 'aqua', name: 'Aqua', emoji: '💧', desc: 'A water guardian. Balanced.', stats: { hp: 36, maxHp: 36, power: 3, defense: 2 }, signature: 'heal' },
+        { id: 'terra', name: 'Terra', emoji: '🌿', desc: 'A nature golem. Tough.', stats: { hp: 42, maxHp: 42, power: 3, defense: 3 }, signature: 'armor' },
+        { id: 'volt', name: 'Volt', emoji: '⚡', desc: 'An electric sprite. Glass cannon!', stats: { hp: 28, maxHp: 28, power: 5, defense: 1 }, signature: 'double' }
     ],
+
+    // Emoji-based monsters. Power values buffed (+1 normal, +2 elite).
     enemies: [
-        { name: 'Slime', img: 'images/fire-monster-3.jpg', hp: 16, power: 2, type: 'normal' },
-        { name: 'Goblin', img: 'images/shadow-monster-1.jpg', hp: 20, power: 3, type: 'normal' },
-        { name: 'Wolf', img: 'images/nature-monster-2.jpg', hp: 22, power: 3, type: 'normal' },
-        { name: 'Skeleton', img: 'images/shadow-monster-2.jpg', hp: 26, power: 3, type: 'elite' },
-        { name: 'Ogre', img: 'images/fire-monster-2.jpg', hp: 32, power: 3, type: 'elite' },
-        { name: 'Dark Mage', img: 'images/shadow-monster-3.jpg', hp: 24, power: 4, type: 'elite' }
+        { name: 'Slime', emoji: '🟢', hp: 16, power: 3, type: 'normal' },
+        { name: 'Cave Rat', emoji: '🐀', hp: 18, power: 3, type: 'normal' },
+        { name: 'Dire Bat', emoji: '🦇', hp: 18, power: 3, type: 'normal' },
+        { name: 'Goblin', emoji: '👺', hp: 20, power: 4, type: 'normal' },
+        { name: 'Wild Wolf', emoji: '🐺', hp: 22, power: 4, type: 'normal' },
+        { name: 'Spore Shroom', emoji: '🍄', hp: 20, power: 4, type: 'normal' },
+        { name: 'Skeleton', emoji: '💀', hp: 26, power: 5, type: 'elite' },
+        { name: 'Zombie Brute', emoji: '🧟', hp: 28, power: 5, type: 'elite' },
+        { name: 'Scorpion King', emoji: '🦂', hp: 28, power: 5, type: 'elite' },
+        { name: 'Ogre', emoji: '👹', hp: 32, power: 5, type: 'elite' },
+        { name: 'Troll', emoji: '🗿', hp: 34, power: 6, type: 'elite' },
+        { name: 'Dark Mage', emoji: '🧙', hp: 24, power: 6, type: 'elite' }
     ],
-    boss: { name: 'Dungeon Lord', img: 'images/boss-1.jpg', hp: 70, power: 5, type: 'boss' },
+    // Exciting bosses - one is chosen at random each run!
+    bosses: [
+        { name: 'Emberwyrm the Dragon', emoji: '🐲', hp: 75, power: 7, type: 'boss' },
+        { name: 'The Lich Lord', emoji: '☠️', hp: 70, power: 7, type: 'boss' },
+        { name: 'Demon King Malzor', emoji: '👿', hp: 72, power: 7, type: 'boss' },
+        { name: 'The Void Kraken', emoji: '🦑', hp: 74, power: 7, type: 'boss' }
+    ],
 
     newState() {
         return {
@@ -594,6 +882,7 @@ window.Game = {
 
     init() {
         this.state = this.newState();
+        PixelBG.draw('castle', 'bg-start');
         this.renderStarters();
         document.getElementById('floor-max').textContent = this.state.maxFloor;
     },
@@ -602,10 +891,10 @@ window.Game = {
         const grid = document.getElementById('starter-grid');
         grid.innerHTML = this.starters.map(s => `
             <div class="starter-card" onclick="Game.selectStarter('${s.id}')" id="starter-${s.id}">
-                <div class="starter-icon"><img src="${s.img}" alt="${s.name}"></div>
+                <div class="starter-icon">${s.emoji}</div>
                 <div class="starter-info">
                     <h3>${s.emoji} ${s.name}</h3>
-                    <p>${s.desc}</p>
+                    <p class="soft">${s.desc}</p>
                     <p class="signature">Signature: ${this.abilities[s.signature].name}</p>
                     <div class="stat-badges">
                         <span class="badge">❤️ ${s.stats.hp}</span>
@@ -627,11 +916,13 @@ window.Game = {
         const s = this.state.selectedStarter;
         this.state.player = {
             name: s.name,
-            img: s.img,
+            emoji: s.emoji,
             stats: { ...s.stats },
             energy: 3,
             maxEnergy: 3,
-            buffs: { defense: 0 },
+            buffs: { defense: 0, thorns: 0 },
+            potions: [],   // carried potions, max 2
+            tempPower: 0,  // battle-only power boosts (Might Tonic)
             owned: { quick: { lvl: 1 }, guard: { lvl: 1 }, [s.signature]: { lvl: 1 } },
             loadout: ['quick', 'guard', s.signature, null]
         };
@@ -645,13 +936,13 @@ window.Game = {
 
     updateStatusBar() {
         const p = this.state.player;
-        document.getElementById('mini-avatar').innerHTML = '<img src="' + p.img + '" alt="">';
+        document.getElementById('mini-avatar').textContent = p.emoji;
         document.getElementById('floor-num').textContent = this.state.floor;
         const hpPct = Math.max(0, (p.stats.hp / p.stats.maxHp) * 100);
         document.getElementById('mini-hp').style.width = hpPct + '%';
         document.getElementById('mini-hp-text').textContent = Math.max(0, p.stats.hp) + '/' + p.stats.maxHp;
         const hpFill = document.getElementById('mini-hp');
-        if (hpPct > 50) hpFill.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+        if (hpPct > 50) hpFill.style.background = 'linear-gradient(90deg, #2fbf4f, #38d95c)';
         else if (hpPct > 25) hpFill.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
         else hpFill.style.background = 'linear-gradient(90deg, #ef4444, #f87171)';
     },
@@ -667,9 +958,8 @@ window.Game = {
         const container = document.getElementById('path-container');
         const floor = this.state.floor;
         const isBossFloor = floor >= this.state.maxFloor;
-        const bgs = ['images/dungeon-bg-1.jpg', 'images/forest-bg-2.jpg', 'images/dungeon-bg-2.jpg', 'images/forest-bg-3.jpg'];
-        document.getElementById('map-bg').src = isBossFloor ? 'images/boss-bg-2.jpg' : bgs[(floor - 1) % bgs.length];
-        document.getElementById('map-title').textContent = isBossFloor ? '⚠️ Final Chamber' : 'Floor ' + floor;
+        PixelBG.draw(isBossFloor ? 'boss' : (floor % 2 ? 'forest' : 'dungeon'), 'map-bg');
+        document.getElementById('map-title').textContent = isBossFloor ? '⚠️ FINAL CHAMBER' : 'FLOOR ' + floor;
         document.getElementById('map-subtitle').textContent = isBossFloor ? 'The Dungeon Lord awaits!' : 'Choose your path wisely...';
         const numPaths = isBossFloor ? 1 : (Math.random() > 0.5 ? 2 : 3);
         const paths = [];
@@ -722,14 +1012,21 @@ window.Game = {
 
     describeAbility(ab, lvl) {
         switch (ab.kind) {
-            case 'attack':
-            case 'drain': {
+            case 'attack': {
                 const total = this.attackDamage(ab, lvl) * (ab.hits || 1);
                 return ab.cost + ' Energy · ~' + total + ' dmg';
             }
+            case 'drain': {
+                const total = this.attackDamage(ab, lvl);
+                return ab.cost + ' Energy · ~' + total + ' dmg · heal ' + (1 + lvl);
+            }
+            case 'stun': return ab.cost + ' Energy · ~' + this.attackDamage(ab, lvl) + ' dmg + SKIP turn';
+            case 'poison': return ab.cost + ' Energy · poison ' + (2 + lvl) + '/turn';
+            case 'weaken': return ab.cost + ' Energy · ~' + this.attackDamage(ab, lvl) + ' dmg, enemy -50%';
+            case 'execute': return ab.cost + ' Energy · ~' + this.attackDamage(ab, lvl) + '+' + (ab.execBonus + lvl - 1) + ' vs low HP';
             case 'guard': return '+' + lvl + ' Energy';
             case 'heal': return ab.cost + ' Energy · +' + this.levelValue(ab, lvl) + ' HP';
-            case 'armor': return ab.cost + ' Energy · +' + this.levelValue(ab, lvl) + ' DEF';
+            case 'armor': return ab.cost + ' Energy · Reflect ' + this.levelValue(ab, lvl) + ' dmg';
         }
         return '';
     },
@@ -746,7 +1043,8 @@ window.Game = {
         const p = this.state.player;
         let enemy;
         if (isBoss) {
-            enemy = { ...this.boss, maxHp: this.boss.hp };
+            const base = this.bosses[Math.floor(Math.random() * this.bosses.length)];
+            enemy = { ...base, maxHp: base.hp, lvl: 10 + this.state.floor };
         } else {
             const pool = this.enemies.filter(e => e.type === (isElite ? 'elite' : 'normal'));
             const base = pool[Math.floor(Math.random() * pool.length)];
@@ -754,23 +1052,36 @@ window.Game = {
             const hpMult = 1 + (f - 1) * 0.08;
             const bonusPower = Math.floor((f - 1) / 3);
             const scaledHp = Math.floor(base.hp * hpMult);
-            enemy = { ...base, hp: scaledHp, maxHp: scaledHp, power: base.power + bonusPower };
+            enemy = { ...base, hp: scaledHp, maxHp: scaledHp, power: base.power + bonusPower, lvl: f + (isElite ? 3 : 0) };
         }
         this.state.currentEnemy = enemy;
         this.state.battleState = { playerTurn: true, defending: false, turns: 0 };
         this.state.isProcessing = false;
-        // Every battle starts with full energy
+        // Every battle starts with full energy; battle-only buffs reset
         p.energy = p.maxEnergy;
         p.buffs.defense = 0;
-        document.getElementById('enemy-img').src = enemy.img;
+        p.buffs.thorns = 0;
+        if (p.tempPower) {
+            p.stats.power -= p.tempPower;
+            p.tempPower = 0;
+        }
+        document.getElementById('enemy-emoji').textContent = enemy.emoji;
         document.getElementById('enemy-name').textContent = enemy.name;
-        document.getElementById('enemy-visual').classList.toggle('boss', isBoss);
-        const bgs = ['images/dungeon-bg-1.jpg', 'images/forest-bg-1.jpg', 'images/dungeon-bg-3.jpg'];
-        document.getElementById('battle-bg').src = isBoss ? 'images/boss-bg-3.jpg' : bgs[Math.floor(Math.random() * bgs.length)];
+        document.getElementById('enemy-lvl').textContent = 'Lv' + enemy.lvl;
+        document.getElementById('player-name').textContent = p.name;
+        document.getElementById('player-lvl').textContent = 'Lv' + this.state.floor;
+        document.getElementById('player-sprite').textContent = p.emoji;
+        document.getElementById('mini-avatar').textContent = p.emoji;
+        document.getElementById('what-will').textContent = 'What will ' + p.name.toUpperCase() + ' do?';
+        const visual = document.getElementById('enemy-visual');
+        visual.classList.toggle('boss', isBoss);
+        visual.classList.toggle('elite', isElite && !isBoss);
+        PixelBG.draw(isBoss ? 'boss' : (Math.random() < 0.5 ? 'dungeon' : 'forest'), 'battle-bg');
         this.renderActionGrid();
         this.updateBattleUI();
         this.showScreen('screen-battle');
-        this.log(enemy.name + ' appeared! Your turn!');
+        this.log(isBoss ? '💀 ' + enemy.name + ' has awoken! Your turn!' : enemy.name + ' appeared! Your turn!');
+        document.getElementById('intent-icon').textContent = '👀';
         document.getElementById('intent-text').textContent = 'Your turn! Choose an action!';
     },
 
@@ -784,6 +1095,44 @@ window.Game = {
             const lvl = p.owned[id].lvl;
             return '<button class="action-btn kind-' + ab.kind + '" id="slot-btn-' + i + '" onclick="Game.battleAction(' + i + ')"><span class="icon">' + ab.icon + '</span><span class="name">' + ab.name + '</span><span class="lvl">Lv ' + lvl + '</span><span class="cost" id="slot-cost-' + i + '"></span></button>';
         }).join('');
+        this.renderPotionBar();
+    },
+
+    // ---------- POTIONS UI + USE ----------
+    // Potions are instant: using one does NOT end your turn or cost energy.
+    renderPotionBar() {
+        const p = this.state.player;
+        const bar = document.getElementById('potion-bar');
+        if (!bar) return;
+        const potions = p.potions || [];
+        bar.innerHTML = Array.from({ length: this.POTION_MAX }, (_, i) => {
+            const id = potions[i];
+            if (!id) return '<button class="potion-slot empty" disabled>·</button>';
+            return '<button class="potion-slot" id="potion-' + i + '" title="' + this.potions[id].name + '" onclick="Game.usePotion(' + i + ')">' + this.potions[id].icon + '</button>';
+        }).join('');
+    },
+
+    usePotion(i) {
+        const s = this.state;
+        if (!s.battleState || !s.battleState.playerTurn || s.isProcessing) return;
+        const p = s.player;
+        const id = (p.potions || [])[i];
+        if (!id) return;
+        const potion = this.potions[id];
+        const result = potion.apply.call(this, p);
+        p.potions.splice(i, 1);
+        this.renderPotionBar();
+        this.updateBattleUI();
+        this.log('🧪 ' + potion.name + ' used! ' + result);
+        const e = s.currentEnemy;
+        if (e && e.hp <= 0) {
+            s.isProcessing = true;
+            s.battleState.playerTurn = false;
+            setTimeout(() => this.battleWin(), 800);
+            return;
+        }
+        // Small flash on player sprite for feedback
+        this.showDamage('player', 0, true);
     },
 
     updateBattleUI() {
@@ -791,13 +1140,24 @@ window.Game = {
         const e = this.state.currentEnemy;
         const canAct = this.state.battleState.playerTurn && !this.state.isProcessing;
         const ePct = Math.max(0, (e.hp / e.maxHp) * 100);
-        document.getElementById('enemy-hp-fill').style.width = ePct + '%';
+        const eFill = document.getElementById('enemy-hp-fill');
+        eFill.style.width = ePct + '%';
+        // Pokemon-style HP color: green -> yellow -> red
+        eFill.style.background = ePct > 50 ? 'var(--green)' : ePct > 20 ? '#f5c542' : '#ef4444';
         document.getElementById('enemy-hp-text').textContent = Math.max(0, e.hp) + '/' + e.maxHp;
+        const pHpPct = Math.max(0, (p.stats.hp / p.stats.maxHp) * 100);
+        const pFill = document.getElementById('player-hp-fill');
+        pFill.style.width = pHpPct + '%';
+        pFill.style.background = pHpPct > 50 ? 'var(--green)' : pHpPct > 20 ? '#f5c542' : '#ef4444';
+        document.getElementById('player-hp-text').textContent = Math.max(0, p.stats.hp) + '/' + p.stats.maxHp;
         const bar = document.getElementById('energy-bar');
         if (bar.children.length !== p.maxEnergy) {
             bar.innerHTML = Array.from({ length: p.maxEnergy }, () => '<div class="energy-orb"></div>').join('');
         }
         [...bar.children].forEach((orb, i) => orb.classList.toggle('full', i < p.energy));
+        const canUsePotion = canAct;
+        const potionSlots = document.querySelectorAll('.potion-slot:not(.empty)');
+        potionSlots.forEach(btn => btn.disabled = !canUsePotion);
         for (let i = 0; i < p.loadout.length; i++) {
             const btn = document.getElementById('slot-btn-' + i);
             const id = p.loadout[i];
@@ -823,7 +1183,7 @@ window.Game = {
         el.style.transform = 'translateX(-50%)';
         document.getElementById('screen-battle').appendChild(el);
         setTimeout(() => el.remove(), 1000);
-        const visual = document.getElementById(target === 'enemy' ? 'enemy-visual' : 'mini-avatar');
+        const visual = document.getElementById(target === 'enemy' ? 'enemy-visual' : 'player-sprite');
         const flash = document.createElement('div');
         flash.className = 'hit-flash';
         visual.appendChild(flash);
@@ -859,12 +1219,53 @@ window.Game = {
             }
             case 'drain': {
                 const total = this.attackDamage(ab, lvl);
-                const heal = Math.floor(total / 2);
+                // Nerf: heal is a small flat amount based on ability level,
+                // it no longer scales with Power (was half of all damage dealt).
+                const heal = 1 + lvl;
                 e.hp -= total;
                 p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
                 this.showDamage('enemy', total);
                 this.showDamage('player', heal, true);
                 msg = ab.icon + ' Life Drain! Dealt ' + total + ' and healed ' + heal + '!';
+                break;
+            }
+            case 'stun': {
+                const total = this.attackDamage(ab, lvl);
+                e.hp -= total;
+                s.battleState.stunned = true;
+                this.showDamage('enemy', total);
+                msg = ab.icon + ' Thunder Clash! Dealt ' + total + ' - ' + e.name + ' is stunned and loses its next turn!';
+                break;
+            }
+            case 'poison': {
+                const hit = this.attackDamage(ab, lvl);
+                const poisonPerTurn = 2 + lvl;
+                e.hp -= hit;
+                s.battleState.poison = Math.max(s.battleState.poison || 0, poisonPerTurn);
+                this.showDamage('enemy', hit);
+                msg = ab.icon + ' Venom Bite! Dealt ' + hit + ' - ' + e.name + ' is poisoned for ' + poisonPerTurn + ' dmg every turn!';
+                break;
+            }
+            case 'weaken': {
+                const total = this.attackDamage(ab, lvl);
+                e.hp -= total;
+                s.battleState.weakened = true;
+                this.showDamage('enemy', total);
+                msg = ab.icon + ' Hypnotic Gaze! Dealt ' + total + ' - ' + e.name + ' will deal half damage next turn!';
+                break;
+            }
+            case 'execute': {
+                const hpPct = Math.max(0, e.hp / e.maxHp);
+                // The lower the enemy HP, the bigger the bonus (up to execBonus at <=20% HP)
+                const bonus = hpPct <= 0.2 ? ab.execBonus + (lvl - 1)
+                    : hpPct <= 0.5 ? Math.ceil((ab.execBonus + (lvl - 1)) / 2)
+                    : 0;
+                const total = this.attackDamage(ab, lvl) + bonus;
+                e.hp -= total;
+                this.showDamage('enemy', total);
+                msg = bonus > 0
+                    ? ab.icon + ' Reaper Cut! A vicious blow for ' + total + ' damage (+' + bonus + ' execute bonus)!'
+                    : ab.icon + ' Reaper Cut! Dealt ' + total + ' damage. (Bonus grows as enemy weakens!)';
                 break;
             }
             case 'guard': {
@@ -881,9 +1282,11 @@ window.Game = {
                 break;
             }
             case 'armor': {
-                // Non-stacking: takes the higher of current and new value
-                p.buffs.defense = Math.max(p.buffs.defense, this.levelValue(ab, lvl));
-                msg = ab.icon + ' Thorn Armor! Defense is now +' + p.buffs.defense + ' for this battle!';
+                // Rework: Thorn Armor no longer grants defense (defense was too
+                // weak to matter). Instead it REFLECTS damage back at the enemy
+                // every time they hit you!
+                p.buffs.thorns = Math.max(p.buffs.thorns || 0, this.levelValue(ab, lvl));
+                msg = '🌵 Thorn Armor up! Attackers will take ' + p.buffs.thorns + ' damage back this battle!';
                 break;
             }
         }
@@ -907,37 +1310,75 @@ window.Game = {
         const p = s.player;
         const e = s.currentEnemy;
         const heavy = Math.random() > 0.7;
-        const dmg = heavy ? Math.floor(e.power * 1.5) : e.power;
-        const intentText = heavy
+        // Boss heavy hits are 1 point weaker than they would normally be
+        const dmg = heavy ? Math.floor(e.power * 1.5) - (e.type === 'boss' ? 1 : 0) : e.power;
+        document.getElementById('intent-icon').textContent = heavy ? '💥' : '⚔️';
+        document.getElementById('intent-text').textContent = heavy
             ? '💥 ' + e.name + ' is charging a heavy attack!'
             : '⚔️ ' + e.name + ' is preparing to attack...';
-        const msg = heavy ? e.name + ' unleashes a POWERFUL strike!' : e.name + ' attacks!';
-        document.getElementById('intent-text').textContent = intentText;
+        const baseMsg = heavy ? e.name + ' unleashes a POWERFUL strike!' : e.name + ' attacks!';
         setTimeout(() => {
+            // Stun: the enemy skips its attack entirely
+            if (s.battleState.stunned) {
+                s.battleState.stunned = false;
+                this.log('💤 ' + e.name + ' is stunned and cannot move!');
+                document.getElementById('intent-icon').textContent = '💤';
+                document.getElementById('intent-text').textContent = e.name + ' is stunned!';
+                s.battleState.playerTurn = true;
+                s.isProcessing = false;
+                s.battleState.turns++;
+                p.energy = Math.min(p.maxEnergy, p.energy + 1);
+                this.updateBattleUI();
+                return;
+            }
+            // Poison: ticks at the start of the enemy's turn, before it acts
+            if (s.battleState.poison > 0) {
+                e.hp -= s.battleState.poison;
+                this.showDamage('enemy', s.battleState.poison);
+                baseMsg = '☠️ Poison deals ' + s.battleState.poison + ' damage to ' + e.name + '! ' + baseMsg;
+            }
             let finalDmg = dmg;
-            let fullMsg = msg;
+            let fullMsg = baseMsg;
             if (s.battleState.defending) {
                 finalDmg = Math.max(1, Math.floor(dmg / 2));
                 s.battleState.defending = false;
                 fullMsg += ' (Guarded! Only ' + finalDmg + ' damage!)';
             }
-            finalDmg = Math.max(1, finalDmg - (p.stats.defense + p.buffs.defense));
+            if (s.battleState.weakened) {
+                s.battleState.weakened = false;
+                finalDmg = Math.max(1, Math.floor(finalDmg / 2));
+                fullMsg += ' (Hypnotized! Damage halved!)';
+            }
+            finalDmg = Math.max(1, finalDmg - (p.stats.defense + (p.buffs.defense || 0)));
             p.stats.hp -= finalDmg;
             this.showDamage('player', finalDmg);
-            this.log(fullMsg + ' You took ' + finalDmg + ' damage!');
+            fullMsg += ' You took ' + finalDmg + ' damage!';
+            // Thorn Armor reflects damage back at the attacker
+            if (p.buffs.thorns > 0) {
+                e.hp -= p.buffs.thorns;
+                this.showDamage('enemy', p.buffs.thorns);
+                fullMsg += ' 🌵 Thorn Armor reflected ' + p.buffs.thorns + ' damage!';
+            }
+            this.log(fullMsg);
             this.updateBattleUI();
             if (p.stats.hp <= 0) {
                 s.isProcessing = false;
                 setTimeout(() => this.gameOver(), 1000);
                 return;
             }
+            if (e.hp <= 0) {
+                s.isProcessing = false;
+                setTimeout(() => this.battleWin(), 800);
+                return;
+            }
             s.battleState.playerTurn = true;
             s.isProcessing = false;
-            // Slower passive energy regen: +1 every second player turn
+            // FIX for the zero-energy soft-lock: the player now ALWAYS regains
+            // +1 energy at the start of every turn, so you can never be stuck
+            // with 0 energy and no legal action (Guard costs 0 as well).
             s.battleState.turns++;
-            if (s.battleState.turns % 2 === 0) {
-                p.energy = Math.min(p.maxEnergy, p.energy + 1);
-            }
+            p.energy = Math.min(p.maxEnergy, p.energy + 1);
+            document.getElementById('intent-icon').textContent = '👀';
             document.getElementById('intent-text').textContent = 'Your turn! Choose an action!';
             this.updateBattleUI();
         }, 1000);
@@ -945,38 +1386,120 @@ window.Game = {
 
     battleWin() {
         const e = this.state.currentEnemy;
-        this.state.player.buffs.defense = 0;
+        const p = this.state.player;
+        p.buffs.defense = 0;
+        p.buffs.thorns = 0;
+        // Might Tonic power boost only lasts for the battle
+        if (p.tempPower) {
+            p.stats.power -= p.tempPower;
+            p.tempPower = 0;
+        }
+        // Give fights their own identity: battles are the reliable way to
+        // earn POTIONS (puzzles keep their heal + guaranteed ability reward).
         this.updateStatusBar();
         this.log('🎉 Victory!');
         setTimeout(() => {
             if (e.type === 'boss') {
                 this.victory();
             } else if (e.type === 'elite') {
-                this.showRewardPicker(4, () => this.finishNode(), 'An elite falls! Claim a strong reward.');
+                this.showRewardPicker(4, () => this.finishNode(), {
+                    desc: 'An elite falls! Claim a strong reward.',
+                    lootType: 'fight', guaranteedAbility: false
+                });
             } else {
-                this.showRewardPicker(3, () => this.finishNode(), 'Monster defeated! Choose one reward.');
+                this.showRewardPicker(3, () => this.finishNode(), {
+                    desc: 'Monster defeated! Choose one reward.',
+                    lootType: 'fight', guaranteedAbility: false
+                });
             }
         }, 1500);
     },
 
+    // ---------- SAVE / LOAD (export & import a JSON save file) ----------
+    exportSaveClick() {
+        const data = {
+            version: 1,
+            player: this.state.player,
+            floor: this.state.floor,
+            pathHistory: this.state.pathHistory
+        };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'monster-quest-save-floor' + this.state.floor + '.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    },
+
+    importSaveClick() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.onchange = () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const data = JSON.parse(reader.result);
+                    if (!data || !data.player || !data.floor) throw new Error('bad save');
+                    this.state = this.newState();
+                    this.state.player = data.player;
+                    this.state.floor = data.floor;
+                    this.state.pathHistory = data.pathHistory || [];
+                    // Safety: make sure potions array exists on old saves
+                    if (!Array.isArray(this.state.player.potions)) this.state.player.potions = [];
+                    document.getElementById('status-bar').classList.remove('hidden');
+                    this.updateStatusBar();
+                    this.showScreen('screen-map');
+                    this.generatePaths();
+                } catch (err) {
+                    alert('That does not look like a valid Monster Quest save file!');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    },
+
     gameOver() {
         document.getElementById('death-floor').textContent = this.state.floor;
+        PixelBG.draw('dungeon', 'bg-gameover');
         this.showScreen('screen-gameover');
     },
 
     victory() {
         const p = this.state.player;
+        const boss = this.state.currentEnemy;
         document.getElementById('final-floor').textContent = this.state.maxFloor;
         document.getElementById('final-hp').textContent = Math.max(0, p.stats.hp);
         document.getElementById('final-power').textContent = p.stats.power;
+        document.getElementById('victory-msg').textContent = 'You defeated ' + boss.name + '!';
+        PixelBG.draw('treasure', 'bg-victory');
         this.showScreen('screen-victory');
     },
 
     // ---------- PUZZLES ----------
+    // Puzzle types scale with floor:
+    //  Floors 1-3:  'math'    (simple sums) or 'pattern' (short sequence)
+    //  Floors 4-5:  'odd'     (odd emoji out) or 'math'
+    //  Floors 6-8:  'pattern' (the classic memory one) or 'odd'
+    //  Floors 9-10: 'memory'  (reverse the sequence) or 'equation'
+    puzzleTypesForFloor(f) {
+        if (f <= 3) return ['math', 'pattern'];
+        if (f <= 5) return ['odd', 'math'];
+        if (f <= 8) return ['pattern', 'odd'];
+        return ['memory', 'equation'];
+    },
 
     startPuzzle() {
-        const type = Math.random() > 0.5 ? 'pattern' : 'count';
-        this.state.puzzleState = { type: type, sequence: [], playerSequence: [], targetCount: 0, showing: false };
+        PixelBG.draw('dungeon', 'bg-puzzle');
+        const types = this.puzzleTypesForFloor(this.state.floor);
+        const type = types[Math.floor(Math.random() * types.length)];
+        this.state.puzzleState = { type: type, sequence: [], playerSequence: [], targetCount: 0, showing: false, input: '', gridSize: 0 };
         document.getElementById('pattern-grid').classList.add('hidden');
         document.getElementById('count-container').classList.add('hidden');
         if (type === 'pattern') {
@@ -984,18 +1507,48 @@ window.Game = {
             document.getElementById('puzzle-instruction').textContent = 'Watch the sequence, then repeat it!';
             document.getElementById('pattern-grid').classList.remove('hidden');
             this.generatePattern();
-        } else {
-            document.getElementById('puzzle-title').textContent = '🔢 Counting Challenge';
-            document.getElementById('puzzle-instruction').textContent = 'How many stars? Tap the number!';
+        } else if (type === 'memory') {
+            document.getElementById('puzzle-title').textContent = '🌀 Mirror Seal';
+            document.getElementById('puzzle-instruction').textContent = 'Watch the sequence... then repeat it BACKWARDS!';
+            document.getElementById('pattern-grid').classList.remove('hidden');
+            this.generateMemory();
+        } else if (type === 'math') {
+            document.getElementById('puzzle-title').textContent = '➕ Rune Arithmetic';
+            document.getElementById('puzzle-instruction').textContent = 'Solve the sum, then enter the answer!';
             document.getElementById('count-container').classList.remove('hidden');
-            this.generateCount();
+            this.generateMath();
+        } else if (type === 'equation') {
+            document.getElementById('puzzle-title').textContent = '🧮 Arcane Equation';
+            document.getElementById('puzzle-instruction').textContent = 'Find the missing number!';
+            document.getElementById('count-container').classList.remove('hidden');
+            this.generateEquation();
+        } else if (type === 'odd') {
+            document.getElementById('puzzle-title').textContent = '🔍 Odd One Out';
+            document.getElementById('puzzle-instruction').textContent = 'One rune does not belong. Tap it!';
+            document.getElementById('count-container').classList.remove('hidden');
+            this.generateOdd();
         }
         this.showScreen('screen-puzzle');
     },
 
+    // --- Puzzle 1: Magic Pattern (memory, forwards) ---
     generatePattern() {
-        const length = 3 + Math.min(this.state.floor, 3);
+        const f = this.state.floor;
+        // Floors 6-8: 5-6 long (was previously the only difficulty)
+        // Floors 1-3 (easier variant): 3-4 long
+        const length = f <= 3 ? 3 + (Math.random() < 0.5 ? 1 : 0) : 5 + (Math.random() < 0.5 ? 1 : 0);
         const colors = [0, 1, 2, 3];
+        this.state.puzzleState.sequence = [];
+        for (let i = 0; i < length; i++) {
+            this.state.puzzleState.sequence.push(colors[Math.floor(Math.random() * colors.length)]);
+        }
+        this.playPattern();
+    },
+
+    // --- Puzzle 2: Mirror Seal (memory, backwards) ---
+    generateMemory() {
+        const colors = [0, 1, 2, 3];
+        const length = 3 + Math.min(2, Math.floor(this.state.floor / 4));
         this.state.puzzleState.sequence = [];
         for (let i = 0; i < length; i++) {
             this.state.puzzleState.sequence.push(colors[Math.floor(Math.random() * colors.length)]);
@@ -1016,19 +1569,23 @@ window.Game = {
             await this.sleep(300);
         }
         this.state.puzzleState.showing = false;
-        status.textContent = '👆 Your turn! Tap the pattern!';
+        status.textContent = this.state.puzzleState.type === 'memory' ? '👆 Now tap it BACKWARDS!' : '👆 Your turn! Tap the pattern!';
     },
 
     puzzleInput(color) {
-        if (this.state.puzzleState.showing) return;
-        if (this.state.puzzleState.type !== 'pattern') return;
+        const ps = this.state.puzzleState;
+        if (ps.showing) return;
+        if (ps.type !== 'pattern' && ps.type !== 'memory') return;
         const btn = document.querySelectorAll('.puzzle-btn')[color];
         btn.classList.add('lit');
         setTimeout(() => btn.classList.remove('lit'), 200);
-        const ps = this.state.puzzleState;
         ps.playerSequence.push(color);
         const idx = ps.playerSequence.length - 1;
-        if (ps.playerSequence[idx] !== ps.sequence[idx]) {
+        // For Mirror Seal the answer is the sequence in REVERSE order
+        const expected = ps.type === 'memory'
+            ? ps.sequence[ps.sequence.length - 1 - idx]
+            : ps.sequence[idx];
+        if (ps.playerSequence[idx] !== expected) {
             document.getElementById('puzzle-status').textContent = '❌ Oops! Try again...';
             this.state.player.stats.hp -= 5;
             this.updateStatusBar();
@@ -1042,30 +1599,139 @@ window.Game = {
         }
     },
 
-    generateCount() {
-        const count = 3 + Math.floor(Math.random() * 5);
-        this.state.puzzleState.targetCount = count;
+    // --- Puzzle 3: Rune Arithmetic (sum with keypad entry) ---
+    generateMath() {
+        const f = this.state.floor;
+        let a, b;
+        if (f <= 3) {
+            a = 2 + Math.floor(Math.random() * 8);      // 2-9
+            b = 1 + Math.floor(Math.random() * 9);      // 1-9
+        } else if (f <= 6) {
+            a = 10 + Math.floor(Math.random() * 20);    // 10-29
+            b = 5 + Math.floor(Math.random() * 15);     // 5-19
+        } else {
+            a = 20 + Math.floor(Math.random() * 40);    // 20-59
+            b = 10 + Math.floor(Math.random() * 30);    // 10-39
+            if (Math.random() < 0.4) b = -b;            // sometimes subtract
+        }
+        this.state.puzzleState.answer = a + b;
+        this.state.puzzleState.input = '';
+        const op = b < 0 ? '−' : '+';
+        this.renderMathQuestion(a + ' ' + op + ' ' + Math.abs(b) + ' = ?');
+    },
+
+    // --- Puzzle 4: Arcane Equation (missing number) ---
+    generateEquation() {
+        const a = 2 + Math.floor(Math.random() * 8);
+        const b = 2 + Math.floor(Math.random() * 8);
+        const answer = a * b;
+        const showB = Math.random() < 0.5;
+        this.state.puzzleState.answer = showB ? b : a;
+        this.state.puzzleState.input = '';
+        this.renderMathQuestion(showB
+            ? a + ' × ? = ' + answer
+            : '? × ' + b + ' = ' + answer);
+    },
+
+    renderMathQuestion(text) {
         const display = document.getElementById('count-display');
         display.innerHTML = '';
-        for (let i = 0; i < count; i++) {
-            const item = document.createElement('div');
-            item.className = 'count-item';
-            item.textContent = '⭐';
-            item.style.background = '#fbbf24';
-            item.style.color = '#000';
-            display.appendChild(item);
-        }
+        const item = document.createElement('div');
+        item.className = 'count-item wide';
+        item.textContent = text;
+        display.appendChild(item);
+        const entry = document.createElement('div');
+        entry.className = 'count-item wide';
+        entry.id = 'math-entry';
+        entry.textContent = '_';
+        display.appendChild(entry);
     },
 
     countInput(num) {
-        if (num === this.state.puzzleState.targetCount) {
+        const ps = this.state.puzzleState;
+        if (ps.type !== 'math' && ps.type !== 'equation') return;
+        if (ps.input.length < 3) ps.input += num;
+        document.getElementById('math-entry').textContent = ps.input || '_';
+    },
+
+    countClear() {
+        const ps = this.state.puzzleState;
+        ps.input = '';
+        document.getElementById('math-entry').textContent = '_';
+    },
+
+    countSubmit() {
+        const ps = this.state.puzzleState;
+        if (ps.input === '') return;
+        if (parseInt(ps.input, 10) === ps.answer) {
             document.getElementById('puzzle-status').textContent = '✅ Correct!';
             setTimeout(() => this.puzzleSuccess(), 800);
         } else {
-            document.getElementById('puzzle-status').textContent = '❌ Try again!';
+            document.getElementById('puzzle-status').textContent = '❌ Wrong! The answer was ' + ps.answer + '...';
             this.state.player.stats.hp -= 3;
             this.updateStatusBar();
-            if (this.state.player.stats.hp <= 0) { setTimeout(() => this.gameOver(), 1000); }
+            if (this.state.player.stats.hp <= 0) { setTimeout(() => this.gameOver(), 1000); return; }
+            // Re-roll a fresh puzzle of the same type
+            setTimeout(() => this.startPuzzle(), 1200);
+        }
+    },
+
+    // --- Puzzle 5: Odd One Out (grid of emojis, one doesn't belong) ---
+    generateOdd() {
+        // Pairs of "families": one correct family + one impostor
+        const families = [
+            ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'], // animals
+            ['🍎', '🍌', '🍇', '🍓', '🍒', '🍑', '🍍', '🥝'], // fruit
+            ['🚗', '🚕', '🚙', '🚌', '🏎️', '🚓', '🚑', '🚚'], // vehicles
+            ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱'], // balls
+            ['🌼', '🌻', '🌷', '🌹', '🌺', '🌸', '💐', '🏵️'], // flowers
+            ['🐟', '🐠', '🐡', '🦈', '🐬', '🐳', '🐙', '🦑']  // sea
+        ];
+        const famIdx = Math.floor(Math.random() * families.length);
+        const family = families[famIdx];
+        let impostor;
+        do {
+            impostor = families[Math.floor(Math.random() * families.length)];
+        } while (impostor === family);
+        const size = this.state.floor >= 7 ? 16 : 12;   // bigger grid on later floors
+        const cols = size >= 16 ? 4 : 3;
+        const oddIdx = Math.floor(Math.random() * size);
+        this.state.puzzleState.gridSize = size;
+        this.state.puzzleState.oddIdx = oddIdx;
+        const oddEmoji = impostor[Math.floor(Math.random() * impostor.length)];
+        const normal = family[Math.floor(Math.random() * family.length)];
+        // Show the grid inside the puzzle area (it replaces the keypad view)
+        const container = document.getElementById('count-display');
+        container.innerHTML = '';
+        const grid = document.createElement('div');
+        grid.className = 'odd-grid ' + (cols === 4 ? 'cols-4' : 'cols-3');
+        for (let i = 0; i < size; i++) {
+            const cell = document.createElement('button');
+            cell.className = 'odd-cell';
+            cell.textContent = i === oddIdx ? oddEmoji : normal;
+            cell.onclick = () => this.oddPick(i);
+            grid.appendChild(cell);
+        }
+        container.appendChild(grid);
+    },
+
+    oddPick(i) {
+        // Guard: make sure the odd-one-out puzzle is actually active.
+        // (Prevents the "instant correct + frozen" bug when a stale click
+        // fires on a puzzle state that was never generated.)
+        const ps = this.state.puzzleState;
+        if (!ps || ps.type !== 'odd' || ps.oddIdx === undefined || ps.oddIdx === null) return;
+        if (i === ps.oddIdx) {
+            document.getElementById('puzzle-status').textContent = '✅ Found it!';
+            // Clear the grid so it can't be clicked again (frozen-screen fix)
+            document.getElementById('count-display').innerHTML = '';
+            setTimeout(() => this.puzzleSuccess(), 800);
+        } else {
+            document.getElementById('puzzle-status').textContent = '❌ Nope! Try again...';
+            this.state.player.stats.hp -= 3;
+            this.updateStatusBar();
+            if (this.state.player.stats.hp <= 0) { setTimeout(() => this.gameOver(), 1000); return; }
+            setTimeout(() => this.generateOdd(), 800);
         }
     },
 
@@ -1075,18 +1741,24 @@ window.Game = {
         const heal = Math.floor(p.stats.maxHp * 0.2);
         p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + heal);
         this.updateStatusBar();
-        this.showRewardPicker(3, () => this.finishNode(), 'Seal broken! You restored ' + heal + ' HP. Choose one reward.');
+        this.showRewardPicker(3, () => this.finishNode(), {
+            desc: 'Seal broken! You restored ' + heal + ' HP. Choose one reward.',
+            lootType: 'puzzle', guaranteedAbility: true
+        });
     },
 
     // ---------- REWARDS ----------
 
-    buildRewardPool() {
+    buildRewardPool(opts) {
         const p = this.state.player;
         const abilityCards = [];
+        const lootType = opts.lootType || 'any';
 
+        // Signature moves (Flame Burst, Double Strike) are starter-exclusive
         Object.keys(this.abilities).forEach(id => {
             const ab = this.abilities[id];
             if (!ab.learnable || p.owned[id]) return;
+            if (this.SIGNATURE_IDS.includes(id)) return;
             abilityCards.push({
                 tag: 'NEW ABILITY', tagClass: 'new', icon: ab.icon,
                 title: 'Learn ' + ab.name, desc: ab.desc,
@@ -1123,25 +1795,46 @@ window.Game = {
               apply: () => { p.maxEnergy += 1; p.energy += 1; return false; } }
         ];
 
-        return { abilityCards, statCards };
+        // Potions are BATTLE loot (and high-floor puzzle loot) - this keeps
+        // fights feeling rewarding compared to puzzles.
+        const potionCards = [];
+        const allowPotions = lootType === 'fight' || (lootType === 'puzzle' && this.state.floor >= 6);
+        if (allowPotions && (p.potions || []).length < this.POTION_MAX) {
+            Object.keys(this.potions).forEach(id => {
+                const po = this.potions[id];
+                potionCards.push({
+                    tag: 'POTION', tagClass: 'potion', icon: po.icon,
+                    title: po.name, desc: po.desc + ' (Used instantly, costs no turn.)',
+                    apply: () => { p.potions.push(id); return false; }
+                });
+            });
+        }
+
+        return { abilityCards, statCards, potionCards };
     },
 
-    pickRewardCards(count) {
-        const pool = this.buildRewardPool();
+    pickRewardCards(count, opts) {
+        opts = opts || {};
+        const pool = this.buildRewardPool(opts);
         const primary = this.shuffle([...pool.abilityCards]);
         const picks = [];
-        // Guarantee at least one ability option when one exists
-        if (primary.length) picks.push(primary.shift());
-        const rest = this.shuffle([...primary, ...pool.statCards]);
+        // Guarantee an ability option (always for puzzles, when one exists)
+        if (primary.length && (opts.guaranteedAbility !== false)) picks.push(primary.shift());
+        const rest = this.shuffle([...primary, ...pool.statCards, ...pool.potionCards]);
         while (picks.length < count && rest.length) picks.push(rest.shift());
+        // Fallback for fight loot when there are no abilities left to show
+        if (!picks.length) picks.push(...this.shuffle([...pool.statCards]).slice(0, count));
         return picks;
     },
 
-    showRewardPicker(count, next, desc) {
+    showRewardPicker(count, next, opts) {
+        if (typeof opts === 'string') opts = { desc: opts };
+        opts = opts || {};
         this.state.rewardNext = next;
-        this.state.rewardCards = this.pickRewardCards(count);
+        this.state.rewardCards = this.pickRewardCards(count, opts);
+        PixelBG.draw('treasure', 'bg-reward');
         document.getElementById('reward-title').textContent = '🎁 Choose a Reward';
-        document.getElementById('reward-desc').textContent = desc;
+        document.getElementById('reward-desc').textContent = opts.desc || 'Choose your upgrade:';
         document.getElementById('upgrade-options').innerHTML = this.state.rewardCards.map((c, i) =>
             `<button class="btn reward-option" onclick="Game.pickReward(${i})">
                 <span class="r-icon">${c.icon}</span>
@@ -1166,6 +1859,7 @@ window.Game = {
     },
 
     showChest() {
+        PixelBG.draw('treasure', 'bg-reward');
         document.getElementById('reward-title').textContent = '🧰 Treasure Room';
         document.getElementById('reward-desc').textContent = 'Two chests. Which one do you open?';
         document.getElementById('upgrade-options').innerHTML = `
@@ -1174,7 +1868,7 @@ window.Game = {
                 <div class="r-body">
                     <span class="r-tag safe">SAFE</span>
                     <strong>Safe Chest</strong>
-                    <small>A guaranteed reward, pick from 2.</small>
+                    <small>A guaranteed single reward.</small>
                 </div>
             </button>
             <button class="btn reward-option" onclick="Game.openGambleChest()">
@@ -1184,18 +1878,26 @@ window.Game = {
                     <strong>Gamble Chest</strong>
                     <small>50% chance of a pick from 4 rewards, 50% chance of a trap for 8 damage.</small>
                 </div>
+            </button>
+            <button class="btn reward-option" onclick="Game.exportSaveClick()">
+                <span class="r-icon">💾</span>
+                <div class="r-body">
+                    <span class="r-tag safe">SAVE</span>
+                    <strong>Export Progress</strong>
+                    <small>Download a save file of your current run.</small>
+                </div>
             </button>`;
         this.showScreen('screen-reward');
     },
 
     openSafeChest() {
-        this.showRewardPicker(2, () => this.finishNode(), 'The safe chest held two rewards. Choose one.');
+        this.showRewardPicker(1, () => this.finishNode(), { desc: 'The safe chest held a single reward.', lootType: 'fight' });
     },
 
     openGambleChest() {
         const p = this.state.player;
         if (Math.random() < 0.5) {
-            this.showRewardPicker(4, () => this.finishNode(), 'The chest was full of goodies! Choose one.');
+            this.showRewardPicker(4, () => this.finishNode(), { desc: 'The chest was full of goodies! Choose one.', lootType: 'fight' });
         } else {
             p.stats.hp -= 8;
             this.updateStatusBar();
@@ -1223,6 +1925,7 @@ window.Game = {
     openLoadout(returnFn, msg) {
         this.state.loadoutReturn = returnFn || null;
         this.state.selectedSlot = null;
+        PixelBG.draw('dungeon', 'bg-loadout');
         document.getElementById('loadout-msg').textContent = msg || 'Tap a slot, then tap an ability to equip it.';
         this.renderLoadout();
         this.showScreen('screen-loadout');
@@ -1290,6 +1993,7 @@ window.Game = {
         document.getElementById('floor-max').textContent = this.state.maxFloor;
         document.querySelectorAll('.starter-card').forEach(c => c.classList.remove('selected'));
         document.getElementById('start-btn').disabled = true;
+        PixelBG.draw('castle', 'bg-start');
         this.showScreen('screen-start');
     }
 };
