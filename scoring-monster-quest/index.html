@@ -820,7 +820,7 @@ window.Game = {
         heal:   { name: 'Healing Wave', icon: '💧', kind: 'heal', cost: 2, amount: 6, lvlBonus: 3, learnable: true, desc: 'Restore HP.', upText: '+3 healing' },
         armor:  { name: 'Thorn Armor', icon: '🌵', kind: 'armor', cost: 2, amount: 2, lvlBonus: 1, learnable: true, desc: 'Reflect damage back at attackers.', upText: '+1 reflected damage' },
         stun:   { name: 'Thunder Clash', icon: '🌩️', kind: 'stun', cost: 2, mult: 0.8, flat: 1, lvlBonus: 1, learnable: true, desc: 'Hit and the enemy loses its next turn!', upText: '+1 damage' },
-        poison: { name: 'Venom Bite', icon: '🐍', kind: 'poison', cost: 2, mult: 0.5, flat: 1, lvlBonus: 1, learnable: true, desc: 'Poisons the enemy: 3 dmg every turn.', upText: '+1 poison damage/turn' },
+        poison: { name: 'Venom Bite', icon: '🐍', kind: 'poison', cost: 2, mult: 0.5, flat: 1, lvlBonus: 1, learnable: true, desc: 'Poisons the enemy: it takes poison damage every turn this battle.', upText: '+1 poison damage/turn' },
         weaken: { name: 'Hypnotic Gaze', icon: '🌀', kind: 'weaken', cost: 1, mult: 0.5, flat: 1, lvlBonus: 1, learnable: true, desc: 'Hit; enemy deals half damage on its next turn.', upText: '+1 damage' },
         execute:{ name: 'Reaper Cut', icon: '🗡️', kind: 'execute', cost: 2, mult: 1, flat: 2, lvlBonus: 1, execBonus: 3, learnable: true, desc: 'Bonus damage that grows as enemy HP drops.', upText: '+3 max bonus dmg' }
     },
@@ -837,7 +837,7 @@ window.Game = {
         stoneSkin: { name: 'Stoneskin Brew', icon: '🪨', desc: 'Block 3 damage from every hit for this battle.', apply: p => { p.buffs.defense = (p.buffs.defense || 0) + 3; return 'Stoneskin! -3 damage from every hit this battle!'; } },
         might:     { name: 'Might Tonic', icon: '🍺', desc: '+3 Power for the rest of this battle.', apply: p => { p.stats.power += 3; p.tempPower = (p.tempPower || 0) + 3; return 'Might surges! +3 Power this battle!'; } },
         energy:    { name: 'Star Candy', icon: '🍬', desc: 'Instantly refill all energy.', apply: p => { p.energy = p.maxEnergy; return 'Energy fully restored!'; } },
-        bomb:      { name: 'Bomb', icon: '💣', desc: 'Throw for 12 damage, instantly.', apply: () => { const e = this.state.currentEnemy; e.hp -= 12; return 'BOOM! 12 damage to ' + e.name + '!'; } }
+        bomb:      { name: 'Bomb', icon: '💣', desc: 'Throw for 12 damage, instantly.', apply: function() { const e = this.state.currentEnemy; e.hp -= 12; return 'BOOM! 12 damage to ' + e.name + '!'; } }
     },
     POTION_MAX: 2,
 
@@ -1044,7 +1044,13 @@ window.Game = {
         let enemy;
         if (isBoss) {
             const base = this.bosses[Math.floor(Math.random() * this.bosses.length)];
-            enemy = { ...base, maxHp: base.hp, lvl: 10 + this.state.floor };
+            // FIX: bosses were created with hp: base.hp but maxHp: base.hp while
+            // their power was never scaled by floor. They also kept the shared
+            // base object reference alive through the spread. Fine now - but
+            // scaled boss HP keeps late-game bosses meaningful:
+            const f = this.state.floor;
+            const scaledHp = Math.floor(base.hp * (1 + (f - 1) * 0.08));
+            enemy = { ...base, hp: scaledHp, maxHp: scaledHp, lvl: 10 + f };
         } else {
             const pool = this.enemies.filter(e => e.type === (isElite ? 'elite' : 'normal'));
             const base = pool[Math.floor(Math.random() * pool.length)];
@@ -1055,7 +1061,7 @@ window.Game = {
             enemy = { ...base, hp: scaledHp, maxHp: scaledHp, power: base.power + bonusPower, lvl: f + (isElite ? 3 : 0) };
         }
         this.state.currentEnemy = enemy;
-        this.state.battleState = { playerTurn: true, defending: false, turns: 0 };
+        this.state.battleState = { playerTurn: true, defending: false, turns: 0, poison: 0, stunned: false, weakened: false };
         this.state.isProcessing = false;
         // Every battle starts with full energy; battle-only buffs reset
         p.energy = p.maxEnergy;
@@ -1119,6 +1125,10 @@ window.Game = {
         const id = (p.potions || [])[i];
         if (!id) return;
         const potion = this.potions[id];
+        // FIX: bomb.apply was defined as a plain `apply: () => {...}` closure
+        // that referenced `this.state` - but it is invoked via
+        // `potion.apply.call(this, p)`, so a strict-mode `this` broke it.
+        // All potion appliers now receive the game object as `this`.
         const result = potion.apply.call(this, p);
         p.potions.splice(i, 1);
         this.renderPotionBar();
@@ -1138,6 +1148,7 @@ window.Game = {
     updateBattleUI() {
         const p = this.state.player;
         const e = this.state.currentEnemy;
+        if (!e || !p) return; // safety: don't render a stale battle
         const canAct = this.state.battleState.playerTurn && !this.state.isProcessing;
         const ePct = Math.max(0, (e.hp / e.maxHp) * 100);
         const eFill = document.getElementById('enemy-hp-fill');
@@ -1243,7 +1254,7 @@ window.Game = {
                 e.hp -= hit;
                 s.battleState.poison = Math.max(s.battleState.poison || 0, poisonPerTurn);
                 this.showDamage('enemy', hit);
-                msg = ab.icon + ' Venom Bite! Dealt ' + hit + ' - ' + e.name + ' is poisoned for ' + poisonPerTurn + ' dmg every turn!';
+                msg = ab.icon + ' Venom Bite! Dealt ' + hit + ' - ' + e.name + ' is poisoned for ' + poisonPerTurn + ' dmg every turn this battle!';
                 break;
             }
             case 'weaken': {
@@ -1316,8 +1327,30 @@ window.Game = {
         document.getElementById('intent-text').textContent = heavy
             ? '💥 ' + e.name + ' is charging a heavy attack!'
             : '⚔️ ' + e.name + ' is preparing to attack...';
-        const baseMsg = heavy ? e.name + ' unleashes a POWERFUL strike!' : e.name + ' attacks!';
+        // FIX: must be `let` - the poison tick below rewrites this message.
+        // (It was `const`, which threw a TypeError and froze the battle.)
+        let baseMsg = heavy ? e.name + ' unleashes a POWERFUL strike!' : e.name + ' attacks!';
         setTimeout(() => {
+            // Poison: ticks at the start of the enemy's turn, BEFORE the stun
+            // check - the ability promises "damage every turn", so poison must
+            // also tick on a stunned turn. FIX: it previously lived below the
+            // stun branch, so it never ticked while the enemy was stunned.
+            if ((s.battleState.poison || 0) > 0) {
+                e.hp -= s.battleState.poison;
+                this.showDamage('enemy', s.battleState.poison);
+                baseMsg = '☠️ Poison deals ' + s.battleState.poison + ' damage to ' + e.name + '! ' + baseMsg;
+                // NOTE: poison is NOT reset here - it keeps ticking every turn
+                // for the rest of the battle, exactly as the ability describes.
+                // FIX: if the poison tick killed the enemy, it should not get to
+                // attack from beyond the grave. Jump straight to the win screen.
+                if (e.hp <= 0) {
+                    this.log(baseMsg);
+                    this.updateBattleUI();
+                    s.isProcessing = false;
+                    setTimeout(() => this.battleWin(), 800);
+                    return;
+                }
+            }
             // Stun: the enemy skips its attack entirely
             if (s.battleState.stunned) {
                 s.battleState.stunned = false;
@@ -1330,12 +1363,6 @@ window.Game = {
                 p.energy = Math.min(p.maxEnergy, p.energy + 1);
                 this.updateBattleUI();
                 return;
-            }
-            // Poison: ticks at the start of the enemy's turn, before it acts
-            if (s.battleState.poison > 0) {
-                e.hp -= s.battleState.poison;
-                this.showDamage('enemy', s.battleState.poison);
-                baseMsg = '☠️ Poison deals ' + s.battleState.poison + ' damage to ' + e.name + '! ' + baseMsg;
             }
             let finalDmg = dmg;
             let fullMsg = baseMsg;
@@ -1452,6 +1479,10 @@ window.Game = {
                     this.state.pathHistory = data.pathHistory || [];
                     // Safety: make sure potions array exists on old saves
                     if (!Array.isArray(this.state.player.potions)) this.state.player.potions = [];
+                    // Safety: make sure battle-buff fields exist on old saves
+                    // (missing buffs crashed startBattle with a TypeError)
+                    if (!this.state.player.buffs) this.state.player.buffs = { defense: 0, thorns: 0 };
+                    if (typeof this.state.player.tempPower !== 'number') this.state.player.tempPower = 0;
                     document.getElementById('status-bar').classList.remove('hidden');
                     this.updateStatusBar();
                     this.showScreen('screen-map');
@@ -1499,7 +1530,7 @@ window.Game = {
         PixelBG.draw('dungeon', 'bg-puzzle');
         const types = this.puzzleTypesForFloor(this.state.floor);
         const type = types[Math.floor(Math.random() * types.length)];
-        this.state.puzzleState = { type: type, sequence: [], playerSequence: [], targetCount: 0, showing: false, input: '', gridSize: 0 };
+        this.state.puzzleState = { type: type, sequence: [], playerSequence: [], targetCount: 0, showing: false, input: '', gridSize: 0, done: false };
         document.getElementById('pattern-grid').classList.add('hidden');
         document.getElementById('count-container').classList.add('hidden');
         if (type === 'pattern') {
@@ -1576,6 +1607,11 @@ window.Game = {
         const ps = this.state.puzzleState;
         if (ps.showing) return;
         if (ps.type !== 'pattern' && ps.type !== 'memory') return;
+        // FIX: guard against extra taps after the sequence was completed
+        // (during the "Correct!" delay). Without it, further taps were
+        // compared against an undefined "expected" value and punished the
+        // player with -5 HP for a puzzle they had already solved.
+        if (ps.done || ps.playerSequence.length >= ps.sequence.length) return;
         const btn = document.querySelectorAll('.puzzle-btn')[color];
         btn.classList.add('lit');
         setTimeout(() => btn.classList.remove('lit'), 200);
@@ -1587,6 +1623,7 @@ window.Game = {
             : ps.sequence[idx];
         if (ps.playerSequence[idx] !== expected) {
             document.getElementById('puzzle-status').textContent = '❌ Oops! Try again...';
+            ps.done = true; // lock taps until the puzzle restarts
             this.state.player.stats.hp -= 5;
             this.updateStatusBar();
             if (this.state.player.stats.hp <= 0) { setTimeout(() => this.gameOver(), 1000); return; }
@@ -1594,6 +1631,9 @@ window.Game = {
             return;
         }
         if (ps.playerSequence.length === ps.sequence.length) {
+            // FIX: set a done flag so further taps / re-submits are ignored
+            // until the next puzzle is generated.
+            ps.done = true;
             document.getElementById('puzzle-status').textContent = '✅ Correct!';
             setTimeout(() => this.puzzleSuccess(), 800);
         }
@@ -1663,7 +1703,11 @@ window.Game = {
     countSubmit() {
         const ps = this.state.puzzleState;
         if (ps.input === '') return;
+        // FIX: ignore re-submits after a correct answer (double reward bug)
+        // and ignore submits on puzzle types that don't use the keypad.
+        if (ps.done || (ps.type !== 'math' && ps.type !== 'equation')) return;
         if (parseInt(ps.input, 10) === ps.answer) {
+            ps.done = true;
             document.getElementById('puzzle-status').textContent = '✅ Correct!';
             setTimeout(() => this.puzzleSuccess(), 800);
         } else {
@@ -1698,6 +1742,7 @@ window.Game = {
         const oddIdx = Math.floor(Math.random() * size);
         this.state.puzzleState.gridSize = size;
         this.state.puzzleState.oddIdx = oddIdx;
+        this.state.puzzleState.done = false; // fresh grid is clickable again
         const oddEmoji = impostor[Math.floor(Math.random() * impostor.length)];
         const normal = family[Math.floor(Math.random() * family.length)];
         // Show the grid inside the puzzle area (it replaces the keypad view)
@@ -1721,7 +1766,11 @@ window.Game = {
         // fires on a puzzle state that was never generated.)
         const ps = this.state.puzzleState;
         if (!ps || ps.type !== 'odd' || ps.oddIdx === undefined || ps.oddIdx === null) return;
+        // FIX: ignore clicks while the puzzle is re-rolling after a wrong
+        // guess (rapid taps no longer stack multiple -3 HP penalties).
+        if (ps.done) return;
         if (i === ps.oddIdx) {
+            ps.done = true;
             document.getElementById('puzzle-status').textContent = '✅ Found it!';
             // Clear the grid so it can't be clicked again (frozen-screen fix)
             document.getElementById('count-display').innerHTML = '';
@@ -1731,6 +1780,7 @@ window.Game = {
             this.state.player.stats.hp -= 3;
             this.updateStatusBar();
             if (this.state.player.stats.hp <= 0) { setTimeout(() => this.gameOver(), 1000); return; }
+            ps.done = true; // lock until the fresh grid is ready
             setTimeout(() => this.generateOdd(), 800);
         }
     },
