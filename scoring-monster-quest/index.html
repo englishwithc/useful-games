@@ -819,7 +819,7 @@ window.Game = {
         drain:  { name: 'Life Drain', icon: '🩸', kind: 'drain', cost: 2, mult: 1, flat: 0, lvlBonus: 1, learnable: true, desc: 'Hit and restore a little HP.', upText: '+1 damage & healing' },
         heal:   { name: 'Healing Wave', icon: '💧', kind: 'heal', cost: 2, amount: 6, lvlBonus: 3, learnable: true, desc: 'Restore HP.', upText: '+3 healing' },
         armor:  { name: 'Thorn Armor', icon: '🌵', kind: 'armor', cost: 2, amount: 2, lvlBonus: 1, learnable: true, desc: 'Reflect damage back at attackers.', upText: '+1 reflected damage' },
-        stun:   { name: 'Thunder Clash', icon: '🌩️', kind: 'stun', cost: 2, mult: 0.8, flat: 1, lvlBonus: 1, learnable: true, desc: 'Hit and the enemy loses its next turn!', upText: '+1 damage' },
+        stun:   { name: 'Thunder Clash', icon: '🌩️', kind: 'stun', cost: 3, mult: 0.8, flat: 1, lvlBonus: 1, learnable: true, desc: 'Hit and the enemy loses its next turn!', upText: '+1 damage' },
         poison: { name: 'Venom Bite', icon: '🐍', kind: 'poison', cost: 2, mult: 0.5, flat: 1, lvlBonus: 1, learnable: true, desc: 'Poisons the enemy: it takes poison damage every turn this battle.', upText: '+1 poison damage/turn' },
         weaken: { name: 'Hypnotic Gaze', icon: '🌀', kind: 'weaken', cost: 1, mult: 0.5, flat: 1, lvlBonus: 1, learnable: true, desc: 'Hit; enemy deals half damage on its next turn.', upText: '+1 damage' },
         execute:{ name: 'Reaper Cut', icon: '🗡️', kind: 'execute', cost: 2, mult: 1, flat: 2, lvlBonus: 1, execBonus: 3, learnable: true, desc: 'Bonus damage that grows as enemy HP drops.', upText: '+3 max bonus dmg' }
@@ -865,10 +865,10 @@ window.Game = {
     ],
     // Exciting bosses - one is chosen at random each run!
     bosses: [
-        { name: 'Emberwyrm the Dragon', emoji: '🐲', hp: 75, power: 7, type: 'boss' },
-        { name: 'The Lich Lord', emoji: '☠️', hp: 70, power: 7, type: 'boss' },
-        { name: 'Demon King Malzor', emoji: '👿', hp: 72, power: 7, type: 'boss' },
-        { name: 'The Void Kraken', emoji: '🦑', hp: 74, power: 7, type: 'boss' }
+        { name: 'Emberwyrm the Dragon', emoji: '🐲', hp: 75, power: 6, type: 'boss' },
+        { name: 'The Lich Lord', emoji: '☠️', hp: 70, power: 6, type: 'boss' },
+        { name: 'Demon King Malzor', emoji: '👿', hp: 72, power: 6, type: 'boss' },
+        { name: 'The Void Kraken', emoji: '🦑', hp: 74, power: 6, type: 'boss' }
     ],
 
     newState() {
