@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Useful Games — ESL Tools &amp; Activities Hub</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f4f7fb;
+      color: #333;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      text-align: center;
+      padding: 3rem 1.5rem 2.5rem;
+    }
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.4rem;
+    }
+    .hero p {
+        font-size: 1.05rem; opacity: 0.92; max-width: 560px; margin: 0 auto;
+    }
+
+    .scoring-banner {
+      max-width: 700px;
+      margin: -1.2rem auto 2rem;
+      padding: 1rem 1.4rem;
+      background: #fffbe6;
+      border: 2px solid #f5d913;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 0.97rem;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+    .scoring-banner a { color: #b8860b; font-weight: 600; text-decoration: underline; }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      max-width: 960px;
+      margin: 0 auto 1.8rem;
+      padding: 0 1rem;
+    }
+    .filters button {
+      border: none;
+      background: #e0e7f3;
+      color: #555;
+      font-size: 0.88rem;
+      padding: 0.45rem 1rem;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .filters button:hover, .filters button.active {
+        background: #667eea; color: #fff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.4rem;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .card[hidden] {
+      display: none;
+    }
+
+    .card-band { height: 6px; }
+
+    .card-body { padding: 1.2rem 1.4rem 1.4rem; }
+
+    .card-emoji { font-size: 2rem; margin-bottom: 0.3rem; }
+    .card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem; }
+
+    .card-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.8rem; }
+    .tag {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 10px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .card-desc { font-size: 0.92rem; color: #555; margin-bottom: 0.8rem; }
+
+    .play-btn {
+      display: inline-block;
+      text-decoration: none;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.55rem 1.3rem;
+      border-radius: 10px;
+      transition: opacity .2s;
+    }
+    .play-btn:hover { opacity: 0.88; }
+
+    .cat-boardgames   { background: #6366f1; }
+    .cat-vocabulary   { background: #eab308; color: #fff; }
+    .cat-typing       { background: #ef4444; }
+    .cat-scoring      { background: #3b82f6; }
+    .cat-listening    { background: #ec4899; }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.82rem;
+      color: #999;
+    }
+
+    @media (max-width: 600px) {
+        .hero h1 { font-size: 1.6rem; }
+        .grid { grid-template-columns: 1fr; }
+    }
+
+    noscript {
+      display: block;
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin: 0 auto 2rem;
+      max-width: 700px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Useful Games — ESL Tools &amp; Activities Hub</h1>
+    <p>A collection of interactive tools and games for classroom use — from PDF board games to scoring systems.</p>
+  </header>
+
+  <div class="scoring-banner">
+    🏴‍☠️ Want points &amp; leaderboards? Use the free <a href="https://englishwithc.github.io/useful-games/scoring-pirates-plunder/" target="_blank" rel="noopener">Scoring System</a> alongside any game — open it in a second window or side-by-side!
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="active" data-filter="all">All Games</button>
+    <button data-filter="boardgames">🎲 Board Games</button>
+    <button data-filter="vocabulary">📝 Vocabulary</button>
+    <button data-filter="typing">⌨️ Typing</button>
+    <button data-filter="scoring">🏆 Scoring Systems</button>
+    <button data-filter="listening">👂 Listening</button>
+  </div>
+
+  <main class="grid" id="grid">
+    <article class="card" data-cat="boardgames">
+      <div class="card-band" style="background:#6366f1"></div>
+      <div class="card-body">
+        <div class="card-emoji">🎲</div>
+        <div class="card-title">Adventure Board Game</div>
+        <div class="card-tags"><span class="tag cat-boardgames">Board Games</span></div>
+        <p class="card-desc">Upload any PDF or image and play interactive board games on top of it. Turns static printed PDFs into playable screen-based games — no printing needed.</p>
+        <a class="play-btn" href="./boardgame-from-pdf/" target="_blank" rel="noopener">▶ Play Game</a>
+      </div>
+    </article>
+
+    <article class="card" data-cat="vocabulary">
+      <div class="card-band" style="background:#eab308"></div>
+      <div class="card-body">
+        <div class="card-emoji">🚨</div>
+        <div class="card-title">Vocabulary Jeopardy</div>
+        <div class="card-tags"><span class="tag cat-vocabulary">Vocabulary</span></div>
+        <p class="card-desc">A customizable Jeopardy-style quiz where you insert your own vocabulary words. Students ask each other questions using the terms, promoting question formation and rich answers.</p>
+        <a class="play-btn" href="./jeopardy-question-edition/" target="_blank" rel="noopener">▶ Play Game</a>
+      </div>
+    </article>
+
+    <article class="card" data-cat="typing">
+      <div class="card-band" style="background:#ef4444"></div>
+      <div class="card-body">
+        <div class="card-emoji">⌨️</div>
+        <div class="card-title">Meteor Typing</div>
+        <div class="card-tags"><span class="tag cat-typing">Typing</span></div>
+        <p class="card-desc">A fast-paced vocabulary game where materials fall from the sky and students race to call out the words — high energy, plenty of excitement, and just enough pressure to keep everyone on their toes. Students who can type play the words themselves, or the teacher can take the keyboard while the class shouts out the vocabulary.</p>
+        <a class="play-btn" href="./meteor-typing/" target="_blank" rel="noopener">▶ Play Game</a>
+      </div>
+    </article>
+
+    <article class="card" data-cat="scoring">
+      <div class="card-band" style="background:#3b82f6"></div>
+      <div class="card-body">
+        <div class="card-emoji">🌱</div>
+        <div class="card-title">Gardening Scoring Simulator</div>
+        <div class="card-tags"><span class="tag cat-scoring">Scoring</span></div>
+        <p class="card-desc">Every completed task earns water to grow your garden. Combine with in-class tasks — students earn rewards and see their progress visually. Includes save functionality.</p>
+        <a class="play-btn" href="./scoring-gardening-simulator/" target="_blank" rel="noopener">▶ Play Game</a>
+      </div>
+    </article>
+
+    <article class="card" data-cat="scoring">
+      <div class="card-band" style="background:#3b82f6"></div>
+      <div class="card-body">
+        <div class="card-emoji">🦗</div>
+        <div class="card-title">Monster Quest Scoring</div>
+        <div class="card-tags"><span class="tag cat-scoring">Scoring</span></div>
+        <p class="card-desc">A monster-themed scoring system for tracking student achievements. Complete tasks to earn points and progress through levels — perfect for pre-intermediate learners aged 10+.</p>
+        <a class="play-btn" href="./scoring-monster-quest/" target="_blank" rel="noopener">▶ Play Game</a>
+      </div>
+    </article>
+
+    <article class="card" data-cat="scoring">
+      <div class="card-band" style="background:#3b82f6"></div>
+      <div class="card-body">
+        <div class="card-emoji">🏴‍☠️</div>
+        <div class="card-title">Pirates Plunder Scoring</div>
+        <div class="card-tags"><span class="tag cat-scoring">Scoring</span></div>
+        <p class="card-desc">A pirate-themed scoring system with points, leaderboards, and achievement tracking. Aimed at younger students — great for motivating engagement in class.</p>
+        <a class="play-btn" href="./scoring-pirates-plunder/" target="_blank" rel="noopener">▶ Play Game</a>
+      </div>
+    </article>
+
+    <article class="card" data-cat="listening">
+      <div class="card-band" style="background:#ec4899"></div>
+      <div class="card-body">
+        <div class="card-emoji">👂</div>
+        <div class="card-title">Simon Says</div>
+        <div class="card-tags"><span class="tag cat-listening">Listening</span></div>
+        <p class="card-desc">A classic listening game where students follow Simon's commands. Tests quick reaction and understanding of English instructions — fun and fast-paced.</p>
+        <a class="play-btn" href="./simon-says/" target="_blank" rel="noopener">▶ Play Game</a>
+      </div>
+    </article>
+  </main>
+
+  <noscript>
+    🔔 JavaScript is disabled in your browser. The game cards below require JavaScript to load. Please enable JavaScript to browse and filter the games.
+  </noscript>
+
+  <footer>Hosted on GitHub Pages &bull; Built for ESL teachers 🌍</footer>
+
+<script>
+  const grid = document.getElementById('grid');
+  const cards = Array.from(grid.querySelectorAll('.card'));
+
+  document.getElementById('filters').addEventListener('click', function (e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+
+    document.querySelectorAll('#filters button')
+      .forEach(b => b.classList.toggle('active', b === btn));
+
+    const filter = btn.dataset.filter;
+    cards.forEach(card => {
+      const cats = card.dataset.cat.split(',');
+      card.hidden = !(filter === 'all' || cats.includes(filter));
+    });
+  });
+</script>
+</body>
+</html>
