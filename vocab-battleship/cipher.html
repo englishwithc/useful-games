@@ -78,7 +78,7 @@ summary{cursor:pointer;font-weight:700;font-size:.95rem}
       <p class="small muted">Put your ships on this screen. Nobody else sees this board.</p>
       <p class="small muted">When the fleet is complete you get a <b>key</b> (1 to 500) and a <b>fleet code</b>. Write both on a slip and give them to your teacher.</p>
       <p class="small muted">Ships may not touch, not even at the corners.</p>
-      <p class="small muted" style="margin:0">If you see no game code, type the number of words instead, for example <span class="mono">10</span>.</p>
+      <p class="small muted" style="margin:0">If you have no game code, type the number of words instead, for example <span class="mono">10</span>.</p>
     </div>
   </div>
 </section>
@@ -170,7 +170,7 @@ summary{cursor:pointer;font-weight:700;font-size:.95rem}
   var BASE = 36n;
   var MIN = 8;
   var MAX = 15;
-  var VERSION = "3.2-inline";
+  var VERSION = "3.2.2-inline";
   var NAMES = { 5: "Carrier", 4: "Battleship", 3: "Cruiser", 2: "Destroyer" };
 
   function shipLengths(n) {
@@ -472,12 +472,19 @@ summary{cursor:pointer;font-weight:700;font-size:.95rem}
       var k = 1 + Math.floor(Math.random() * 500);
       try {
         var ships = randomShips(n);
+
+        var want = [], w, wc;
+        for (w = 0; w < ships.length; w++) {
+          for (wc = 0; wc < ships[w].cells.length; wc++) want.push(ships[w].cells[wc]);
+        }
+        want.sort(function (a, b) { return a - b; });
+
         var enc = encodeShips(ships, n, k);
         var dec = decodeFleet(enc.code, k);
-        var want = randomFleet(n);
-        if (dec.n !== n || dec.cells.join(",") !== want.join(",")) {
+
+        if (dec.n !== n || dec.ships.length !== ships.length || dec.cells.join(",") !== want.join(",")) {
           bad++;
-          if (!firstBad) firstBad = "n=" + n + " key=" + k;
+          if (!firstBad) firstBad = "n=" + n + " key=" + k + " code=" + enc.code;
         }
       } catch (e) {
         bad++;
