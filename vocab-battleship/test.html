@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cipher round-trip test</title>
+<link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Cipher <span>test</span></div>
+    <span class="tag">run before class</span>
+    <div class="spacer"></div>
+    <a class="btn" href="./">← Referee board</a>
+  </header>
+  <section class="panel">
+    <h1>Round-trip check</h1>
+    <p class="lead">Encodes and decodes 400 random fleets, then tries wrong keys and single-character typos.</p>
+    <div id="out"></div>
+  </section>
+</div>
+<script src="shared/cipher.js"></script>
+<script>
+(function () {
+  "use strict";
+  var C = window.VBCipher;
+  var out = document.getElementById("out");
+  var rows = [];
+
+  function line(name, pass, detail) {
+    rows.push({ name: name, pass: pass, detail: detail });
+  }
+
+  function sameCells(a, b) {
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+
+  /* 1. round trip */
+  var trips = 400, bad = 0, firstBad = "";
+  for (var i = 0; i < trips; i++) {
+    var n = 8 + Math.floor(Math.random() * 8);
+    var keys = 1 + Math.floor(Math.random() * 500);
+    try {
+      var cells = C.randomFleet(n);
+      var enc = C.encodeFleet(cells, n, keys);
+      var dec = C.decodeFleet(enc.code, keys);
+      if (dec.n !== n || !sameCells(dec.cells, cells.slice().sort(function (x, y) { return x - y; }))) {
+        bad++;
+        if (!firstBad) firstBad = "n=" + n + " key=" + keys + " code=" + enc.code;
+      }
+    } catch (e) {
+      bad++;
+      if (!firstBad) firstBad = "n=" + n + " key=" + keys + " threw " + e.message;
+    }
+  }
+  line("Round trip (" + trips + " random fleets)", bad === 0, bad ? bad + " failures. " + firstBad : "all decoded exactly");
+
+  /* 2. determinism */
+  var det = true;
+  try {
+    var fc = C.randomFleet(10);
+    var a1 = C.encodeFleet(fc, 10, 77).code;
+    var a2 = C.encodeFleet(fc, 10, 77).code;
+    det = a1 === a2;
+  } catch (e) { det = false; }
+  line("Same fleet and key always give the same code", det, det ? "stable" : "unstable");
+
+  /* 3. wrong key is rejected */
+  var rejected = 0, tries = 120;
+  for (var j = 0; j < tries; j++) {
+    var n3 = 8 + Math.floor(Math.random() * 8);
+    var k3 = 1 + Math.floor(Math.random() * 500);
+    var k4 = 1 + Math.floor(Math.random() * 500);
+    if (k4 === k3) k4 = k3 === 500 ? 1 : k3 + 1;
+    var enc3 = C.encodeFleet(C.randomFleet(n3), n3, k3);
+    try { C.decodeFleet(enc3.code, k4); } catch (e) { rejected++; }
+  }
+  line("Wrong key is rejected", rejected === tries,
+    rejected + " of " + tries + " wrong keys refused");
+
+  /* 4. single character typo */
+  var caught = 0, total = 120;
+  for (var t = 0; t < total; t++) {
+    var n5 = 8 + Math.floor(Math.random() * 8);
+    var k5 = 1 + Math.floor(Math.random() * 500);
+    var enc5 = C.encodeFleet(C.randomFleet(n5), n5, k5);
+    var ch = enc5.code.split("");
+    var pos = Math.floor(Math.random() * ch.length);
+    var old = ch[pos];
+    var alpha = C.ALPHA;
+    ch[pos] = alpha[(alpha.indexOf(old) + 1 + Math.floor(Math.random() * 34)) % 36];
+    var broken = ch.join("");
+    try { C.decodeFleet(broken, k5); } catch (e) { caught++; }
+  }
+  line("Single character typo is caught", caught === total, caught + " of " + total + " typos refused");
+
+  var html = '<table style="width:100%;border-collapse:collapse">' +
+    "<tr><th style=\"text-align:left;padding:8px;border-bottom:1px solid #d8e0ea\">Check</th>" +
+    "<th style=\"text-align:left;padding:8px;border-bottom:1px solid #d8e0ea\">Result</th>" +
+    "<th style=\"text-align:left;padding:8px;border-bottom:1px solid #d8e0ea\">Detail</th></tr>";
+  rows.forEach(function (r) {
+    html += "<tr>" +
+      '<td style="padding:8px;border-bottom:1px solid #eef2f7">' + r.name + "</td>" +
+      '<td style="padding:8px;border-bottom:1px solid #eef2f7;font-weight:700;color:' +
+      (r.pass ? "#15803d" : "#dc2626") + '">' + (r.pass ? "PASS" : "FAIL") + "</td>" +
+      '<td style="padding:8px;border-bottom:1px solid #eef2f7;color:#5b6b7f">' + r.detail + "</td>" +
+      "</tr>";
+  });
+  html += "</table>";
+  out.innerHTML = html;
+})();
+</script>
+</body>
+</html>
