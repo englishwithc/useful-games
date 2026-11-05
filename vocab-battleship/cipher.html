@@ -2,216 +2,597 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Fleet Cipher — Vocab Battleships</title>
 <style>
 *,*::before,*::after{box-sizing:border-box}
-:root{--bg:#f4f7fb;--panel:#fff;--line:#d8e0ea;--ink:#101828;--muted:#5b6b7f;--accent:#2563eb;--hit:#dc2626;--ok:#15803d;--radius:14px;--shadow:0 1px 3px rgba(16,24,40,.08),0 8px 24px rgba(16,24,40,.06)}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);line-height:1.5;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:1080px;margin:0 auto;padding:22px 18px 72px}
-header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-.brand{font-weight:800;font-size:1.12rem;letter-spacing:-.01em}
-.brand span{color:var(--accent)}
-.tag{font-size:.76rem;color:var(--muted);border:1px solid var(--line);background:#fff;padding:3px 9px;border-radius:999px}
+body{margin:0;background:#f4f7fb;color:#101828;line-height:1.5;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1060px;margin:0 auto;padding:20px 16px 64px}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.brand{font-weight:800;font-size:1.1rem}.brand span{color:#2563eb}
+.tag{font-size:.74rem;color:#5b6b7f;border:1px solid #d8e0ea;background:#fff;padding:3px 9px;border-radius:999px}
 .spacer{flex:1}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
-.card{background:#fbfdff;border:1px solid var(--line);border-radius:12px;padding:16px}
-.card+.slip{margin-top:16px}
-h1{font-size:1.6rem;margin:0 0 6px;letter-spacing:-.02em}
-h2{font-size:1rem;margin:0 0 12px}
-p.lead{color:var(--muted);margin:0 0 16px}
-p{margin:0 0 10px}
-label{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:5px}
+.panel{background:#fff;border:1px solid #d8e0ea;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.08),0 8px 24px rgba(16,24,40,.06);padding:18px}
+.card{background:#fbfdff;border:1px solid #d8e0ea;border-radius:12px;padding:14px}
+h1{font-size:1.5rem;margin:0 0 6px;letter-spacing:-.02em}
+h2{font-size:1rem;margin:0 0 10px}
+p{margin:0 0 8px}.lead{color:#5b6b7f;margin:0 0 14px}
+label{display:block;font-size:.78rem;font-weight:600;color:#5b6b7f;margin-bottom:4px}
 input,button{font:inherit}
-input[type=text],input[type=number]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
-input:focus-visible,button:focus-visible{outline:3px solid rgba(37,99,235,.35);outline-offset:1px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:600;cursor:pointer;text-decoration:none;transition:background .12s}
+input[type=text],input[type=number]{width:100%;padding:10px 12px;border:1px solid #d8e0ea;border-radius:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 15px;border-radius:10px;border:1px solid #d8e0ea;background:#fff;font-weight:600;cursor:pointer;text-decoration:none;color:#101828}
 .btn:hover{background:#f1f5fb}
-.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary{background:#2563eb;border-color:#2563eb;color:#fff}
 .btn-primary:hover{background:#1d4ed8}
-.btn-danger{border-color:#fecaca;color:var(--hit)}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
-.muted{color:var(--muted)}
-.small{font-size:.82rem}
+.btn-danger{border-color:#fecaca;color:#dc2626}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}
+.muted{color:#5b6b7f}.small{font-size:.82rem}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-.err{color:var(--hit);font-size:.85rem;min-height:1.2em;margin:6px 0 0}
-.ok{color:var(--ok);font-size:.85rem;min-height:1.2em;margin:6px 0 0}
-.board-scroll{overflow-x:auto;padding-bottom:6px}
+.err{color:#dc2626;font-size:.84rem;min-height:1.2em;margin:6px 0 0}
+.ok{color:#15803d;font-size:.84rem;min-height:1.2em;margin:6px 0 0}
+.board-scroll{overflow-x:auto;padding-bottom:4px}
 .board{display:grid;gap:4px}
-.cell{aspect-ratio:1;width:100%;padding:0;min-width:0;border:1px solid var(--line);border-radius:7px;background:#eef3fa;cursor:pointer}
-.cell:hover{background:#dbe7fa;border-color:var(--accent)}
+.cell{aspect-ratio:1;width:100%;padding:0;min-width:0;border:1px solid #d8e0ea;border-radius:6px;background:#eef3fa;cursor:pointer}
+.cell:hover{background:#dbe7fa;border-color:#2563eb}
 .cell.ship{background:#1e3a8a;border-color:#1e3a8a}
-.cell.preview{background:#bfdbfe;border-color:var(--accent)}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
-.chip.done{background:#ecfdf5;border-color:#a7f3d0;color:var(--ok)}
-.slip{border:2px dashed var(--ink);border-radius:14px;padding:18px;background:#fff}
-.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.25rem;font-weight:700;letter-spacing:.12em;word-break:break-all}
-.keynum{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.9rem;font-weight:800}
-details.panel{margin-top:18px}
-details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
-@media(max-width:640px){.wrap{padding:16px 12px 56px}.panel{padding:15px}h1{font-size:1.3rem}}
-@media print{body{background:#fff}.noprint,header.top{display:none!important}.wrap{max-width:none;padding:0}.panel{border:0;box-shadow:none;padding:0}.slip{border-style:solid}}
+.cell.preview{background:#bfdbfe;border-color:#2563eb}
+.chip{font-size:.77rem;font-weight:600;padding:4px 9px;border-radius:999px;border:1px solid #d8e0ea;background:#fff;color:#5b6b7f;display:inline-block}
+.chip.done{background:#ecfdf5;border-color:#a7f3d0;color:#15803d}
+.slip{border:2px dashed #101828;border-radius:14px;padding:16px;background:#fff;margin-top:14px}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.2rem;font-weight:700;letter-spacing:.12em;word-break:break-all}
+.keynum{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.8rem;font-weight:800}
+summary{cursor:pointer;font-weight:700;font-size:.95rem}
+@media(max-width:640px){.wrap{padding:14px 12px 56px}.panel{padding:14px}h1{font-size:1.3rem}}
+@media print{body{background:#fff}.noprint,header{display:none!important}.panel{border:0;box-shadow:none;padding:0}.slip{border-style:solid}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <header class="top">
-    <div class="brand">Fleet <span>Cipher</span></div>
-    <span class="tag" id="verTag">loading…</span>
-    <div class="spacer"></div>
-    <a class="btn" href="index.html">← Referee board</a>
-  </header>
+<header>
+  <div class="brand">Fleet <span>Cipher</span></div>
+  <span class="tag" id="verTag">engine …</span>
+  <span class="tag" id="stChip">self-test …</span>
+  <div class="spacer"></div>
+  <a class="btn" href="index.html">← Referee board</a>
+</header>
 
-  <div class="panel" id="bootErr" hidden style="border-color:#fecaca;background:#fef2f2;margin-bottom:18px">
-    <h2 style="color:#b91c1c;margin-bottom:6px">The cipher library did not load</h2>
-    <p class="small" style="margin:0 0 6px">This page tried <span class="mono">shared/cipher.js</span>, <span class="mono">cipher.js</span> and <span class="mono">js/cipher.js</span> and found none of them.</p>
-    <p class="small mono" style="margin:0">Expected layout: REPO/index.html, REPO/cipher.html, REPO/shared/cipher.js</p>
+<div class="panel" id="bootErr" hidden style="border-color:#fecaca;background:#fef2f2;margin-bottom:16px">
+  <h2 style="color:#b91c1c;margin-bottom:6px">This page is incomplete</h2>
+  <p class="small" style="margin:0">The engine block is missing, which means the paste was cut short. Copy the whole file again.</p>
+</div>
+
+<section class="panel" id="step1">
+  <h1>Hide your fleet</h1>
+  <p class="lead">Type the game code from your teacher's screen. Your board must match theirs.</p>
+  <div class="grid2">
+    <div>
+      <label for="gameIn">Game code</label>
+      <input type="text" id="gameIn" class="mono" autocomplete="off" spellcheck="false" placeholder="VA7KQ">
+      <p class="err" id="gameErr"></p>
+      <button class="btn btn-primary" id="btnStart" type="button" style="width:100%">Open my board →</button>
+    </div>
+    <div>
+      <h2>How this works</h2>
+      <p class="small muted">Put your ships on this screen. Nobody else sees this board.</p>
+      <p class="small muted">When the fleet is complete you get a <b>key</b> (1 to 500) and a <b>fleet code</b>. Write both on a slip and give them to your teacher.</p>
+      <p class="small muted">Ships may not touch, not even at the corners.</p>
+      <p class="small muted" style="margin:0">If you see no game code, type the number of words instead, for example <span class="mono">10</span>.</p>
+    </div>
+  </div>
+</section>
+
+<section id="placer" hidden>
+  <div class="panel">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div>
+        <h1 style="margin-bottom:2px">Place your ships</h1>
+        <p class="lead" style="margin:0">Board <b id="boardLabel">—</b> · <span id="placerMsg" class="small muted">Tap a square.</span></p>
+      </div>
+      <div class="tag mono" id="gameLabel">—</div>
+    </div>
+
+    <div class="grid2" style="margin-top:16px;align-items:start">
+      <div>
+        <div class="board-scroll"><div class="board" id="cboard"></div></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="btnRotate" type="button">Rotate: horizontal</button>
+          <button class="btn" id="btnUndo" type="button">Undo</button>
+          <button class="btn" id="btnRandom" type="button">Random</button>
+          <button class="btn btn-danger" id="btnClear" type="button">Clear</button>
+        </div>
+        <div class="row" id="tray" style="margin-top:12px"></div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Your key</h2>
+          <label for="keyIn">Number from 1 to 500</label>
+          <div class="row">
+            <input type="number" id="keyIn" min="1" max="500" inputmode="numeric" style="flex:1;min-width:120px">
+            <button class="btn" id="btnNewKey" type="button">New</button>
+          </div>
+          <p class="err" id="keyErr"></p>
+        </div>
+
+        <div class="slip" id="slip" hidden>
+          <div class="small muted">Give this slip to your teacher. Do not show the other player.</div>
+          <div class="row" style="justify-content:space-between;align-items:flex-end;margin-top:10px">
+            <div>
+              <div class="small muted">key</div>
+              <div class="keynum" id="slipKey">—</div>
+            </div>
+            <div style="text-align:right">
+              <div class="small muted">game</div>
+              <div class="mono" id="slipGame">—</div>
+            </div>
+          </div>
+          <div class="small muted" style="margin-top:12px">fleet code</div>
+          <div class="code" id="slipCode">—</div>
+          <div class="row noprint" style="margin-top:14px">
+            <button class="btn" id="btnCopyKey" type="button">Copy key</button>
+            <button class="btn" id="btnCopyCode" type="button">Copy code</button>
+            <button class="btn" id="btnPrint" type="button">Print slip</button>
+          </div>
+        </div>
+        <p class="small muted" id="slipHint" style="margin-top:12px">Place your whole fleet to get your code.</p>
+      </div>
+    </div>
   </div>
 
-  <section class="panel" id="step1">
-    <h1>Hide your fleet</h1>
-    <p class="lead">Type the game code from your teacher's screen. Your board must match theirs.</p>
-    <div class="grid2">
+  <details class="panel" style="margin-top:16px">
+    <summary>Teacher check and self-test</summary>
+    <div class="grid2" style="margin-top:14px">
       <div>
-        <label for="gameIn">Game code</label>
-        <input type="text" id="gameIn" class="mono" autocomplete="off" spellcheck="false" placeholder="VA7KQ">
-        <p class="err" id="gameErr"></p>
-        <button class="btn btn-primary" id="btnStart" type="button" style="width:100%">Open my board →</button>
+        <label for="chkKey">Key</label>
+        <input type="number" id="chkKey" min="1" max="500" inputmode="numeric">
+        <label for="chkCode" style="margin-top:10px">Fleet code</label>
+        <input type="text" id="chkCode" class="mono" autocomplete="off" spellcheck="false">
+        <button class="btn" id="btnCheck" type="button" style="width:100%;margin-top:12px">Decode</button>
+        <p class="err" id="chkErr"></p>
+        <p class="ok" id="chkOk"></p>
+        <button class="btn" id="btnSelfTest" type="button" style="width:100%;margin-top:8px">Run self-test again</button>
+        <div id="stOut" class="small" style="margin-top:10px"></div>
       </div>
-      <div>
-        <h2>How this works</h2>
-        <p class="small muted">Put your ships on this screen, not on the game screen. Nobody else sees this board.</p>
-        <p class="small muted">When your fleet is complete you get a <b>key</b> (1 to 500) and a <b>fleet code</b>. Write both on a slip and give them to your teacher.</p>
-        <p class="small muted" style="margin:0">Ships may not touch, not even at the corners.</p>
-      </div>
+      <div class="board-scroll"><div class="board" id="chkBoard"></div></div>
     </div>
-  </section>
-
-  <section id="placer" hidden>
-    <div class="panel">
-      <div class="row" style="justify-content:space-between;align-items:flex-start">
-        <div>
-          <h1 style="margin-bottom:2px">Place your ships</h1>
-          <p class="lead" style="margin:0">Board <b id="boardLabel">—</b> · <span id="placerMsg" class="small muted">Tap a square to drop the next ship.</span></p>
-        </div>
-        <div class="tag mono" id="gameLabel">—</div>
-      </div>
-
-      <div class="grid2" style="margin-top:16px;align-items:start">
-        <div>
-          <div class="board-scroll"><div class="board" id="cboard"></div></div>
-          <div class="row" style="margin-top:12px">
-            <button class="btn" id="btnRotate" type="button">Rotate: horizontal</button>
-            <button class="btn" id="btnUndo" type="button">Undo</button>
-            <button class="btn" id="btnRandom" type="button">Random</button>
-            <button class="btn btn-danger" id="btnClear" type="button">Clear</button>
-          </div>
-          <div class="row" id="tray" style="margin-top:12px"></div>
-        </div>
-
-        <div>
-          <div class="card">
-            <h2>Your key</h2>
-            <label for="keyIn">Number from 1 to 500</label>
-            <div class="row">
-              <input type="number" id="keyIn" min="1" max="500" inputmode="numeric" style="flex:1;min-width:120px">
-              <button class="btn" id="btnNewKey" type="button">New</button>
-            </div>
-            <p class="err" id="keyErr"></p>
-            <p class="small muted" style="margin:0">Change the key and the code changes completely.</p>
-          </div>
-
-          <div class="slip" id="slip" hidden>
-            <div class="small muted">Give this slip to your teacher. Do not show the other player.</div>
-            <div class="row" style="justify-content:space-between;align-items:flex-end;margin-top:10px">
-              <div>
-                <div class="small muted">key</div>
-                <div class="keynum" id="slipKey">—</div>
-              </div>
-              <div style="text-align:right">
-                <div class="small muted">game</div>
-                <div class="mono" id="slipGame">—</div>
-              </div>
-            </div>
-            <div class="small muted" style="margin-top:12px">fleet code</div>
-            <div class="code" id="slipCode">—</div>
-            <div class="row noprint" style="margin-top:14px">
-              <button class="btn" id="btnCopyKey" type="button">Copy key</button>
-              <button class="btn" id="btnCopyCode" type="button">Copy code</button>
-              <button class="btn" id="btnPrint" type="button">Print slip</button>
-            </div>
-          </div>
-          <p class="small muted" id="slipHint" style="margin-top:12px">Place your whole fleet to get your code.</p>
-        </div>
-      </div>
-    </div>
-
-    <details class="panel">
-      <summary>Teacher check and self-test</summary>
-      <div class="grid2" style="margin-top:14px">
-        <div>
-          <label for="chkKey">Key</label>
-          <input type="number" id="chkKey" min="1" max="500" inputmode="numeric">
-          <label for="chkCode" style="margin-top:10px">Fleet code</label>
-          <input type="text" id="chkCode" class="mono" autocomplete="off" spellcheck="false">
-          <button class="btn" id="btnCheck" type="button" style="width:100%;margin-top:12px">Decode</button>
-          <p class="err" id="chkErr"></p>
-          <p class="ok" id="chkOk"></p>
-          <button class="btn" id="btnSelfTest" type="button" style="width:100%;margin-top:8px">Run cipher self-test</button>
-          <div id="stOut" class="small" style="margin-top:10px"></div>
-        </div>
-        <div class="board-scroll"><div class="board" id="chkBoard"></div></div>
-      </div>
-    </details>
-  </section>
+  </details>
+</section>
 </div>
 
 <script>
-function bootCipherPage() {
+/* ==== ENGINE START ==== */
+(function (global) {
   "use strict";
 
-  var C = window.VBCipher;
+  var ALPHA = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  var BASE = 36n;
+  var MIN = 8;
+  var MAX = 15;
+  var VERSION = "3.2-inline";
   var NAMES = { 5: "Carrier", 4: "Battleship", 3: "Cruiser", 2: "Destroyer" };
 
+  function shipLengths(n) {
+    if (n <= 10) return [5, 4, 3, 3, 2];
+    if (n <= 12) return [5, 4, 3, 3, 2, 2];
+    return [5, 4, 3, 3, 2, 2, 2];
+  }
+
+  function fleetCellCount(n) {
+    var a = shipLengths(n);
+    var t = 0;
+    for (var i = 0; i < a.length; i++) t += a[i];
+    return t;
+  }
+
+  function isValidBoardSize(n) {
+    return typeof n === "number" && isFinite(n) && Math.floor(n) === n && n >= MIN && n <= MAX;
+  }
+
+  function randomGameCode(n) {
+    var tail = "";
+    for (var i = 0; i < 3; i++) tail += ALPHA.charAt(Math.floor(Math.random() * 36));
+    return "V" + ALPHA.charAt(n) + tail;
+  }
+
+  function parseGameCode(raw) {
+    var code = String(raw == null ? "" : raw).toUpperCase().replace(/[^0-9A-Z]/g, "");
+    if (code.length < 2 || code.charAt(0) !== "V") {
+      return { ok: false, error: "A game code starts with V, for example VA7KQ." };
+    }
+    var n = ALPHA.indexOf(code.charAt(1));
+    if (!isValidBoardSize(n)) return { ok: false, error: "That code does not describe a board of 8 to 15 words." };
+    return { ok: true, n: n, code: code };
+  }
+
+  function toB36(v) {
+    if (v === 0n) return "0";
+    var s = "";
+    while (v > 0n) { s = ALPHA.charAt(Number(v % BASE)) + s; v = v / BASE; }
+    return s;
+  }
+
+  function fromB36(s) {
+    var v = 0n;
+    for (var i = 0; i < s.length; i++) {
+      var d = ALPHA.indexOf(s.charAt(i));
+      if (d < 0) throw new Error("The code contains an unknown character.");
+      v = v * BASE + BigInt(d);
+    }
+    return v;
+  }
+
+  function checksum(body) {
+    var a = 0, b = 0;
+    for (var i = 0; i < body.length; i++) {
+      var v = ALPHA.indexOf(body.charAt(i));
+      a = (a + v) % 36;
+      b = (b + v * (i + 1)) % 36;
+    }
+    return ALPHA.charAt(a) + ALPHA.charAt(b);
+  }
+
+  function mulberry32(seed) {
+    var a = seed | 0;
+    return function () {
+      a = (a + 0x6d2b79f5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function permFor(len, key) {
+    var seed = (Math.trunc(key) * 7919 + 104729) % 2147483647;
+    var rnd = mulberry32(seed);
+    var p = [], i, k, t;
+    for (i = 0; i < len; i++) p.push(i);
+    for (i = len - 1; i > 0; i--) {
+      k = Math.floor(rnd() * (i + 1));
+      t = p[i]; p[i] = p[k]; p[k] = t;
+    }
+    return p;
+  }
+
+  function normalizeKey(raw) {
+    var k = Math.trunc(Number(raw));
+    if (!isFinite(k) || k < 1 || k > 500) throw new Error("The key must be a whole number from 1 to 500.");
+    return k;
+  }
+
+  function group(s) { return s.replace(/(.{4})(?=.)/g, "$1-"); }
+  function ungroup(s) { return String(s == null ? "" : s).toUpperCase().replace(/[^0-9A-Z]/g, ""); }
+
+  function recordOf(ship) {
+    var cells = ship.cells.slice().sort(function (a, b) { return a - b; });
+    var anchor = cells[0];
+    var horiz = cells.length > 1 && cells[1] === anchor + 1 ? 1 : 0;
+    return { anchor: anchor, horiz: horiz, len: cells.length, cells: cells };
+  }
+
+  function nameShips(ships) {
+    var totals = {}, seen = {};
+    ships.forEach(function (s) { totals[s.len] = (totals[s.len] || 0) + 1; });
+    ships.forEach(function (s) {
+      seen[s.len] = (seen[s.len] || 0) + 1;
+      s.name = NAMES[s.len] || (s.len + "-deck ship");
+      if (totals[s.len] > 1) s.name = s.name + " " + seen[s.len];
+      if (typeof s.hits !== "number") s.hits = 0;
+    });
+    return ships;
+  }
+
+  function finishEncode(value, n, k) {
+    var body = ALPHA.charAt(n) + toB36(value);
+    var raw = body + checksum(body);
+    var shift = k % 36;
+    var shifted = "", i;
+    for (i = 0; i < raw.length; i++) shifted += ALPHA.charAt((ALPHA.indexOf(raw.charAt(i)) + shift) % 36);
+    var perm = permFor(shifted.length, k);
+    var out = "";
+    for (i = 0; i < perm.length; i++) out += shifted.charAt(perm[i]);
+    return { code: group(out), key: k, n: n };
+  }
+
+  function encodeShips(ships, n, key) {
+    var k = normalizeKey(key);
+    if (!isValidBoardSize(n)) throw new Error("Board size must be 8 to 15.");
+    var lengths = shipLengths(n).slice().sort(function (a, b) { return b - a; });
+    if (!ships || ships.length !== lengths.length) {
+      throw new Error("This fleet has " + (ships ? ships.length : 0) + " ships, but a " + n + " by " + n + " board needs " + lengths.length + ".");
+    }
+    var list = ships.slice().sort(function (a, b) {
+      var ra = recordOf(a), rb = recordOf(b);
+      if (rb.len !== ra.len) return rb.len - ra.len;
+      return ra.anchor - rb.anchor;
+    });
+    var value = 0n;
+    for (var i = 0; i < list.length; i++) {
+      var r = recordOf(list[i]);
+      if (r.len !== lengths[i]) throw new Error("Those ships are not the right sizes for this board.");
+      value = value * 512n + BigInt(r.anchor) * 2n + BigInt(r.horiz);
+    }
+    return finishEncode(value, n, k);
+  }
+
+  function runOf(start, step, len) {
+    var out = [];
+    for (var i = 0; i < len; i++) out.push(start + i * step);
+    return out;
+  }
+
+  function shipsFromCells(cells, n) {
+    if (!isValidBoardSize(n)) throw new Error("Board size must be 8 to 15.");
+    var set = new Set(cells);
+    if (set.size !== cells.length) throw new Error("Two squares in this fleet are the same square.");
+    var expected = fleetCellCount(n);
+    if (cells.length !== expected) {
+      throw new Error("This fleet has " + cells.length + " squares, but a " + n + " by " + n + " board needs " + expected + ".");
+    }
+    var runs = [];
+    cells.forEach(function (c) {
+      var row = Math.floor(c / n), col = c % n, len, x;
+      if (col === 0 || !set.has(c - 1)) {
+        len = 0; x = c;
+        while (Math.floor(x / n) === row && set.has(x)) { len++; x++; }
+        if (len > 1) runs.push(runOf(c, 1, len));
+      }
+      if (row === 0 || !set.has(c - n)) {
+        len = 0; x = c;
+        while (x < n * n && set.has(x)) { len++; x += n; }
+        if (len > 1) runs.push(runOf(c, n, len));
+      }
+    });
+    var wanted = shipLengths(n).slice().sort(function (a, b) { return b - a; });
+    if (runs.length !== wanted.length) {
+      throw new Error("Those squares do not form " + wanted.length + " separate ships.");
+    }
+    var found = runs.map(function (r) { return r.length; }).sort(function (a, b) { return b - a; });
+    for (var i = 0; i < wanted.length; i++) {
+      if (found[i] !== wanted[i]) {
+        throw new Error("Those squares do not match the ship sizes for this board: " + wanted.join(", ") + ".");
+      }
+    }
+    return nameShips(runs.map(function (r) { return { len: r.length, cells: r.slice() }; }));
+  }
+
+  function encodeFleet(cells, n, key) {
+    return encodeShips(shipsFromCells(cells, n), n, key);
+  }
+
+  function decodeFleet(rawCode, rawKey) {
+    var k = normalizeKey(rawKey);
+    var clean = ungroup(rawCode);
+    if (clean.length < 5) throw new Error("That code is too short to be a fleet code.");
+    if (clean.length > 40) throw new Error("That code is too long to be a fleet code.");
+
+    var perm = permFor(clean.length, k);
+    var digits = new Array(clean.length), i;
+    for (i = 0; i < clean.length; i++) digits[perm[i]] = ALPHA.indexOf(clean.charAt(i));
+
+    var shift = k % 36, raw = "";
+    for (i = 0; i < digits.length; i++) raw += ALPHA.charAt((digits[i] - shift + 36) % 36);
+
+    var body = raw.slice(0, -2), cs = raw.slice(-2);
+    if (checksum(body) !== cs) {
+      throw new Error("Wrong key, or a mistyped character. Check the key first, then every letter of the code.");
+    }
+
+    var n = ALPHA.indexOf(body.charAt(0));
+    if (!isValidBoardSize(n)) throw new Error("That code belongs to a different board size.");
+
+    var value = fromB36(body.slice(1));
+    var wanted = shipLengths(n).slice().sort(function (a, b) { return b - a; });
+    var chunks = [], v = value;
+    for (var c = 0; c < wanted.length; c++) { chunks.unshift(v % 512n); v = v / 512n; }
+    if (v !== 0n) throw new Error("That code does not fit this game's fleet size.");
+
+    var owner = new Array(n * n);
+    for (i = 0; i < owner.length; i++) owner[i] = -1;
+
+    var seen = {}, ships = [];
+    for (var s = 0; s < wanted.length; s++) {
+      var anchor = Number(chunks[s] >> 1n);
+      var horiz = (chunks[s] & 1n) === 1n;
+      var len = wanted[s];
+      if (anchor >= n * n) throw new Error("A ship in that slip is off the board.");
+      var row = Math.floor(anchor / n), col = anchor % n;
+      if (horiz && col + len > n) throw new Error("A ship in that slip runs off the edge.");
+      if (!horiz && row + len > n) throw new Error("A ship in that slip runs off the edge.");
+      var sig = anchor + ":" + (horiz ? 1 : 0);
+      if (seen[sig]) throw new Error("That slip lists one ship twice, so it came from the first buggy version. Make a fresh slip on the current page.");
+      seen[sig] = true;
+      var sc = [];
+      for (var d = 0; d < len; d++) sc.push(horiz ? anchor + d : anchor + d * n);
+      for (var q = 0; q < sc.length; q++) {
+        if (owner[sc[q]] !== -1) throw new Error("Two ships in that slip overlap. Make a fresh slip.");
+      }
+      for (q = 0; q < sc.length; q++) owner[sc[q]] = s;
+      ships.push({ len: len, cells: sc });
+    }
+
+    nameShips(ships);
+    var cells = [];
+    for (i = 0; i < owner.length; i++) if (owner[i] !== -1) cells.push(i);
+    if (cells.length !== fleetCellCount(n)) throw new Error("That slip is incomplete.");
+    return { cells: cells, n: n, key: k, ships: ships };
+  }
+
+  function touches(idx, occ, n) {
+    var r = Math.floor(idx / n), c = idx % n;
+    for (var dr = -1; dr <= 1; dr++) {
+      for (var dc = -1; dc <= 1; dc++) {
+        var rr = r + dr, cc = c + dc;
+        if (rr < 0 || cc < 0 || rr >= n || cc >= n) continue;
+        if (occ.has(rr * n + cc)) return true;
+      }
+    }
+    return false;
+  }
+
+  function randomShips(n) {
+    var lengths = shipLengths(n).slice().sort(function (a, b) { return b - a; });
+    for (var attempt = 0; attempt < 400; attempt++) {
+      var occ = new Set(), ships = [], ok = true, i;
+      for (i = 0; i < lengths.length && ok; i++) {
+        var len = lengths[i], placed = false;
+        for (var t = 0; t < 500 && !placed; t++) {
+          var horiz = Math.random() < 0.5;
+          var r = Math.floor(Math.random() * n), c = Math.floor(Math.random() * n);
+          if (horiz ? c + len > n : r + len > n) continue;
+          var cand = [], d;
+          for (d = 0; d < len; d++) cand.push(horiz ? r * n + c + d : (r + d) * n + c);
+          var bad = false, q;
+          for (q = 0; q < cand.length; q++) if (touches(cand[q], occ, n)) { bad = true; break; }
+          if (bad) continue;
+          for (q = 0; q < cand.length; q++) occ.add(cand[q]);
+          ships.push({ len: len, cells: cand.slice() });
+          placed = true;
+        }
+        if (!placed) ok = false;
+      }
+      if (ok) return ships;
+    }
+    throw new Error("Could not find room for a fleet. Press Clear and try again.");
+  }
+
+  function randomFleet(n) {
+    var ships = randomShips(n), out = [];
+    ships.forEach(function (s) { s.cells.forEach(function (c) { out.push(c); }); });
+    return out.sort(function (a, b) { return a - b; });
+  }
+
+  function selfTest() {
+    var results = [];
+
+    var trips = 60, bad = 0, firstBad = "";
+    for (var i = 0; i < trips; i++) {
+      var n = MIN + Math.floor(Math.random() * (MAX - MIN + 1));
+      var k = 1 + Math.floor(Math.random() * 500);
+      try {
+        var ships = randomShips(n);
+        var enc = encodeShips(ships, n, k);
+        var dec = decodeFleet(enc.code, k);
+        var want = randomFleet(n);
+        if (dec.n !== n || dec.cells.join(",") !== want.join(",")) {
+          bad++;
+          if (!firstBad) firstBad = "n=" + n + " key=" + k;
+        }
+      } catch (e) {
+        bad++;
+        if (!firstBad) firstBad = "n=" + n + " key=" + k + " -> " + e.message;
+      }
+    }
+    results.push({ name: "Round trip", pass: bad === 0,
+      detail: bad === 0 ? trips + " random fleets decoded exactly" : bad + " failures, first: " + firstBad });
+
+    var fixture = [0, 1, 2, 3, 4, 27, 37, 47, 57, 40, 41, 42, 60, 70, 80, 98, 99];
+    var fixtureBad = 0, fixtureTries = 0;
+    for (var fk = 1; fk <= 500; fk += 7) {
+      fixtureTries++;
+      try {
+        var fe = encodeFleet(fixture, 10, fk);
+        var fd = decodeFleet(fe.code, fk);
+        if (fd.cells.join(",") !== fixture.slice().sort(function (a, b) { return a - b; }).join(",")) fixtureBad++;
+      } catch (e) { fixtureBad++; }
+    }
+    results.push({ name: "Two ships of equal length", pass: fixtureBad === 0,
+      detail: fixtureBad === 0 ? fixtureTries + " keys, fleet rebuilt exactly" : fixtureBad + " of " + fixtureTries + " failed" });
+
+    var throws = 0, tries = 150;
+    for (var r = 0; r < tries; r++) {
+      try {
+        var nn = MIN + Math.floor(Math.random() * (MAX - MIN + 1));
+        var ss = randomShips(nn);
+        var enc2 = encodeShips(ss, nn, 1 + Math.floor(Math.random() * 500));
+        if (!enc2.code) throws++;
+      } catch (e) { throws++; }
+    }
+    results.push({ name: "Random always yields a slip", pass: throws === 0,
+      detail: throws === 0 ? tries + " of " + tries + " produced a code" : throws + " of " + tries + " failed" });
+
+    var rejected = 0, wrongTries = 30;
+    for (var j = 0; j < wrongTries; j++) {
+      var n2 = MIN + Math.floor(Math.random() * 8);
+      var k2 = 1 + Math.floor(Math.random() * 500);
+      var k3 = k2 === 500 ? 1 : k2 + 1;
+      try {
+        var e2 = encodeShips(randomShips(n2), n2, k2);
+        decodeFleet(e2.code, k3);
+      } catch (e) { rejected++; }
+    }
+    results.push({ name: "Wrong key rejected", pass: rejected === wrongTries,
+      detail: rejected + " of " + wrongTries + " rejected" });
+
+    var caught = 0, typoTries = 30;
+    for (var t2 = 0; t2 < typoTries; t2++) {
+      var n4 = MIN + Math.floor(Math.random() * 8);
+      var k4 = 1 + Math.floor(Math.random() * 500);
+      try {
+        var e3 = encodeShips(randomShips(n4), n4, k4);
+        var chars = e3.code.split("");
+        var at = Math.floor(Math.random() * chars.length);
+        var cur = ALPHA.indexOf(chars[at]);
+        chars[at] = ALPHA.charAt((cur + 1 + Math.floor(Math.random() * 34)) % 36);
+        decodeFleet(chars.join(""), k4);
+      } catch (e) { caught++; }
+    }
+    results.push({ name: "Typo caught", pass: caught === typoTries,
+      detail: caught + " of " + typoTries + " refused" });
+
+    return { pass: results.every(function (x) { return x.pass; }), version: VERSION, results: results };
+  }
+
+  global.VBCipher = {
+    version: VERSION,
+    ALPHA: ALPHA,
+    MIN_WORDS: MIN,
+    MAX_WORDS: MAX,
+    shipLengths: shipLengths,
+    fleetCellCount: fleetCellCount,
+    isValidBoardSize: isValidBoardSize,
+    randomGameCode: randomGameCode,
+    parseGameCode: parseGameCode,
+    encodeShips: encodeShips,
+    encodeFleet: encodeFleet,
+    shipsFromCells: shipsFromCells,
+    decodeFleet: decodeFleet,
+    randomShips: randomShips,
+    randomFleet: randomFleet,
+    selfTest: selfTest,
+    group: group,
+    ungroup: ungroup
+  };
+})(typeof window !== "undefined" ? window : globalThis);
+/* ==== ENGINE END ==== */
+</script>
+
+<script>
+(function () {
+  "use strict";
+
+  var VB = window.VBCipher;
+  if (!VB) { document.getElementById("bootErr").hidden = false; return; }
+
+  var NAMES = { 5: "Carrier", 4: "Battleship", 3: "Cruiser", 2: "Destroyer" };
   var n = 0;
-  var ships = [];
   var horiz = true;
+  var ships = [];
   var keyVal = 1 + Math.floor(Math.random() * 500);
   var gameLabel = "";
 
-  document.getElementById("verTag").textContent = "cipher v" + C.version;
-
   function el(id) { return document.getElementById(id); }
-
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (m) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
     });
   }
 
-  function totalShips() { return C.shipLengths(n).length; }
-
-  function allCells() {
-    var out = [], i, j;
-    for (i = 0; i < ships.length; i++) {
-      for (j = 0; j < ships[i].cells.length; j++) out.push(ships[i].cells[j]);
-    }
-    return out;
-  }
-
-  function occupiedSet() {
-    var set = new Set(), i, j;
-    for (i = 0; i < ships.length; i++) {
-      for (j = 0; j < ships[i].cells.length; j++) set.add(ships[i].cells[j]);
-    }
-    return set;
-  }
+  el("verTag").textContent = "engine " + VB.version;
 
   function remaining() {
-    var rem = C.shipLengths(n).slice().sort(function (a, b) { return b - a; });
+    var rem = VB.shipLengths(n).slice().sort(function (a, b) { return b - a; });
     for (var i = 0; i < ships.length; i++) {
       var at = rem.indexOf(ships[i].len);
       if (at >= 0) rem.splice(at, 1);
@@ -219,11 +600,19 @@ function bootCipherPage() {
     return rem;
   }
 
-  function touches(idx, occ) {
-    var r = Math.floor(idx / n), c = idx % n, dr, dc, rr, cc;
-    for (dr = -1; dr <= 1; dr++) {
-      for (dc = -1; dc <= 1; dc++) {
-        rr = r + dr; cc = c + dc;
+  function occupied() {
+    var set = new Set();
+    for (var i = 0; i < ships.length; i++) {
+      for (var j = 0; j < ships[i].cells.length; j++) set.add(ships[i].cells[j]);
+    }
+    return set;
+  }
+
+  function near(idx, occ) {
+    var r = Math.floor(idx / n), c = idx % n;
+    for (var dr = -1; dr <= 1; dr++) {
+      for (var dc = -1; dc <= 1; dc++) {
+        var rr = r + dr, cc = c + dc;
         if (rr < 0 || cc < 0 || rr >= n || cc >= n) continue;
         if (occ.has(rr * n + cc)) return true;
       }
@@ -236,16 +625,16 @@ function bootCipherPage() {
     if (isHoriz ? c + len > n : r + len > n) return null;
     var out = [], i;
     for (i = 0; i < len; i++) out.push(isHoriz ? r * n + c + i : (r + i) * n + c);
-    var occ = occupiedSet();
-    for (i = 0; i < out.length; i++) if (touches(out[i], occ)) return null;
+    var occ = occupied();
+    for (i = 0; i < out.length; i++) if (near(out[i], occ)) return null;
     return out;
   }
 
   function renderBoard() {
     var b = el("cboard");
-    b.style.gridTemplateColumns = "repeat(" + n + ", minmax(0, 1fr))";
+    b.style.gridTemplateColumns = "repeat(" + n + ", minmax(0,1fr))";
     b.style.width = "min(100%, " + Math.max(300, n * 40) + "px)";
-    var occ = occupiedSet(), html = "", i;
+    var occ = occupied(), html = "", i;
     for (i = 0; i < n * n; i++) {
       html += '<button type="button" class="cell' + (occ.has(i) ? " ship" : "") +
         '" data-cell="' + i + '" aria-label="row ' + (Math.floor(i / n) + 1) +
@@ -255,7 +644,7 @@ function bootCipherPage() {
   }
 
   function renderTray() {
-    var all = C.shipLengths(n).slice().sort(function (a, b) { return b - a; });
+    var all = VB.shipLengths(n).slice().sort(function (a, b) { return b - a; });
     var counts = {}, seen = {}, html = "", i, k;
     for (i = 0; i < ships.length; i++) counts[ships[i].len] = (counts[ships[i].len] || 0) + 1;
     for (k = 0; k < all.length; k++) {
@@ -272,21 +661,20 @@ function bootCipherPage() {
 
     var left = remaining();
     el("placerMsg").textContent = left.length
-      ? "Next: " + (NAMES[left[0]] || left[0] + "-deck") + " (" + left[0] + " squares), " +
-        (horiz ? "horizontal" : "vertical") + "."
+      ? "Next: " + (NAMES[left[0]] || left[0] + "-deck") + " (" + left[0] + " squares), " + (horiz ? "horizontal" : "vertical") + "."
       : "Fleet complete. Your slip is ready.";
   }
 
-  function slipText() {
+  function slip() {
     var hint = el("slipHint");
-    if (ships.length !== totalShips()) {
+    if (!n || ships.length !== VB.shipLengths(n).length) {
       el("slip").hidden = true;
       hint.hidden = false;
       hint.textContent = "Place your whole fleet to get your code.";
       return;
     }
     try {
-      var out = C.encodeFleet(allCells(), n, keyVal);
+      var out = VB.encodeShips(ships, n, keyVal);
       el("slip").hidden = false;
       hint.hidden = true;
       el("slipKey").textContent = out.key;
@@ -299,15 +687,10 @@ function bootCipherPage() {
     }
   }
 
-  function refresh() { renderBoard(); renderTray(); slipText(); }
-
-  function clearPreview() {
-    var nodes = el("cboard").querySelectorAll(".cell.preview"), i;
-    for (i = 0; i < nodes.length; i++) nodes[i].classList.remove("preview");
-  }
+  function refresh() { renderBoard(); renderTray(); slip(); }
 
   function place(idx) {
-    if (!n || ships.length >= totalShips()) return;
+    if (!n) return;
     var rem = remaining();
     if (!rem.length) return;
     var cand = candidate(idx, rem[0], horiz);
@@ -321,10 +704,7 @@ function bootCipherPage() {
 
   function copyText(text, btn) {
     var label = btn.textContent;
-    function done() {
-      btn.textContent = "copied";
-      setTimeout(function () { btn.textContent = label; }, 1200);
-    }
+    function done() { btn.textContent = "copied"; setTimeout(function () { btn.textContent = label; }, 1200); }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done, done);
       return;
@@ -333,34 +713,46 @@ function bootCipherPage() {
     ta.value = text;
     document.body.appendChild(ta);
     ta.select();
-    try { document.execCommand("copy"); } catch (e) {}
+    try { document.execCommand("copy"); } catch (e) { /* ignore */ }
     document.body.removeChild(ta);
     done();
   }
 
-  function renderCheck(cells, size) {
-    var b = el("chkBoard");
-    b.style.gridTemplateColumns = "repeat(" + size + ", minmax(0, 1fr))";
-    b.style.width = "min(100%, " + Math.max(280, size * 30) + "px)";
-    var on = {}, html = "", i;
-    for (i = 0; i < cells.length; i++) on[cells[i]] = true;
-    for (i = 0; i < size * size; i++) html += '<div class="cell' + (on[i] ? " ship" : "") + '"></div>';
-    b.innerHTML = html;
+  function runTest() {
+    var out = el("stOut"), chip = el("stChip");
+    try {
+      var r = VB.selfTest(), html = "", i;
+      for (i = 0; i < r.results.length; i++) {
+        var t = r.results[i];
+        html += '<div style="padding:4px 0;border-bottom:1px solid #eef2f7">' +
+          '<b style="color:' + (t.pass ? "#15803d" : "#dc2626") + '">' + (t.pass ? "PASS" : "FAIL") + "</b> " +
+          esc(t.name) + ' <span class="muted">' + esc(t.detail) + "</span></div>";
+      }
+      html += '<p class="small" style="margin:8px 0 0"><b>' + (r.pass ? "All checks passed." : "Something is wrong.") +
+        "</b> engine " + esc(r.version) + "</p>";
+      out.innerHTML = html;
+      chip.textContent = r.pass ? "self-test OK" : "self-test FAIL";
+      chip.style.color = r.pass ? "#15803d" : "#dc2626";
+      chip.style.borderColor = r.pass ? "#a7f3d0" : "#fecaca";
+    } catch (e) {
+      out.innerHTML = '<p class="err">Self-test crashed: ' + esc(e.message) + "</p>";
+      chip.textContent = "self-test crashed";
+    }
   }
 
   el("btnStart").addEventListener("click", function () {
     var raw = el("gameIn").value.trim();
     var err = el("gameErr");
     err.textContent = "";
-    var parsed = C.parseGameCode(raw);
+    var parsed = VB.parseGameCode(raw);
     if (parsed.ok) {
       n = parsed.n;
       gameLabel = parsed.code;
-    } else if (/^\d+$/.test(raw) && C.isValidBoardSize(Number(raw))) {
+    } else if (/^\d+$/.test(raw) && VB.isValidBoardSize(Number(raw))) {
       n = Number(raw);
       gameLabel = "";
     } else {
-      err.textContent = raw ? parsed.error : "Enter the game code first, or just the number of words (8 to 15).";
+      err.textContent = raw ? parsed.error : "Enter the game code, or just the number of words (8 to 15).";
       return;
     }
     ships = [];
@@ -371,35 +763,35 @@ function bootCipherPage() {
     el("boardLabel").textContent = n + " × " + n;
     el("gameLabel").textContent = gameLabel || "no code";
     el("keyIn").value = keyVal;
-    el("slipGame").textContent = gameLabel || "—";
     refresh();
   });
 
-  el("gameIn").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") el("btnStart").click();
-  });
+  el("gameIn").addEventListener("keydown", function (e) { if (e.key === "Enter") el("btnStart").click(); });
 
   el("cboard").addEventListener("click", function (e) {
     var node = e.target.closest("[data-cell]");
-    if (!node) return;
-    place(Number(node.dataset.cell));
+    if (node) place(Number(node.dataset.cell));
   });
 
   el("cboard").addEventListener("mouseover", function (e) {
     var node = e.target.closest("[data-cell]");
     if (!node) return;
-    clearPreview();
+    var old = el("cboard").querySelectorAll(".cell.preview"), i;
+    for (i = 0; i < old.length; i++) old[i].classList.remove("preview");
     var rem = remaining();
     if (!rem.length) return;
     var cand = candidate(Number(node.dataset.cell), rem[0], horiz);
     if (!cand) return;
-    for (var i = 0; i < cand.length; i++) {
+    for (i = 0; i < cand.length; i++) {
       var q = el("cboard").querySelector('[data-cell="' + cand[i] + '"]');
       if (q) q.classList.add("preview");
     }
   });
 
-  el("cboard").addEventListener("mouseleave", clearPreview);
+  el("cboard").addEventListener("mouseleave", function () {
+    var old = el("cboard").querySelectorAll(".cell.preview"), i;
+    for (i = 0; i < old.length; i++) old[i].classList.remove("preview");
+  });
 
   el("btnRotate").addEventListener("click", function () {
     horiz = !horiz;
@@ -407,57 +799,39 @@ function bootCipherPage() {
     renderTray();
   });
 
-  el("btnUndo").addEventListener("click", function () {
-    ships.pop();
-    refresh();
-  });
+  el("btnUndo").addEventListener("click", function () { ships.pop(); refresh(); });
 
   el("btnRandom").addEventListener("click", function () {
+    if (!n) return;
     try {
-      var built = C.buildFleet(C.randomFleet(n), n);
-      ships = [];
-      for (var i = 0; i < built.length; i++) {
-        ships.push({ len: built[i].len, cells: built[i].cells.slice() });
-      }
+      ships = VB.randomShips(n);
       refresh();
     } catch (e) {
       el("placerMsg").textContent = e.message;
     }
   });
 
-  el("btnClear").addEventListener("click", function () {
-    ships = [];
-    refresh();
-  });
+  el("btnClear").addEventListener("click", function () { ships = []; refresh(); });
 
   el("keyIn").addEventListener("input", function () {
     var v = Math.trunc(Number(this.value));
     var err = el("keyErr");
-    if (isFinite(v) && v >= 1 && v <= 500) {
-      keyVal = v;
-      err.textContent = "";
-      slipText();
-    } else {
-      err.textContent = "Enter a whole number from 1 to 500.";
-    }
+    if (isFinite(v) && v >= 1 && v <= 500) { keyVal = v; err.textContent = ""; slip(); }
+    else err.textContent = "Enter a whole number from 1 to 500.";
   });
 
   el("btnNewKey").addEventListener("click", function () {
     keyVal = 1 + Math.floor(Math.random() * 500);
     el("keyIn").value = keyVal;
     el("keyErr").textContent = "";
-    slipText();
+    slip();
   });
 
-  el("btnCopyKey").addEventListener("click", function () {
-    copyText(String(el("slipKey").textContent), this);
-  });
-
-  el("btnCopyCode").addEventListener("click", function () {
-    copyText(String(el("slipCode").textContent), this);
-  });
-
+  el("btnCopyKey").addEventListener("click", function () { copyText(String(el("slipKey").textContent), this); });
+  el("btnCopyCode").addEventListener("click", function () { copyText(String(el("slipCode").textContent), this); });
   el("btnPrint").addEventListener("click", function () { window.print(); });
+
+  el("btnSelfTest").addEventListener("click", runTest);
 
   el("btnCheck").addEventListener("click", function () {
     var err = el("chkErr"), ok = el("chkOk");
@@ -465,53 +839,21 @@ function bootCipherPage() {
     ok.textContent = "";
     el("chkBoard").innerHTML = "";
     try {
-      var dec = C.decodeFleet(el("chkCode").value, el("chkKey").value);
-      ok.textContent = "Valid: " + dec.ships.length + " ships, " + dec.cells.length +
-        " squares, board " + dec.n + " × " + dec.n + ".";
-      renderCheck(dec.cells, dec.n);
+      var dec = VB.decodeFleet(el("chkCode").value, el("chkKey").value);
+      ok.textContent = "Valid: " + dec.ships.length + " ships, " + dec.cells.length + " squares, board " + dec.n + " × " + dec.n + ".";
+      var b = el("chkBoard");
+      b.style.gridTemplateColumns = "repeat(" + dec.n + ", minmax(0,1fr))";
+      b.style.width = "min(100%, " + Math.max(280, dec.n * 30) + "px)";
+      var on = {}, html = "", i;
+      for (i = 0; i < dec.cells.length; i++) on[dec.cells[i]] = true;
+      for (i = 0; i < dec.n * dec.n; i++) html += '<div class="cell' + (on[i] ? " ship" : "") + '"></div>';
+      b.innerHTML = html;
     } catch (e) {
       err.textContent = e.message;
     }
   });
 
-  el("btnSelfTest").addEventListener("click", function () {
-    var out = el("stOut");
-    try {
-      var r = C.selfTest(), html = "", i;
-      for (i = 0; i < r.results.length; i++) {
-        var t = r.results[i];
-        html += '<div style="padding:4px 0;border-bottom:1px solid #eef2f7">' +
-          '<b style="color:' + (t.pass ? "#15803d" : "#dc2626") + '">' +
-          (t.pass ? "PASS" : "FAIL") + "</b> " + esc(t.name) +
-          ' <span class="muted">' + esc(t.detail) + "</span></div>";
-      }
-      html += '<p class="small" style="margin:8px 0 0"><b>' +
-        (r.pass ? "All checks passed." : "Something is wrong.") + "</b> cipher v" + esc(r.version) + "</p>";
-      out.innerHTML = html;
-    } catch (e) {
-      out.innerHTML = '<p class="err">Self-test crashed: ' + esc(e.message) + "</p>";
-    }
-  });
-}
-
-(function () {
-  var paths = ["shared/cipher.js?v=2", "cipher.js?v=2", "js/cipher.js?v=2"];
-  function next(i) {
-    if (i >= paths.length) {
-      var box = document.getElementById("bootErr");
-      if (box) box.hidden = false;
-      return;
-    }
-    var s = document.createElement("script");
-    s.src = paths[i];
-    s.onload = function () {
-      if (window.VBCipher) { bootCipherPage(); }
-      else { next(i + 1); }
-    };
-    s.onerror = function () { next(i + 1); };
-    document.head.appendChild(s);
-  }
-  next(0);
+  runTest();
 })();
 </script>
 </body>
