@@ -1,4 +1,4 @@
-/* Vocab Battleships - shared fleet cipher, version 2.
+/* Vocab Battleships - shared fleet cipher, version 2.1.
    Loaded by the referee board and by the student cipher page.
    Code format, before the display dashes:
      [board size char][payload in base 36][2 checksum chars]
@@ -15,7 +15,7 @@
   var BASE = 36n;
   var MIN_WORDS = 8;
   var MAX_WORDS = 15;
-  var VERSION = "2.0";
+  var VERSION = "2.1";
   var SHIP_NAMES = { 5: "Carrier", 4: "Battleship", 3: "Cruiser", 2: "Destroyer" };
 
   function shipLengths(n) {
@@ -130,20 +130,19 @@
     return out;
   }
 
-  function allIn(set, run) {
-    for (var i = 0; i < run.length; i++) if (!set.has(run[i])) return false;
-    return true;
-  }
-
   function buildFleet(cells, n) {
     if (!isValidBoardSize(n)) throw new Error("Board size must be 8 to 15.");
+
     var set = new Set(cells);
-    if (set.size !== cells.length) throw new Error("Two ships share a square.");
+    if (set.size !== cells.length) {
+      throw new Error("Two ships share a square. If this came from a slip, the slip was made by an older buggy version: generate a fresh one.");
+    }
     if (cells.length !== fleetCellCount(n)) {
       throw new Error("This fleet has " + cells.length + " squares, but a " + n + " by " + n +
         " board needs " + fleetCellCount(n) + ".");
     }
 
+    /* Every maximal straight run of two or more ships' cells. */
     var runs = [];
     cells.forEach(function (c) {
       var row = Math.floor(c / n);
@@ -174,13 +173,22 @@
       for (var r = 0; r < runs.length; r++) {
         var cand = runs[r];
         if (cand.length !== len) continue;
-        if (!allIn(new Set(used), new Set(cand)) && cand.some(function (q) { return used.has(q); })) continue;
+        var clash = false;
+        for (var q = 0; q < cand.length; q++) {
+          if (used.has(cand[q])) { clash = true; break; }
+        }
+        if (clash) continue;
         pick = cand;
         break;
       }
       if (!pick) throw new Error("Those squares do not form the ship shapes for this board.");
       for (var u = 0; u < pick.length; u++) used.add(pick[u]);
       ships.push({ len: len, cells: pick.slice(), hits: 0, name: "" });
+    }
+
+    /* Nothing may be left over and nothing may be used twice. */
+    if (used.size !== cells.length) {
+      throw new Error("Some squares in that fleet are not part of any ship.");
     }
 
     var totals = {};
@@ -345,6 +353,7 @@
 
   function selfTest() {
     var results = [];
+
     var trips = 80;
     var bad = 0;
     var firstBad = "";
@@ -368,6 +377,29 @@
       name: "Round trip",
       pass: bad === 0,
       detail: bad === 0 ? trips + " random fleets decoded exactly" : bad + " failures. " + firstBad
+    });
+
+    /* The regression case: two ships of the same length, in different rows. */
+    var fixture = [0, 1, 2, 3, 4, 27, 37, 47, 57, 40, 41, 42, 60, 70, 80, 98, 99];
+    var fixtureSorted = fixture.slice().sort(function (a, b) { return a - b; }).join(",");
+    var fixtureBad = 0;
+    var fixtureTries = 0;
+    for (var fk = 1; fk <= 500; fk += 7) {
+      fixtureTries++;
+      try {
+        var fe = encodeFleet(fixture, 10, fk);
+        var fd = decodeFleet(fe.code, fk);
+        if (fd.cells.join(",") !== fixtureSorted) fixtureBad++;
+      } catch (e) {
+        fixtureBad++;
+      }
+    }
+    results.push({
+      name: "Two ships of equal length",
+      pass: fixtureBad === 0,
+      detail: fixtureBad === 0
+        ? fixtureTries + " keys, fleet rebuilt exactly"
+        : fixtureBad + " of " + fixtureTries + " failed"
     });
 
     var rejected = 0;
