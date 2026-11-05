@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vocab Battleships — referee board</title>
+<link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">Vocab <span>Battleships</span></div>
+    <span class="tag">referee board</span>
+    <span class="tag" id="headCode">no game yet</span>
+    <div class="spacer"></div>
+    <a class="btn" href="cipher/">Fleet cipher →</a>
+  </header>
+
+  <!-- ============ SETUP ============ -->
+  <section class="panel" id="screen-setup">
+    <h1>Set up the lesson</h1>
+    <p class="lead">Type 8 to 15 words or phrases, one per line. Every word becomes a row and a column on the board.</p>
+
+    <div class="grid2">
+      <div>
+        <label for="wordsIn">Vocabulary (one per line)</label>
+        <textarea id="wordsIn" spellcheck="false" placeholder="chocolate&#10;bicycle&#10;museum&#10;thunderstorm&#10;volunteer&#10;recycling&#10;flexible&#10;recipe"></textarea>
+        <div class="row" style="margin-top:10px">
+          <span class="small muted" id="wordCount">0 words</span>
+          <div class="spacer"></div>
+          <button class="btn" id="btnSample" type="button">Load sample</button>
+          <button class="btn" id="btnClearWords" type="button">Clear</button>
+        </div>
+        <p class="err" id="setupErr"></p>
+      </div>
+
+      <div>
+        <h2>Rules</h2>
+        <label for="difficulty">Sentence requirement</label>
+        <select id="difficulty">
+          <option value="both" selected>Both the row word and the column word</option>
+          <option value="row">Only the row word</option>
+          <option value="col">Only the column word</option>
+        </select>
+
+        <label class="inline" style="margin-top:12px">
+          <input type="checkbox" id="optBonus"> Bonus shot when a ship is hit
+        </label>
+        <label class="inline">
+          <input type="checkbox" id="optTimer"> 30-second thinking timer
+        </label>
+
+        <label for="preset" style="margin-top:14px">Saved lessons</label>
+        <div class="row">
+          <select id="preset" style="flex:1"><option value="">— none —</option></select>
+          <button class="btn" id="btnSavePreset" type="button">Save list</button>
+        </div>
+
+        <button class="btn btn-primary" id="btnCreate" type="button" style="width:100%;margin-top:18px">Create game →</button>
+        <p class="small muted" style="margin-top:10px">Next you will get a game code. Students type it into the fleet cipher page, hide their ships, and bring you a key and a code.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LOAD FLEETS ============ -->
+  <section class="panel" id="screen-load" hidden>
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div>
+        <h1>Load both fleets</h1>
+        <p class="lead" style="margin-bottom:0">Type each slip in while the other student is not looking at the screen.</p>
+      </div>
+      <div style="text-align:right">
+        <div class="small muted">game code</div>
+        <div class="code" id="loadCode">—</div>
+        <div class="small muted" id="loadSize"></div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:18px">
+      <div class="card">
+        <h2>Player A fleet</h2>
+        <label for="keyA">Key (1 to 500)</label>
+        <input type="number" id="keyA" min="1" max="500" inputmode="numeric" autocomplete="off">
+        <label for="codeA" style="margin-top:10px">Fleet code</label>
+        <input type="text" id="codeA" class="mono" autocomplete="off" spellcheck="false" placeholder="ABCD-EFGH">
+        <p class="err" id="errA"></p>
+        <p class="ok" id="okA"></p>
+        <button class="btn" id="btnLoadA" type="button" style="width:100%;margin-top:6px">Load A</button>
+      </div>
+
+      <div class="card">
+        <h2>Player B fleet</h2>
+        <label for="keyB">Key (1 to 500)</label>
+        <input type="number" id="keyB" min="1" max="500" inputmode="numeric" autocomplete="off">
+        <label for="codeB" style="margin-top:10px">Fleet code</label>
+        <input type="text" id="codeB" class="mono" autocomplete="off" spellcheck="false" placeholder="ABCD-EFGH">
+        <p class="err" id="errB"></p>
+        <p class="ok" id="okB"></p>
+        <button class="btn" id="btnLoadB" type="button" style="width:100%;margin-top:6px">Load B</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:18px">
+      <button class="btn" id="btnBackSetup" type="button">← Back to setup</button>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btnStart" type="button" disabled>Start match →</button>
+    </div>
+  </section>
+
+  <!-- ============ PLAY ============ -->
+  <section id="screen-play" hidden>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <h1 style="margin-bottom:2px">Player <span id="turnName">A</span>, choose your target</h1>
+          <p class="lead" id="turnHint" style="margin:0">Pick a square, then say your sentence.</p>
+        </div>
+        <div class="row">
+          <div class="card small" style="text-align:center;padding:10px 14px"><div class="muted">shots</div><b id="statShots">0</b></div>
+          <div class="card small" style="text-align:center;padding:10px 14px"><div class="muted">hits</div><b id="statHits">0</b></div>
+          <div class="card small" style="text-align:center;padding:10px 14px"><div class="muted">game</div><b id="statCode" class="mono">—</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div id="boardWrap">
+          <div class="board-scroll"><div class="board" id="board"></div></div>
+        </div>
+        <div id="revealWrap" hidden>
+          <div class="grid2">
+            <div>
+              <h2>Player A's fleet</h2>
+              <div class="board-scroll"><div class="board" id="boardA"></div></div>
+            </div>
+            <div>
+              <h2>Player B's fleet</h2>
+              <div class="board-scroll"><div class="board" id="boardB"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="sentencePanel" style="margin-top:14px"></div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Turn log</h2>
+          <div id="log" class="small"></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="btnReveal" type="button">Reveal fleets</button>
+          <button class="btn btn-danger" id="btnNewGame" type="button">New game</button>
+        </div>
+        <p class="small muted" style="margin-top:12px">Keep this screen turned towards you. The other student should only ever see their own slip of paper.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="card modal">
+    <h1 id="ovTitle">Match over</h1>
+    <p class="lead" id="ovBody"></p>
+    <div class="row">
+      <button class="btn" id="ovReveal" type="button">Reveal both fleets</button>
+      <button class="btn btn-primary" id="ovAgain" type="button">New game, same words</button>
+    </div>
+  </div>
+</div>
+
+<script src="shared/cipher.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var C = window.VBCipher;
+  var LS_GAME = "vbbs.game.v1";
+  var LS_PRESETS = "vbbs.presets.v1";
+
+  var SAMPLE = ["chocolate", "bicycle", "museum", "thunderstorm", "volunteer",
+                "recycling", "flexible", "recipe", "journey", "discount"];
+
+  var S = null;
+  var pending = null;
+  var tickId = null;
+  var timeLeft = 0;
+
+  function el(id) { return document.getElementById(id); }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (m) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
+    });
+  }
+
+  function short(w, k) {
+    k = k || 14;
+    return w.length > k ? w.slice(0, k - 1) + "…" : w;
+  }
+
+  function freshState() {
+    return {
+      words: [], n: 0, code: "", phase: "setup",
+      opts: { difficulty: "both", bonus: false, timer: false },
+      fleets: { A: null, B: null },
+      shots: { A: [], B: [] },
+      turn: "A", log: [], over: null, reveal: false
+    };
+  }
+
+  function save() {
+    try { localStorage.setItem(LS_GAME, JSON.stringify(S)); } catch (e) { /* private mode */ }
+  }
+
+  function loadSaved() {
+    try {
+      var raw = localStorage.getItem(LS_GAME);
+      if (!raw) return null;
+      var s = JSON.parse(raw);
+      if (!s || !Array.isArray(s.words) || !s.words.length) return null;
+      return s;
+    } catch (e) { return null; }
+  }
+
+  function parseWords(text) {
+    var seen = {}, out = [];
+    text.split(/\r?\n|,/).forEach(function (line) {
+      var w = line.trim().replace(/\s+/g, " ");
+      if (!w) return;
+      var k = w.toLowerCase();
+      if (seen[k]) return;
+      seen[k] = true;
+      out.push(w);
+    });
+    return out;
+  }
+
+  /* ---------- screens ---------- */
+
+  function go(phase) {
+    S.phase = phase;
+    el("screen-setup").hidden = phase !== "setup";
+    el("screen-load").hidden = phase !== "load";
+    el("screen-play").hidden = phase !== "play";
+    el("headCode").textContent = S.code ? "game " + S.code : "no game yet";
+    if (phase === "load") renderLoad();
+    if (phase === "play") renderPlay();
+    window.scrollTo(0, 0);
+    save();
+  }
+
+  /* ---------- setup ---------- */
+
+  function updateWordCount() {
+    var words = parseWords(el("wordsIn").value);
+    var n = words.length;
+    var txt = n + (n === 1 ? " word" : " words");
+    if (n >= C.MIN_WORDS && n <= C.MAX_WORDS) txt += " · board " + n + "×" + n;
+    el("wordCount").textContent = txt;
+  }
+
+  function createGame() {
+    var words = parseWords(el("wordsIn").value);
+    var err = el("setupErr");
+    if (words.length < C.MIN_WORDS || words.length > C.MAX_WORDS) {
+      err.textContent = "Enter between " + C.MIN_WORDS + " and " + C.MAX_WORDS +
+        " words (you have " + words.length + ").";
+      return;
+    }
+    err.textContent = "";
+    var opts = {
+      difficulty: el("difficulty").value,
+      bonus: el("optBonus").checked,
+      timer: el("optTimer").checked
+    };
+    S = freshState();
+    S.words = words;
+    S.n = words.length;
+    S.code = C.randomGameCode(words.length);
+    S.opts = opts;
+    el("keyA").value = "";
+    el("codeA").value = "";
+    el("keyB").value = "";
+    el("codeB").value = "";
+    go("load");
+  }
+
+  /* ---------- presets ---------- */
+
+  function getPresets() {
+    try { return JSON.parse(localStorage.getItem(LS_PRESETS) || "[]"); } catch (e) { return []; }
+  }
+
+  function renderPresets() {
+    var sel = el("preset");
+    var list = getPresets();
+    var html = '<option value="">— none —</option>';
+    list.forEach(function (p, i) {
+      html += '<option value="' + i + '">' + esc(p.name) + " (" + p.words.length + ")</option>";
+    });
+    sel.innerHTML = html;
+  }
+
+  /* ---------- load fleets ---------- */
+
+  function renderLoad() {
+    el("loadCode").textContent = S.code;
+    el("loadSize").textContent = S.n + " × " + S.n + " · ships " + C.shipLengths(S.n).join(" / ");
+    ["A", "B"].forEach(function (p) {
+      var f = S.fleets[p];
+      el("ok" + p).textContent = f
+        ? "Loaded: " + f.ships.length + " ships, " + f.cells.length + " squares."
+        : "";
+      el("err" + p).textContent = "";
+    });
+    el("btnStart").disabled = !(S.fleets.A && S.fleets.B);
+  }
+
+  function loadFleetFor(p) {
+    var err = el("err" + p), ok = el("ok" + p);
+    err.textContent = "";
+    ok.textContent = "";
+    try {
+      var dec = C.decodeFleet(el("code" + p).value, el("key" + p).value);
+      if (dec.n !== S.n) {
+        throw new Error("That fleet is for a " + dec.n + "×" + dec.n +
+          " board, but this game is " + S.n + "×" + S.n + ".");
+      }
+      S.fleets[p] = { cells: dec.cells, ships: dec.ships, key: dec.key };
+      save();
+      ok.textContent = "Loaded: " + dec.ships.length + " ships, " + dec.cells.length + " squares.";
+      el("btnStart").disabled = !(S.fleets.A && S.fleets.B);
+    } catch (e) {
+      err.textContent = e.message;
+    }
+  }
+
+  function startMatch() {
+    if (!(S.fleets.A && S.fleets.B)) return;
+    S.shots = { A: [], B: [] };
+    S.turn = "A";
+    S.log = [];
+    S.over = null;
+    S.reveal = false;
+    pending = null;
+    go("play");
+  }
+
+  /* ---------- board rendering ---------- */
+
+  function boardHTML(owner, shooter, reveal) {
+    var n = S.n;
+    var fleet = S.fleets[owner];
+    var shipAt = {};
+    if (fleet) {
+      fleet.ships.forEach(function (s) {
+        s.cells.forEach(function (c) { shipAt[c] = s; });
+      });
+    }
+    var shots = {};
+    (S.shots[shooter] || []).forEach(function (c) { shots[c] = true; });
+
+    var parts = ['<div></div>'];
+    for (var c = 0; c < n; c++) {
+      parts.push('<div class="axis-col" title="' + esc(S.words[c]) + '">' +
+        esc(short(S.words[c], 12)) + "</div>");
+    }
+    for (var r = 0; r < n; r++) {
+      parts.push('<div class="axis-row" title="' + esc(S.words[r]) + '">' +
+        esc(short(S.words[r], 12)) + "</div>");
+      for (var col = 0; col < n; col++) {
+        var idx = r * n + col;
+        var ship = shipAt[idx];
+        var shot = !!shots[idx];
+        var cls = ["cell"];
+        var glyph = "";
+        if (shot && ship) {
+          cls.push(ship.hits >= ship.len ? "sunk" : "hit");
+          glyph = "✕";
+        } else if (shot) {
+          cls.push("miss");
+          glyph = "•";
+        } else if (reveal && ship) {
+          cls.push("ship");
+        }
+        var dis = (shot || S.over || reveal) ? " disabled" : "";
+        parts.push('<button type="button" class="' + cls.join(" ") + '" data-cell="' + idx +
+          '" aria-label="row ' + (r + 1) + " " + esc(S.words[r]) + ", column " + (col + 1) +
+          " " + esc(S.words[col]) + '"' + dis + ">" + glyph + "</button>");
+      }
+    }
+    return parts.join("");
+  }
+
+  function styleBoard(node) {
+    node.style.gridTemplateColumns = "minmax(52px, auto) repeat(" + S.n + ", minmax(0, 1fr))";
+    node.style.width = "min(100%, " + Math.max(360, S.n * 44) + "px)";
+  }
+
+  /* ---------- play screen ---------- */
+
+  function renderPlay() {
+    var me = S.turn;
+    var foe = me === "A" ? "B" : "A";
+
+    el("turnName").textContent = me;
+    el("statCode").textContent = S.code;
+    el("statShots").textContent = S.shots[me].length;
+    el("statHits").textContent = S.fleets[foe].ships.reduce(function (a, s) {
+      return a + s.hits;
+    }, 0);
+    el("turnHint").textContent = S.over
+      ? "Match finished."
+      : "Pick a square on Player " + foe + "'s water, then say your sentence.";
+
+    if (S.reveal) {
+      el("boardWrap").hidden = true;
+      el("revealWrap").hidden = false;
+      styleBoard(el("boardA"));
+      el("boardA").innerHTML = boardHTML("A", "B", true);
+      styleBoard(el("boardB"));
+      el("boardB").innerHTML = boardHTML("B", "A", true);
+    } else {
+      el("boardWrap").hidden = false;
+      el("revealWrap").hidden = true;
+      styleBoard(el("board"));
+      el("board").innerHTML = boardHTML(foe, me, false);
+    }
+
+    renderPanel();
+    renderLog();
+    renderOverlay();
+  }
+
+  function requiredWords(cell) {
+    var n = S.n;
+    var rw = S.words[Math.floor(cell / n)];
+    var cw = S.words[cell % n];
+    var need = [];
+    if (S.opts.difficulty === "both") {
+      need.push(rw);
+      if (cw !== rw) need.push(cw);
+    } else if (S.opts.difficulty === "row") {
+      need.push(rw);
+    } else {
+      need.push(cw);
+    }
+    return { row: rw, col: cw, need: need };
+  }
+
+  function renderPanel() {
+    var p = el("sentencePanel");
+
+    if (S.over) {
+      p.innerHTML = "<h2>Match over</h2><p class=\"muted\">Player " +
+        esc(S.over.winner) + " wins. Press \"Reveal fleets\" to see both layouts.</p>";
+      return;
+    }
+    if (S.reveal) {
+      p.innerHTML = "<h2>Fleets revealed</h2><p class=\"muted\">Start a new game when you are ready.</p>";
+      return;
+    }
+    if (!pending) {
+      p.innerHTML = "<h2>Say it, then fire</h2>" +
+        "<p class=\"muted small\" style=\"margin:0\">Tap a square on the board. The student must build " +
+        "the sentence out loud before the shot counts.</p>";
+      return;
+    }
+
+    var info = requiredWords(pending.cell);
+    var needHtml = info.need.map(function (w) { return "<b>" + esc(w) + "</b>"; }).join(" and ");
+    var r = Math.floor(pending.cell / S.n) + 1;
+    var c = (pending.cell % S.n) + 1;
+
+    p.innerHTML =
+      '<div class="row" style="justify-content:space-between">' +
+      '<div class="small muted">Target · row ' + r + " \u201c" + esc(info.row) +
+      "\u201d × column " + c + " \u201c" + esc(info.col) + "\u201d</div>" +
+      (S.opts.timer ? '<div class="small"><b id="timerText">' + Math.max(0, timeLeft) + "s</b></div>" : "") +
+      "</div>" +
+      '<p style="font-size:1.12rem;margin:12px 0 14px">Make a sentence using ' + needHtml + ".</p>" +
+      '<div class="row">' +
+      '<button type="button" class="btn btn-primary" data-act="accept">✓ Said it — fire</button>' +
+      '<button type="button" class="btn" data-act="reject">✗ Try again</button>' +
+      '<button type="button" class="btn" data-act="cancel">Cancel shot</button>' +
+      "</div>";
+  }
+
+  function renderLog() {
+    var box = el("log");
+    if (!S.log.length) {
+      box.innerHTML = '<p class="muted small" style="margin:0">No shots yet.</p>';
+      return;
+    }
+    var html = "";
+    S.log.slice(0, 60).forEach(function (e) {
+      html += '<div class="logrow"><b>' + esc(e.turn) + "</b>" +
+        '<span class="muted">' + esc(short(e.rowWord, 12)) + " × " + esc(short(e.colWord, 12)) + "</span>" +
+        '<span class="spacer" style="flex:1"></span>' +
+        '<span class="badge ' + e.result + '">' + e.result + "</span>" +
+        (e.ship ? ' <span class="small muted">' + esc(e.ship) + "</span>" : "") +
+        "</div>";
+    });
+    var used = {};
+    S.log.forEach(function (e) { used[e.rowWord] = true; used[e.colWord] = true; });
+    var unused = S.words.filter(function (w) { return !used[w]; });
+    html += '<p class="small muted" style="margin:10px 0 0">Words not used yet: ' +
+      (unused.length ? unused.map(esc).join(", ") : "all of them") + "</p>";
+    box.innerHTML = html;
+  }
+
+  function renderOverlay() {
+    var ov = el("overlay");
+    if (!S.over) { ov.hidden = true; return; }
+    ov.hidden = false;
+    var totals = { A: { hits: 0, shots: 0 }, B: { hits: 0, shots: 0 } };
+    S.log.forEach(function (e) {
+      totals[e.turn].shots++;
+      if (e.result !== "miss") totals[e.turn].hits++;
+    });
+    el("ovTitle").textContent = "Player " + S.over.winner + " wins";
+    el("ovBody").textContent = "A: " + totals.A.hits + " hits from " + totals.A.shots +
+      " shots. B: " + totals.B.hits + " hits from " + totals.B.shots + " shots. " +
+      "Total sentences attempted: " + S.log.length + ".";
+  }
+
+  /* ---------- shooting ---------- */
+
+  function fire(cell) {
+    var me = S.turn;
+    var foe = me === "A" ? "B" : "A";
+    var fleet = S.fleets[foe];
+    if (S.shots[me].indexOf(cell) >= 0) return;
+
+    S.shots[me].push(cell);
+
+    var ship = null;
+    fleet.ships.forEach(function (s) {
+      if (s.cells.indexOf(cell) >= 0) ship = s;
+    });
+
+    var result = "miss", name = "";
+    if (ship) {
+      ship.hits++;
+      name = ship.name;
+      result = ship.hits >= ship.len ? "sunk" : "hit";
+    }
+
+    var row = Math.floor(cell / S.n), col = cell % S.n;
+    S.log.unshift({
+      turn: me, cell: cell, result: result, ship: name,
+      rowWord: S.words[row], colWord: S.words[col]
+    });
+
+    var won = fleet.ships.every(function (s) { return s.hits >= s.len; });
+    if (won) {
+      S.over = { winner: me };
+    } else if (!(result !== "miss" && S.opts.bonus)) {
+      S.turn = foe;
+    }
+    save();
+  }
+
+  function accept() {
+    if (!pending) return;
+    var cell = pending.cell;
+    pending = null;
+    stopTimer();
+    fire(cell);
+    renderPlay();
+  }
+
+  function choose(cell) {
+    if (S.over || S.reveal) return;
+    if (S.shots[S.turn].indexOf(cell) >= 0) return;
+    var old = document.querySelectorAll(".cell.selected");
+    for (var i = 0; i < old.length; i++) old[i].classList.remove("selected");
+    pending = { cell: cell };
+    var node = document.querySelector('#board [data-cell="' + cell + '"]');
+    if (node) node.classList.add("selected");
+    startTimer();
+    renderPanel();
+  }
+
+  /* ---------- timer ---------- */
+
+  function startTimer() {
+    stopTimer();
+    if (!S.opts.timer) return;
+    timeLeft = 30;
+    tickId = setInterval(function () {
+      timeLeft--;
+      var t = el("timerText");
+      if (t) t.textContent = timeLeft + "s";
+      if (timeLeft <= 0) {
+        stopTimer();
+        pending = null;
+        renderPanel();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (tickId) { clearInterval(tickId); tickId = null; }
+  }
+
+  /* ---------- wiring ---------- */
+
+  function bind() {
+    el("wordsIn").addEventListener("input", updateWordCount);
+
+    el("btnSample").addEventListener("click", function () {
+      el("wordsIn").value = SAMPLE.join("\n");
+      updateWordCount();
+    });
+
+    el("btnClearWords").addEventListener("click", function () {
+      el("wordsIn").value = "";
+      updateWordCount();
+    });
+
+    el("btnCreate").addEventListener("click", createGame);
+
+    el("preset").addEventListener("change", function () {
+      var i = this.value;
+      if (i === "") return;
+      var p = getPresets()[Number(i)];
+      if (!p) return;
+      el("wordsIn").value = p.words.join("\n");
+      el("difficulty").value = p.opts.difficulty;
+      el("optBonus").checked = !!p.opts.bonus;
+      el("optTimer").checked = !!p.opts.timer;
+      updateWordCount();
+    });
+
+    el("btnSavePreset").addEventListener("click", function () {
+      var words = parseWords(el("wordsIn").value);
+      if (words.length < C.MIN_WORDS || words.length > C.MAX_WORDS) {
+        el("setupErr").textContent = "Save a list of 8 to 15 words first.";
+        return;
+      }
+      var name = window.prompt("Name this lesson", words[0] + " set");
+      if (!name) return;
+      var list = getPresets();
+      list.push({
+        name: name,
+        words: words,
+        opts: {
+          difficulty: el("difficulty").value,
+          bonus: el("optBonus").checked,
+          timer: el("optTimer").checked
+        }
+      });
+      try { localStorage.setItem(LS_PRESETS, JSON.stringify(list)); } catch (e) { /* ignore */ }
+      renderPresets();
+    });
+
+    el("btnLoadA").addEventListener("click", function () { loadFleetFor("A"); });
+    el("btnLoadB").addEventListener("click", function () { loadFleetFor("B"); });
+    el("btnStart").addEventListener("click", startMatch);
+
+    el("btnBackSetup").addEventListener("click", function () {
+      go("setup");
+    });
+
+    el("board").addEventListener("click", function (e) {
+      var node = e.target.closest("[data-cell]");
+      if (!node || node.disabled) return;
+      choose(Number(node.dataset.cell));
+    });
+
+    el("sentencePanel").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-act]");
+      if (!b) return;
+      var act = b.dataset.act;
+      if (act === "accept") accept();
+      else if (act === "cancel") { pending = null; stopTimer(); renderPlay(); }
+    });
+
+    el("btnReveal").addEventListener("click", function () {
+      S.reveal = true;
+      save();
+      renderPlay();
+    });
+
+    el("btnNewGame").addEventListener("click", newGameSameWords);
+    el("ovAgain").addEventListener("click", newGameSameWords);
+
+    el("ovReveal").addEventListener("click", function () {
+      S.reveal = true;
+      save();
+      el("overlay").hidden = true;
+      renderPlay();
+    });
+  }
+
+  function newGameSameWords() {
+    var words = S.words.slice();
+    var opts = S.opts;
+    S = freshState();
+    S.words = words;
+    S.n = words.length;
+    S.code = C.randomGameCode(words.length);
+    S.opts = opts;
+    el("overlay").hidden = true;
+    el("keyA").value = "";
+    el("codeA").value = "";
+    el("keyB").value = "";
+    el("codeB").value = "";
+    go("load");
+  }
+
+  function init() {
+    bind();
+    renderPresets();
+
+    var saved = loadSaved();
+    if (saved && saved.phase && saved.phase !== "setup" && saved.code) {
+      S = saved;
+      el("wordsIn").value = S.words.join("\n");
+      el("difficulty").value = S.opts.difficulty;
+      el("optBonus").checked = !!S.opts.bonus;
+      el("optTimer").checked = !!S.opts.timer;
+      updateWordCount();
+      go(S.phase);
+    } else {
+      S = freshState();
+      updateWordCount();
+      go("setup");
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
