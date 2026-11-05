@@ -88,7 +88,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     <p class="small" style="margin:0">The engine block is missing, which means the paste was cut short. Copy the whole file again.</p>
   </div>
 
-  <!-- ============ SETUP ============ -->
   <section class="panel" id="screen-setup">
     <h1>Set up the lesson</h1>
     <p class="lead">Type 8 to 15 words or phrases, one per line. Every word becomes a row and a column on the board.</p>
@@ -134,7 +133,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     </div>
   </section>
 
-  <!-- ============ LOAD FLEETS ============ -->
   <section class="panel" id="screen-load" hidden>
     <div class="row" style="justify-content:space-between;align-items:flex-start">
       <div>
@@ -186,7 +184,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     </details>
   </section>
 
-  <!-- ============ PLAY ============ -->
   <section id="screen-play" hidden>
     <div class="panel" style="margin-bottom:14px">
       <div class="row" style="justify-content:space-between;align-items:flex-start">
@@ -258,7 +255,7 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
   var BASE = 36n;
   var MIN = 8;
   var MAX = 15;
-  var VERSION = "3.2-inline";
+  var VERSION = "3.2.2-inline";
   var NAMES = { 5: "Carrier", 4: "Battleship", 3: "Cruiser", 2: "Destroyer" };
 
   function shipLengths(n) {
@@ -560,12 +557,19 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
       var k = 1 + Math.floor(Math.random() * 500);
       try {
         var ships = randomShips(n);
+
+        var want = [], w, wc;
+        for (w = 0; w < ships.length; w++) {
+          for (wc = 0; wc < ships[w].cells.length; wc++) want.push(ships[w].cells[wc]);
+        }
+        want.sort(function (a, b) { return a - b; });
+
         var enc = encodeShips(ships, n, k);
         var dec = decodeFleet(enc.code, k);
-        var want = randomFleet(n);
-        if (dec.n !== n || dec.cells.join(",") !== want.join(",")) {
+
+        if (dec.n !== n || dec.ships.length !== ships.length || dec.cells.join(",") !== want.join(",")) {
           bad++;
-          if (!firstBad) firstBad = "n=" + n + " key=" + k;
+          if (!firstBad) firstBad = "n=" + n + " key=" + k + " code=" + enc.code;
         }
       } catch (e) {
         bad++;
@@ -729,8 +733,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     return out;
   }
 
-  /* ---------- screens ---------- */
-
   function go(phase) {
     S.phase = phase;
     el("screen-setup").hidden = phase !== "setup";
@@ -742,8 +744,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
     save();
   }
-
-  /* ---------- setup ---------- */
 
   function updateWordCount() {
     var words = parseWords(el("wordsIn").value);
@@ -781,8 +781,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     go("load");
   }
 
-  /* ---------- presets ---------- */
-
   function getPresets() {
     try { return JSON.parse(localStorage.getItem(LS_PRESETS) || "[]"); } catch (e) { return []; }
   }
@@ -796,8 +794,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     });
     sel.innerHTML = html;
   }
-
-  /* ---------- load fleets ---------- */
 
   function renderLoad() {
     el("loadCode").textContent = S.code;
@@ -843,8 +839,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     stopTimer();
     go("play");
   }
-
-  /* ---------- board rendering ---------- */
 
   function boardHTML(owner, shooter, reveal) {
     var n = S.n;
@@ -894,8 +888,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     node.style.gridTemplateColumns = "minmax(52px, auto) repeat(" + S.n + ", minmax(0, 1fr))";
     node.style.width = "min(100%, " + Math.max(360, S.n * 44) + "px)";
   }
-
-  /* ---------- play screen ---------- */
 
   function renderPlay() {
     var me = S.turn;
@@ -1022,8 +1014,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
       "Sentences attempted: " + S.log.length + ".";
   }
 
-  /* ---------- shooting ---------- */
-
   function fire(cell) {
     var me = S.turn;
     var foe = me === "A" ? "B" : "A";
@@ -1080,8 +1070,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     renderPanel();
   }
 
-  /* ---------- timer ---------- */
-
   function startTimer() {
     stopTimer();
     if (!S.opts.timer) return;
@@ -1102,8 +1090,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
     if (tickId) { clearInterval(tickId); tickId = null; }
   }
 
-  /* ---------- engine check ---------- */
-
   function renderVerify() {
     var out = el("verifyOut");
     try {
@@ -1123,8 +1109,6 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
       out.innerHTML = '<p class="err">Self-test crashed: ' + esc(e.message) + "</p>";
     }
   }
-
-  /* ---------- wiring ---------- */
 
   function newGameSameWords() {
     var words = S.words.slice();
