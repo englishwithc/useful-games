@@ -2,38 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vocab Battleships — referee board</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fleet Cipher — Vocab Battleships</title>
 <style>
 *,*::before,*::after{box-sizing:border-box}
-:root{--ink:#0f172a;--muted:#64748b;--line:#dbe3ef;--panel:#fff;--accent:#2563eb;--accent2:#1d4ed8;--a:#2563eb;--b:#ea580c;--hit:#dc2626;--hit2:#b91c1c;--ok:#15803d;--r:16px;--shadow:0 1px 2px rgba(15,23,42,.05),0 14px 30px -14px rgba(15,23,42,.25)}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;color:var(--ink);line-height:1.5;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(1100px 520px at 8% -12%,#dbeafe 0%,transparent 62%),radial-gradient(900px 460px at 108% -6%,#ffe8d6 0%,transparent 58%),#eef2f9;background-attachment:fixed;min-height:100vh}
-.wrap{max-width:1140px;margin:0 auto;padding:20px 16px 84px}
-header.top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:16px}
-.brand{font-weight:800;font-size:1.12rem;letter-spacing:-.02em}.brand span{background:linear-gradient(90deg,#2563eb,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
+:root{--ink:#0f172a;--muted:#64748b;--line:#dbe3ef;--accent:#2563eb;--hit:#dc2626;--ok:#15803d}
+body{margin:0;color:var(--ink);line-height:1.5;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(1000px 480px at 6% -10%,#dbeafe 0%,transparent 62%),radial-gradient(800px 420px at 106% -6%,#ede9fe 0%,transparent 58%),#eef2f9;background-attachment:fixed;min-height:100vh}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 64px}
+header{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:16px}
+.brand{font-weight:800;font-size:1.1rem;letter-spacing:-.02em}
+.brand span{background:linear-gradient(90deg,#2563eb,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
 .tag{font-size:.73rem;font-weight:600;color:var(--muted);border:1px solid var(--line);background:rgba(255,255,255,.8);padding:3px 10px;border-radius:999px}
 .spacer{flex:1}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:20px}
-.panel+.panel,.panel+.grid2{margin-top:16px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(15,23,42,.05),0 14px 30px -14px rgba(15,23,42,.25);padding:20px}
 .card{background:#fbfdff;border:1px solid var(--line);border-radius:13px;padding:15px}
-h1{font-size:1.5rem;margin:0 0 6px;letter-spacing:-.025em}
-h2{font-size:.98rem;margin:0 0 9px;letter-spacing:-.01em}
-p{margin:0 0 9px}p.lead{color:var(--muted);margin:0 0 15px}
+h1{font-size:1.46rem;margin:0 0 6px;letter-spacing:-.025em}
+h2{font-size:.98rem;margin:0 0 9px}
+p{margin:0 0 8px}.lead{color:var(--muted);margin:0 0 14px}
 label{display:block;font-size:.77rem;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
-label.inline{display:flex;align-items:center;gap:9px;margin:9px 0;font-weight:500;color:var(--ink);font-size:.9rem;text-transform:none;letter-spacing:0}
-input,select,textarea,button{font:inherit}
-input[type=text],input[type=number],textarea,select{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
-textarea{min-height:196px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88rem;line-height:1.6}
-input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.18)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:11px;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:650;cursor:pointer;text-decoration:none;transition:transform .1s,background .15s,border-color .15s,box-shadow .15s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+input,button{font:inherit}
+input[type=text],input[type=number]{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:11px;transition:border-color .15s,box-shadow .15s}
+input:focus-visible,button:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:11px;border:1px solid var(--line);background:#fff;font-weight:650;cursor:pointer;text-decoration:none;color:var(--ink);transition:transform .1s,background .15s,border-color .15s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .btn:hover{background:#f4f7fc;border-color:#c8d4e6}
 .btn:active{transform:translateY(1px)}
 .btn-primary{background:linear-gradient(180deg,#3b82f6,#2563eb);border-color:#2563eb;color:#fff;box-shadow:0 2px 8px -2px rgba(37,99,235,.5)}
-.btn-primary:hover{background:linear-gradient(180deg,#2f74e8,#1d4ed8);border-color:#1d4ed8}
-.btn-danger{border-color:#fecaca;color:var(--hit);background:#fff}
+.btn-primary:hover{background:linear-gradient(180deg,#2f74e8,#1d4ed8)}
+.btn-danger{border-color:#fecaca;color:var(--hit)}
 .btn-danger:hover{background:#fef2f2}
-.btn:disabled{opacity:.42;cursor:not-allowed;transform:none}
 .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
 .muted{color:var(--muted)}.small{font-size:.82rem}
@@ -42,249 +38,132 @@ input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-vis
 .ok{color:var(--ok);font-size:.84rem;min-height:1.2em;margin:6px 0 0;font-weight:500}
 .board-scroll{overflow-x:auto;padding:2px 2px 8px}
 .board{display:grid;gap:4px;margin:0 auto}
-.corner{}
-.axis-col,.axis-row{font-size:.7rem;font-weight:700;color:var(--muted);display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;line-height:1.15}
-.axis-col{writing-mode:vertical-rl;transform:rotate(180deg);height:92px}
-.axis-row{padding-right:7px;justify-content:flex-end;word-break:break-word}
-.cell{position:relative;aspect-ratio:1;width:100%;padding:0;min-width:0;border:1px solid #cfdcea;border-radius:8px;background:linear-gradient(180deg,#f6f9fd,#eaf1fa);color:#fff;font-size:.9rem;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:crosshair;transition:background .12s,border-color .12s,transform .1s}
-.cell:hover:not(:disabled){background:linear-gradient(180deg,#dbeafe,#c7ddfb);border-color:var(--accent);transform:scale(1.06);z-index:2}
-.cell:disabled{cursor:default}
-.cell.miss{background:linear-gradient(180deg,#dbe3ee,#c6d1e0);border-color:#b8c5d6;color:#7d8b9e}
-.cell.hit{background:linear-gradient(180deg,#f87171,#dc2626);border-color:#b91c1c;box-shadow:0 0 0 2px rgba(220,38,38,.18)}
-.cell.sunk{background:linear-gradient(180deg,#991b1b,#5b1414);border-color:#4c1010}
+.cell{aspect-ratio:1;width:100%;padding:0;min-width:0;border:1px solid #cfdcea;border-radius:8px;background:linear-gradient(180deg,#f6f9fd,#eaf1fa);cursor:pointer;transition:background .12s,border-color .12s,transform .1s}
+.cell:hover{background:linear-gradient(180deg,#dbeafe,#c7ddfb);border-color:var(--accent);transform:scale(1.06);z-index:2}
 .cell.ship{background:linear-gradient(180deg,#3b5ea8,#1e3a8a);border-color:#1e3a8a}
-.cell.aim{background:linear-gradient(180deg,#fde68a,#fbbf24);border-color:#d97706;transform:scale(1.04);z-index:2}
-.cell.selected{outline:3px solid var(--accent);outline-offset:1px;z-index:3}
-@keyframes pop{from{transform:scale(.55);opacity:.2}to{transform:scale(1);opacity:1}}
-.cell.hit,.cell.sunk,.cell.miss{animation:pop .2s cubic-bezier(.2,1.4,.5,1)}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;font-weight:650;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.cell.preview{background:linear-gradient(180deg,#fde68a,#fbbf24);border-color:#d97706;transform:scale(1.04);z-index:2}
+.chip{font-size:.76rem;font-weight:650;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted);display:inline-block}
 .chip.done{background:#ecfdf5;border-color:#a7f3d0;color:var(--ok)}
-.stat{background:linear-gradient(180deg,#fff,#f5f8fd);border:1px solid var(--line);border-radius:12px;padding:8px 14px;text-align:center;min-width:74px}
-.stat span{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
-.stat b{font-size:1.12rem;letter-spacing:-.01em}
-.stat.ready{background:linear-gradient(180deg,#fffbeb,#fef3c7);border-color:#fcd34d;animation:pulse 1.6s ease-in-out infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.55)}50%{box-shadow:0 0 0 7px rgba(251,191,36,0)}}
-.turnbar{border-left:6px solid var(--pcol,#2563eb);transition:border-color .25s}
-.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.2rem;font-weight:800;letter-spacing:.13em;word-break:break-all;background:linear-gradient(90deg,#eff6ff,#f8fafc);border:1px dashed #bfdbfe;border-radius:10px;padding:8px 12px;display:inline-block}
-.logrow{display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #eef2f7;flex-wrap:wrap;font-size:.82rem}
-.logrow:last-child{border-bottom:0}
-.badge{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;padding:2px 8px;border-radius:999px}
-.badge.miss{background:#eef2f7;color:var(--muted)}
-.badge.hit{background:#fee2e2;color:var(--hit)}
-.badge.sunk{background:#7f1d1d;color:#fff}
-.overlay{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);animation:fade .18s ease-out}
-.overlay[hidden]{display:none}
-@keyframes fade{from{opacity:0}to{opacity:1}}
-@keyframes rise{from{transform:translateY(14px) scale(.97);opacity:0}to{transform:none;opacity:1}}
-.modal{max-width:520px;width:100%;box-shadow:0 30px 70px -20px rgba(15,23,42,.55);animation:rise .22s cubic-bezier(.2,1.2,.4,1);text-align:center;padding:28px 24px}
-.bigemoji{font-size:3.6rem;line-height:1;margin-bottom:10px;animation:bounce .5s cubic-bezier(.2,1.5,.5,1)}
-@keyframes bounce{0%{transform:scale(.3) rotate(-12deg)}60%{transform:scale(1.18) rotate(6deg)}100%{transform:scale(1)}}
-details.panel{margin-top:16px}
-details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
-.count{font-size:.76rem;font-weight:700;color:var(--muted)}
-.count.good{color:var(--ok)}.count.bad{color:var(--hit)}
-@media(max-width:640px){.wrap{padding:14px 12px 60px}.panel{padding:15px}h1{font-size:1.26rem}.axis-col{height:76px}.modal{padding:22px 18px}}
-@media print{body{background:#fff}.noprint,header.top{display:none!important}.wrap{max-width:none;padding:0}.panel{border:0;box-shadow:none;padding:0}}
+.slip{border:2px dashed var(--ink);border-radius:15px;padding:18px;background:#fff;margin-top:14px}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.16rem;font-weight:800;letter-spacing:.12em;word-break:break-all}
+.keynum{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.9rem;font-weight:800}
+summary{cursor:pointer;font-weight:700;font-size:.95rem}
+@media(max-width:640px){.wrap{padding:14px 12px 56px}.panel{padding:15px}h1{font-size:1.26rem}}
+@media print{body{background:#fff}.noprint,header{display:none!important}.panel{border:0;box-shadow:none;padding:0}.slip{border-style:solid}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <header class="top">
-    <div class="brand">Vocab <span>Battleships</span></div>
-    <span class="tag" id="headCode">no game yet</span>
-    <span class="tag" id="engineTag">engine …</span>
-    <div class="spacer"></div>
-    <a class="btn" href="cipher.html">🔐 Fleet cipher</a>
-  </header>
+<header>
+  <div class="brand">Fleet <span>Cipher</span></div>
+  <span class="tag" id="verTag">engine …</span>
+  <span class="tag" id="stChip">self-test …</span>
+  <div class="spacer"></div>
+  <a class="btn" href="index.html">← Referee board</a>
+</header>
 
-  <div class="panel" id="bootErr" hidden style="border-color:#fecaca;background:#fef2f2;margin-bottom:16px">
-    <h2 style="color:#b91c1c;margin-bottom:6px">This page is incomplete</h2>
-    <p class="small" style="margin:0">The engine block is missing, which means the paste was cut short. Copy the whole file again.</p>
-  </div>
-
-  <section class="panel" id="screen-setup">
-    <h1>Set up the lesson</h1>
-    <p class="lead">Two lists, two axes. The vertical words become rows, the horizontal words become columns.</p>
-
-    <div class="grid2">
-      <div>
-        <label for="mode">Board size</label>
-        <select id="mode">
-          <option value="full" selected>Full — 8 to 15 words each way</option>
-          <option value="mini">Mini — 6 to 8 words each way</option>
-        </select>
-        <p class="small muted" id="modeHint" style="margin:6px 0 0"></p>
-
-        <div class="grid2" style="margin-top:14px;gap:12px">
-          <div>
-            <label for="wordsRow">⬇️ Vertical axis (rows)</label>
-            <textarea id="wordsRow" spellcheck="false" placeholder="chocolate&#10;bicycle&#10;museum&#10;thunderstorm"></textarea>
-            <span class="count" id="countRow">0 words</span>
-          </div>
-          <div>
-            <label for="wordsCol">➡️ Horizontal axis (columns)</label>
-            <textarea id="wordsCol" spellcheck="false" placeholder="Present Simple&#10;Past Simple&#10;Present Perfect"></textarea>
-            <span class="count" id="countCol">0 words</span>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px">
-          <button class="btn" id="btnSample" type="button">✨ Load sample</button>
-          <button class="btn" id="btnSwap" type="button">🔀 Swap lists</button>
-          <button class="btn" id="btnClearWords" type="button">🧹 Clear</button>
-        </div>
-        <p class="err" id="setupErr"></p>
-      </div>
-
-      <div>
-        <div class="card">
-          <h2>👥 Players</h2>
-          <div class="row">
-            <div style="flex:1;min-width:120px">
-              <label for="nameA" style="color:var(--a)">Player A</label>
-              <input type="text" id="nameA" maxlength="18" placeholder="Player A">
-            </div>
-            <div style="flex:1;min-width:120px">
-              <label for="nameB" style="color:var(--b)">Player B</label>
-              <input type="text" id="nameB" maxlength="18" placeholder="Player B">
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:14px">
-          <h2>⚙️ Rules</h2>
-          <label for="difficulty">Sentence requirement</label>
-          <select id="difficulty">
-            <option value="both" selected>Both the row word and the column word</option>
-            <option value="row">Only the row word</option>
-            <option value="col">Only the column word</option>
-          </select>
-          <label class="inline" style="margin-top:12px"><input type="checkbox" id="optPowers" checked> 💥 Power shots every 4 turns (full board only)</label>
-          <label class="inline"><input type="checkbox" id="optBonus"> 🎁 Bonus shot when a ship is hit</label>
-          <label class="inline"><input type="checkbox" id="optTimer"> ⏱️ 30-second thinking timer</label>
-        </div>
-
-        <label for="preset" style="margin-top:14px">Saved lessons</label>
-        <div class="row">
-          <select id="preset" style="flex:1"><option value="">— none —</option></select>
-          <button class="btn" id="btnSavePreset" type="button">💾 Save</button>
-        </div>
-
-        <button class="btn btn-primary" id="btnCreate" type="button" style="width:100%;margin-top:16px">Create game →</button>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel" id="screen-load" hidden>
-    <div class="row" style="justify-content:space-between;align-items:flex-start">
-      <div>
-        <h1>Load both fleets</h1>
-        <p class="lead" style="margin-bottom:0">Type each slip in while the other student is not looking at the screen.</p>
-      </div>
-      <div style="text-align:right">
-        <div class="small muted" style="font-weight:700">game code</div>
-        <div class="code" id="loadCode">—</div>
-        <div class="small muted" id="loadSize" style="margin-top:6px"></div>
-      </div>
-    </div>
-
-    <div class="grid2" style="margin-top:16px">
-      <div class="card">
-        <h2 id="loadNameA">Player A fleet</h2>
-        <label for="keyA">Key (1 to 500)</label>
-        <input type="number" id="keyA" min="1" max="500" inputmode="numeric" autocomplete="off">
-        <label for="codeA" style="margin-top:10px">Fleet code</label>
-        <input type="text" id="codeA" class="mono" autocomplete="off" spellcheck="false" placeholder="ABCD-EFGH">
-        <p class="err" id="errA"></p>
-        <p class="ok" id="okA"></p>
-        <button class="btn" id="btnLoadA" type="button" style="width:100%;margin-top:6px">⬇️ Load fleet</button>
-      </div>
-
-      <div class="card">
-        <h2 id="loadNameB">Player B fleet</h2>
-        <label for="keyB">Key (1 to 500)</label>
-        <input type="number" id="keyB" min="1" max="500" inputmode="numeric" autocomplete="off">
-        <label for="codeB" style="margin-top:10px">Fleet code</label>
-        <input type="text" id="codeB" class="mono" autocomplete="off" spellcheck="false" placeholder="ABCD-EFGH">
-        <p class="err" id="errB"></p>
-        <p class="ok" id="okB"></p>
-        <button class="btn" id="btnLoadB" type="button" style="width:100%;margin-top:6px">⬇️ Load fleet</button>
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:16px">
-      <button class="btn" id="btnBackSetup" type="button">← Back to setup</button>
-      <div class="spacer"></div>
-      <button class="btn btn-primary" id="btnStart" type="button" disabled>▶️ Start match</button>
-    </div>
-
-    <details class="panel">
-      <summary>🔧 Engine check</summary>
-      <p class="small muted" style="margin-top:10px">Both pages must run the same engine. Slips only decode if every line says PASS.</p>
-      <button class="btn" id="btnVerify" type="button">Run engine self-test</button>
-      <div id="verifyOut" class="small" style="margin-top:10px"></div>
-    </details>
-  </section>
-
-  <section id="screen-play" hidden>
-    <div class="panel turnbar" id="turnBar" style="margin-bottom:14px">
-      <div class="row" style="justify-content:space-between;align-items:flex-start">
-        <div>
-          <h1 style="margin-bottom:2px"><span id="turnName">Player A</span>, choose your target</h1>
-          <p class="lead" id="turnHint" style="margin:0">Pick a square, then say your sentence.</p>
-        </div>
-        <div class="row">
-          <div class="stat"><span>shots</span><b id="statShots">0</b></div>
-          <div class="stat"><span>hits</span><b id="statHits">0</b></div>
-          <div class="stat" id="powerStat"><span>power</span><b id="statPower">—</b></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid2" style="align-items:start">
-      <div>
-        <div id="boardWrap">
-          <div class="board-scroll"><div class="board" id="board"></div></div>
-        </div>
-        <div id="revealWrap" hidden>
-          <div class="grid2">
-            <div>
-              <h2 id="revNameA">Player A's fleet</h2>
-              <div class="board-scroll"><div class="board" id="boardA"></div></div>
-            </div>
-            <div>
-              <h2 id="revNameB">Player B's fleet</h2>
-              <div class="board-scroll"><div class="board" id="boardB"></div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" id="sentencePanel" style="margin-top:14px"></div>
-      </div>
-
-      <div>
-        <div class="card">
-          <h2>📜 Turn log</h2>
-          <div id="log" class="small"></div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <button class="btn" id="btnReveal" type="button">👁️ Reveal fleets</button>
-          <button class="btn btn-danger" id="btnNewGame" type="button">↺ New game</button>
-        </div>
-        <p class="small muted" style="margin-top:12px">Keep this screen turned towards you. The other student should only ever see their own slip of paper.</p>
-      </div>
-    </div>
-  </section>
+<div class="panel" id="bootErr" hidden style="border-color:#fecaca;background:#fef2f2;margin-bottom:16px">
+  <h2 style="color:#b91c1c;margin-bottom:6px">This page is incomplete</h2>
+  <p class="small" style="margin:0">The engine block is missing, which means the paste was cut short. Copy the whole file again.</p>
 </div>
 
-<div class="overlay" id="overlay" hidden>
-  <div class="card modal">
-    <div class="bigemoji" id="ovEmoji">🎯</div>
-    <h1 id="ovTitle">It was a hit!</h1>
-    <p class="lead" id="ovBody"></p>
-    <div class="row" id="ovActions" style="justify-content:center"></div>
+<section class="panel" id="step1">
+  <h1>Hide your fleet</h1>
+  <p class="lead">Type the game code from your teacher's screen. Your board must match theirs.</p>
+  <div class="grid2">
+    <div>
+      <label for="gameIn">Game code</label>
+      <input type="text" id="gameIn" class="mono" autocomplete="off" spellcheck="false" placeholder="V8B4X2">
+      <p class="err" id="gameErr"></p>
+      <button class="btn btn-primary" id="btnStart" type="button" style="width:100%">Open my board →</button>
+    </div>
+    <div>
+      <h2>How this works</h2>
+      <p class="small muted">Put your ships on this screen. Nobody else sees this board.</p>
+      <p class="small muted">When the fleet is complete you get a <b>key</b> (1 to 500) and a <b>fleet code</b>. Write both on a slip and give them to your teacher.</p>
+      <p class="small muted">Ships may not touch, not even at the corners.</p>
+      <p class="small muted" style="margin:0">No game code? Type the board shape instead, for example <span class="mono">8x10</span>.</p>
+    </div>
   </div>
+</section>
+
+<section id="placer" hidden>
+  <div class="panel">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div>
+        <h1 style="margin-bottom:2px">Place your ships</h1>
+        <p class="lead" style="margin:0">Board <b id="boardLabel">—</b> · <span id="placerMsg" class="small muted">Tap a square.</span></p>
+      </div>
+      <div class="tag mono" id="gameLabel">—</div>
+    </div>
+
+    <div class="grid2" style="margin-top:16px;align-items:start">
+      <div>
+        <div class="board-scroll"><div class="board" id="cboard"></div></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="btnRotate" type="button">🔄 Rotate ↔️ Horizontal</button>
+          <button class="btn" id="btnUndo" type="button">↩️ Undo</button>
+          <button class="btn" id="btnRandom" type="button">🎲 Random</button>
+          <button class="btn btn-danger" id="btnClear" type="button">🗑️ Clear</button>
+        </div>
+        <div class="row" id="tray" style="margin-top:12px"></div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>🔑 Your key</h2>
+          <label for="keyIn">Number from 1 to 500</label>
+          <div class="row">
+            <input type="number" id="keyIn" min="1" max="500" inputmode="numeric" style="flex:1;min-width:120px">
+            <button class="btn" id="btnNewKey" type="button">🎲 New</button>
+          </div>
+          <p class="err" id="keyErr"></p>
+        </div>
+
+        <div class="slip" id="slip" hidden>
+          <div class="small muted">Give this slip to your teacher. Do not show the other player.</div>
+          <div class="row" style="justify-content:space-between;align-items:flex-end;margin-top:10px">
+            <div>
+              <div class="small muted">key</div>
+              <div class="keynum" id="slipKey">—</div>
+            </div>
+            <div style="text-align:right">
+              <div class="small muted">game</div>
+              <div class="mono" id="slipGame">—</div>
+            </div>
+          </div>
+          <div class="small muted" style="margin-top:12px">fleet code</div>
+          <div class="code" id="slipCode">—</div>
+          <div class="row noprint" style="margin-top:14px">
+            <button class="btn" id="btnCopyKey" type="button">📋 Copy key</button>
+            <button class="btn" id="btnCopyCode" type="button">📋 Copy code</button>
+            <button class="btn" id="btnPrint" type="button">🖨️ Print</button>
+          </div>
+        </div>
+        <p class="small muted" id="slipHint" style="margin-top:12px">Place your whole fleet to get your code.</p>
+      </div>
+    </div>
+  </div>
+
+  <details class="panel" style="margin-top:16px">
+    <summary>🔧 Teacher check and self-test</summary>
+    <div class="grid2" style="margin-top:14px">
+      <div>
+        <label for="chkKey">Key</label>
+        <input type="number" id="chkKey" min="1" max="500" inputmode="numeric">
+        <label for="chkCode" style="margin-top:10px">Fleet code</label>
+        <input type="text" id="chkCode" class="mono" autocomplete="off" spellcheck="false">
+        <button class="btn" id="btnCheck" type="button" style="width:100%;margin-top:12px">Decode</button>
+        <p class="err" id="chkErr"></p>
+        <p class="ok" id="chkOk"></p>
+        <button class="btn" id="btnSelfTest" type="button" style="width:100%;margin-top:8px">▶️ Run self-test again</button>
+        <div id="stOut" class="small" style="margin-top:10px"></div>
+      </div>
+      <div class="board-scroll"><div class="board" id="chkBoard"></div></div>
+    </div>
+  </details>
+</section>
 </div>
 
 <script>
@@ -737,639 +616,153 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
   "use strict";
 
   var VB = window.VBCipher;
-  if (!VB) {
-    var bootBox = document.getElementById("bootErr");
-    if (bootBox) bootBox.hidden = false;
-    return;
-  }
+  if (!VB) { document.getElementById("bootErr").hidden = false; return; }
 
-  var LS_GAME = "vbbs.game.v5";
-  var LS_PRESETS = "vbbs.presets.v5";
-
-  var SAMPLE_ROWS = ["chocolate", "bicycle", "museum", "thunderstorm", "volunteer",
-                     "recycling", "flexible", "recipe", "journey", "discount"];
-  var SAMPLE_COLS = ["Present Simple", "Past Simple", "Present Perfect", "Future",
-                     "Past Continuous", "Conditional", "Present Continuous", "Question Form"];
-
-  var S = null;
-  var pending = null;
-  var aim = null;
-  var tickId = null;
-  var timeLeft = 0;
+  var NAMES = { 5: "Carrier", 4: "Battleship", 3: "Cruiser", 2: "Destroyer" };
+  var rows = 0, cols = 0;
+  var horiz = true;
+  var ships = [];
+  var keyVal = 1 + Math.floor(Math.random() * 500);
+  var gameLabel = "";
 
   function el(id) { return document.getElementById(id); }
-  function other(p) { return p === "A" ? "B" : "A"; }
-
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (m) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
     });
   }
 
-  function short(w, k) {
-    k = k || 14;
-    return w.length > k ? w.slice(0, k - 1) + "…" : w;
-  }
+  el("verTag").textContent = "engine " + VB.version;
 
-  function powersOn() { return S.mode === "full" && !!S.opts.powers; }
-
-  function freshState() {
-    return {
-      phase: "setup", mode: "full",
-      rowWords: [], colWords: [], rows: 0, cols: 0, code: "",
-      names: { A: "Player A", B: "Player B" },
-      opts: { difficulty: "both", bonus: false, timer: false, powers: true },
-      fleets: { A: null, B: null },
-      shots: { A: [], B: [] },
-      turn: "A",
-      charge: { A: 0, B: 0 },
-      power: { A: null, B: null },
-      used: {},
-      log: [],
-      over: null,
-      reveal: false,
-      result: null
-    };
-  }
-
-  function save() {
-    try { localStorage.setItem(LS_GAME, JSON.stringify(S)); } catch (e) { /* ignore */ }
-  }
-
-  function loadSaved() {
-    try {
-      var raw = localStorage.getItem(LS_GAME);
-      if (!raw) return null;
-      var s = JSON.parse(raw);
-      if (!s || !Array.isArray(s.rowWords) || !Array.isArray(s.colWords)) return null;
-      if (!s.fleets || !s.shots || !s.rows) return null;
-      return s;
-    } catch (e) { return null; }
-  }
-
-  function parseWords(text) {
-    var seen = {}, out = [];
-    text.split(/\r?\n|,/).forEach(function (line) {
-      var w = line.trim().replace(/\s+/g, " ");
-      if (!w) return;
-      var k = w.toLowerCase();
-      if (seen[k]) return;
-      seen[k] = true;
-      out.push(w);
-    });
-    return out;
-  }
-
-  function modeRange() {
-    return el("mode").value === "mini" ? { min: 6, max: 8 } : { min: 8, max: 15 };
-  }
-
-  function go(phase) {
-    S.phase = phase;
-    el("screen-setup").hidden = phase !== "setup";
-    el("screen-load").hidden = phase !== "load";
-    el("screen-play").hidden = phase !== "play";
-    el("headCode").textContent = S.code ? "game " + S.code : "no game yet";
-    if (phase === "load") renderLoad();
-    if (phase === "play") renderPlay();
-    try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
-    save();
-  }
-
-  function updateCounts() {
-    var rng = modeRange();
-    var rows = parseWords(el("wordsRow").value);
-    var cols = parseWords(el("wordsCol").value);
-
-    function paint(node, list) {
-      var ok = list.length >= rng.min && list.length <= rng.max;
-      node.textContent = list.length + (list.length === 1 ? " word" : " words") +
-        (ok ? "" : " · need " + rng.min + "–" + rng.max);
-      node.className = "count " + (ok ? "good" : "bad");
+  function remaining() {
+    var rem = VB.shipsFor(rows, cols).slice().sort(function (a, b) { return b - a; });
+    for (var i = 0; i < ships.length; i++) {
+      var at = rem.indexOf(ships[i].len);
+      if (at >= 0) rem.splice(at, 1);
     }
-    paint(el("countRow"), rows);
-    paint(el("countCol"), cols);
-
-    el("modeHint").textContent = el("mode").value === "mini"
-      ? "Mini board: small fleet, no power shots, fast games."
-      : "Full board: 4 to 7 ships, power shots every 4 turns.";
-
-    var powers = el("optPowers");
-    powers.disabled = el("mode").value === "mini";
-    if (powers.disabled) powers.checked = false;
+    return rem;
   }
 
-  function createGame() {
-    var rng = modeRange();
-    var rows = parseWords(el("wordsRow").value);
-    var cols = parseWords(el("wordsCol").value);
-    var err = el("setupErr");
-
-    if (rows.length < rng.min || rows.length > rng.max) {
-      err.textContent = "The vertical axis needs " + rng.min + " to " + rng.max + " words (you have " + rows.length + ").";
-      return;
+  function occupied() {
+    var set = new Set();
+    for (var i = 0; i < ships.length; i++) {
+      for (var j = 0; j < ships[i].cells.length; j++) set.add(ships[i].cells[j]);
     }
-    if (cols.length < rng.min || cols.length > rng.max) {
-      err.textContent = "The horizontal axis needs " + rng.min + " to " + rng.max + " words (you have " + cols.length + ").";
-      return;
-    }
-    err.textContent = "";
-
-    var names = {
-      A: (el("nameA").value || "").trim().slice(0, 18) || "Player A",
-      B: (el("nameB").value || "").trim().slice(0, 18) || "Player B"
-    };
-
-    var mode = el("mode").value;
-    S = freshState();
-    S.mode = mode;
-    S.rowWords = rows;
-    S.colWords = cols;
-    S.rows = rows.length;
-    S.cols = cols.length;
-    S.code = VB.randomGameCode(S.rows, S.cols);
-    S.names = names;
-    S.opts = {
-      difficulty: el("difficulty").value,
-      bonus: el("optBonus").checked,
-      timer: el("optTimer").checked,
-      powers: mode === "full" ? el("optPowers").checked : false
-    };
-    el("keyA").value = "";
-    el("codeA").value = "";
-    el("keyB").value = "";
-    el("codeB").value = "";
-    go("load");
+    return set;
   }
 
-  function getPresets() {
-    try { return JSON.parse(localStorage.getItem(LS_PRESETS) || "[]"); } catch (e) { return []; }
-  }
-
-  function renderPresets() {
-    var list = getPresets(), html = '<option value="">— none —</option>';
-    list.forEach(function (p, i) {
-      html += '<option value="' + i + '">' + esc(p.name) + " (" + p.rowWords.length + "×" + p.colWords.length + ")</option>";
-    });
-    el("preset").innerHTML = html;
-  }
-
-  function renderLoad() {
-    el("loadCode").textContent = S.code;
-    el("loadSize").textContent = S.rows + " × " + S.cols + " · ships " + VB.shipsFor(S.rows, S.cols).join(" / ");
-    el("loadNameA").textContent = S.names.A + " fleet";
-    el("loadNameB").textContent = S.names.B + " fleet";
-    ["A", "B"].forEach(function (p) {
-      var f = S.fleets[p];
-      el("ok" + p).textContent = f ? "Loaded: " + f.ships.length + " ships, " + f.cells.length + " squares." : "";
-      el("err" + p).textContent = "";
-    });
-    el("btnStart").disabled = !(S.fleets.A && S.fleets.B);
-  }
-
-  function loadFleetFor(p) {
-    var err = el("err" + p), ok = el("ok" + p);
-    err.textContent = "";
-    ok.textContent = "";
-    try {
-      var dec = VB.decodeFleet(el("code" + p).value, el("key" + p).value);
-      if (dec.rows !== S.rows || dec.cols !== S.cols) {
-        throw new Error("That fleet is for a " + dec.rows + " × " + dec.cols + " board, but this game is " +
-          S.rows + " × " + S.cols + ".");
-      }
-      S.fleets[p] = { cells: dec.cells, ships: dec.ships, key: dec.key };
-      save();
-      ok.textContent = "Loaded " + dec.ships.length + " ships: " +
-        dec.ships.map(function (s) { return s.name; }).join(", ") + ".";
-      el("btnStart").disabled = !(S.fleets.A && S.fleets.B);
-    } catch (e) {
-      err.textContent = e.message;
-    }
-  }
-
-  function startMatch() {
-    if (!(S.fleets.A && S.fleets.B)) return;
-    S.shots = { A: [], B: [] };
-    S.turn = "A";
-    S.log = [];
-    S.used = {};
-    S.charge = { A: 0, B: 0 };
-    S.power = { A: null, B: null };
-    S.over = null;
-    S.reveal = false;
-    S.result = null;
-    pending = null;
-    aim = null;
-    stopTimer();
-    go("play");
-  }
-
-  function area3x3(cell) {
-    var rows = S.rows, cols = S.cols;
-    var r0 = Math.floor(cell / cols), c0 = cell % cols, out = [];
+  function near(idx, occ) {
+    var r = Math.floor(idx / cols), c = idx % cols;
     for (var dr = -1; dr <= 1; dr++) {
       for (var dc = -1; dc <= 1; dc++) {
-        var r = r0 + dr, c = c0 + dc;
-        if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
-        out.push(r * cols + c);
+        var rr = r + dr, cc = c + dc;
+        if (rr < 0 || cc < 0 || rr >= rows || cc >= cols) continue;
+        if (occ.has(rr * cols + cc)) return true;
       }
     }
-    return out;
+    return false;
   }
 
-  function alternatingLine(dir, cell) {
+  function candidate(idx, len, isHoriz) {
+    var r = Math.floor(idx / cols), c = idx % cols;
+    if (isHoriz ? c + len > cols : r + len > rows) return null;
     var out = [], i;
-    if (dir === "row") {
-      var r = Math.floor(cell / S.cols);
-      for (i = 0; i < S.cols; i += 2) out.push(r * S.cols + i);
-    } else {
-      var c = cell % S.cols;
-      for (i = 0; i < S.rows; i += 2) out.push(i * S.cols + c);
-    }
+    for (i = 0; i < len; i++) out.push(isHoriz ? r * cols + c + i : (r + i) * cols + c);
+    var occ = occupied();
+    for (i = 0; i < out.length; i++) if (near(out[i], occ)) return null;
     return out;
   }
 
-  function boardHTML(owner, shooter, reveal) {
-    var rows = S.rows, cols = S.cols;
-    var fleet = S.fleets[owner];
-    var shipAt = {};
-    if (fleet) {
-      fleet.ships.forEach(function (s) {
-        s.cells.forEach(function (c) { shipAt[c] = s; });
-      });
+  function renderBoard() {
+    var b = el("cboard");
+    b.style.gridTemplateColumns = "repeat(" + cols + ", minmax(0,1fr))";
+    b.style.width = "min(100%, " + Math.max(300, cols * 42) + "px)";
+    var occ = occupied(), html = "", i;
+    for (i = 0; i < rows * cols; i++) {
+      html += '<button type="button" class="cell' + (occ.has(i) ? " ship" : "") +
+        '" data-cell="' + i + '" aria-label="row ' + (Math.floor(i / cols) + 1) +
+        " column " + ((i % cols) + 1) + '"></button>';
     }
-    var shots = {};
-    (S.shots[shooter] || []).forEach(function (c) { shots[c] = true; });
-
-    var parts = ['<div class="corner"></div>'], c, r, col;
-    for (c = 0; c < cols; c++) {
-      parts.push('<div class="axis-col" title="' + esc(S.colWords[c]) + '">' + esc(short(S.colWords[c], 16)) + "</div>");
-    }
-    for (r = 0; r < rows; r++) {
-      parts.push('<div class="axis-row" title="' + esc(S.rowWords[r]) + '">' + esc(short(S.rowWords[r], 14)) + "</div>");
-      for (col = 0; col < cols; col++) {
-        var idx = r * cols + col;
-        var ship = shipAt[idx];
-        var shot = !!shots[idx];
-        var cls = ["cell"];
-        var glyph = "";
-        if (shot && ship) {
-          cls.push(ship.hits >= ship.len ? "sunk" : "hit");
-          glyph = "✕";
-        } else if (shot) {
-          cls.push("miss");
-          glyph = "•";
-        } else if (reveal && ship) {
-          cls.push("ship");
-        }
-        var dis = (shot || S.over || reveal) ? " disabled" : "";
-        parts.push('<button type="button" class="' + cls.join(" ") + '" data-cell="' + idx +
-          '" aria-label="row ' + (r + 1) + " " + esc(S.rowWords[r]) + ", column " + (col + 1) +
-          " " + esc(S.colWords[col]) + '"' + dis + ">" + glyph + "</button>");
-      }
-    }
-    return parts.join("");
+    b.innerHTML = html;
   }
 
-  function styleBoard(node) {
-    node.style.gridTemplateColumns = "minmax(58px, auto) repeat(" + S.cols + ", minmax(0, 1fr))";
-    node.style.width = "min(100%, " + Math.max(340, S.cols * 46) + "px)";
+  function renderTray() {
+    var all = VB.shipsFor(rows, cols).slice().sort(function (a, b) { return b - a; });
+    var counts = {}, seen = {}, html = "", i, k;
+    for (i = 0; i < ships.length; i++) counts[ships[i].len] = (counts[ships[i].len] || 0) + 1;
+    for (k = 0; k < all.length; k++) {
+      var len = all[k];
+      seen[len] = (seen[len] || 0) + 1;
+      var done = seen[len] <= (counts[len] || 0);
+      var label = NAMES[len] || (len + "-deck");
+      var same = 0;
+      for (i = 0; i < all.length; i++) if (all[i] === len) same++;
+      if (same > 1) label = label + " " + seen[len];
+      html += '<span class="chip' + (done ? " done" : "") + '">' + esc(label) + " · " + len + "</span>";
+    }
+    el("tray").innerHTML = html;
+
+    var left = remaining();
+    el("placerMsg").textContent = left.length
+      ? "Next: " + (NAMES[left[0]] || left[0] + "-deck") + " (" + left[0] + " squares), " + (horiz ? "horizontal" : "vertical") + "."
+      : "Fleet complete. Your slip is ready.";
   }
 
-  function requiredWords(p) {
-    var rows = S.rows, cols = S.cols;
-    if (p.kind === "airstrike") {
-      var w = p.dir === "row" ? S.rowWords[Math.floor(p.cell / cols)] : S.colWords[p.cell % cols];
-      return { need: [w], row: p.dir === "row" ? w : null, col: p.dir === "col" ? w : null };
-    }
-    var rw = S.rowWords[Math.floor(p.cell / cols)];
-    var cw = S.colWords[p.cell % cols];
-    var need = [];
-    if (S.opts.difficulty === "both") {
-      need.push(rw);
-      if (cw !== rw) need.push(cw);
-    } else if (S.opts.difficulty === "row") {
-      need.push(rw);
-    } else {
-      need.push(cw);
-    }
-    return { need: need, row: rw, col: cw };
-  }
-
-  function describe(p) {
-    var rows = S.rows, cols = S.cols;
-    if (p.kind === "airstrike") {
-      var w = p.dir === "row" ? S.rowWords[Math.floor(p.cell / cols)] : S.colWords[p.cell % cols];
-      return "🛩️ Air strike · " + (p.dir === "row" ? "row " : "column ") + w;
-    }
-    var rw = S.rowWords[Math.floor(p.cell / cols)];
-    var cw = S.colWords[p.cell % cols];
-    return (p.kind === "missile" ? "🚀 Missile · " : "") + rw + " × " + cw;
-  }
-
-  function hitsAgainst(p) {
-    var f = S.fleets[p];
-    if (!f) return 0;
-    return f.ships.reduce(function (a, s) { return a + s.hits; }, 0);
-  }
-
-  function renderPlay() {
-    var me = S.turn, foe = other(me);
-    var nameMe = S.names[me], nameFoe = S.names[foe];
-
-    el("turnBar").style.setProperty("--pcol", me === "A" ? "#2563eb" : "#ea580c");
-    el("turnName").textContent = nameMe;
-    el("statShots").textContent = S.shots[me].length;
-    el("statHits").textContent = hitsAgainst(foe);
-
-    var powerStat = el("powerStat"), statPower = el("statPower");
-    powerStat.classList.remove("ready");
-    if (!powersOn()) {
-      statPower.textContent = "off";
-    } else if (S.power[me] === "missile") {
-      statPower.textContent = "🚀 ready"; powerStat.classList.add("ready");
-    } else if (S.power[me] === "airstrike") {
-      statPower.textContent = "🛩️ ready"; powerStat.classList.add("ready");
-    } else if (S.power[me] === "pending") {
-      statPower.textContent = "choose"; powerStat.classList.add("ready");
-    } else {
-      statPower.textContent = S.charge[me] + "/4";
-    }
-
-    el("turnHint").textContent = S.over
-      ? "Match finished."
-      : "Pick a square on " + nameFoe + "'s water, then say your sentence.";
-
-    el("revNameA").textContent = S.names.A + "'s fleet";
-    el("revNameB").textContent = S.names.B + "'s fleet";
-
-    if (S.reveal) {
-      el("boardWrap").hidden = true;
-      el("revealWrap").hidden = false;
-      styleBoard(el("boardA"));
-      el("boardA").innerHTML = boardHTML("A", "B", true);
-      styleBoard(el("boardB"));
-      el("boardB").innerHTML = boardHTML("B", "A", true);
-    } else {
-      el("boardWrap").hidden = false;
-      el("revealWrap").hidden = true;
-      styleBoard(el("board"));
-      el("board").innerHTML = boardHTML(foe, me, false);
-    }
-
-    renderPanel();
-    renderLog();
-    renderOverlay();
-  }
-
-  function renderPanel() {
-    var p = el("sentencePanel"), me = S.turn, html = "";
-
-    if (S.over) {
-      p.innerHTML = "<h2>Match over</h2><p class=\"muted\" style=\"margin:0\">" +
-        esc(S.names[S.over.winner]) + " wins. Press \"Reveal fleets\" to see both layouts.</p>";
+  function slip() {
+    var hint = el("slipHint");
+    if (!rows || ships.length !== VB.shipsFor(rows, cols).length) {
+      el("slip").hidden = true;
+      hint.hidden = false;
+      hint.textContent = "Place your whole fleet to get your code.";
       return;
     }
-    if (S.reveal) {
-      p.innerHTML = "<h2>Fleets revealed</h2><p class=\"muted\" style=\"margin:0\">Start a new game when you are ready.</p>";
+    try {
+      var out = VB.encodeShips(ships, rows, cols, keyVal);
+      el("slip").hidden = false;
+      hint.hidden = true;
+      el("slipKey").textContent = out.key;
+      el("slipGame").textContent = gameLabel || "—";
+      el("slipCode").textContent = out.code;
+    } catch (e) {
+      el("slip").hidden = true;
+      hint.hidden = false;
+      hint.textContent = e.message;
+    }
+  }
+
+  function refresh() { renderBoard(); renderTray(); slip(); }
+
+  function place(idx) {
+    if (!rows) return;
+    var rem = remaining();
+    if (!rem.length) return;
+    var cand = candidate(idx, rem[0], horiz);
+    if (!cand) {
+      el("placerMsg").textContent = "No room: that ship would leave the board or touch another ship. Rotate it or pick another square.";
       return;
     }
-
-    if (powersOn()) {
-      if (S.power[me] === "pending") {
-        html += '<div class="card" style="border-color:#fcd34d;background:linear-gradient(180deg,#fffbeb,#fef3c7);margin-bottom:12px">' +
-          '<h2 style="margin-bottom:6px">💥 Power shot earned</h2>' +
-          '<p class="small" style="margin:0 0 10px">Choose one. You still need a sentence before it fires.</p>' +
-          '<div class="row">' +
-          '<button class="btn btn-primary" data-act="choose-missile" type="button">🚀 Missile · 3×3 blast</button>' +
-          '<button class="btn btn-primary" data-act="choose-airstrike" type="button">🛩️ Air strike · alternating line</button>' +
-          "</div></div>";
-      } else if (S.power[me] === "missile" || S.power[me] === "airstrike") {
-        html += '<div class="card" style="border-color:#fcd34d;background:#fffbeb;margin-bottom:12px">' +
-          '<div class="row" style="justify-content:space-between">' +
-          '<span class="small"><b>' + (S.power[me] === "missile" ? "🚀 Missile saved" : "🛩️ Air strike saved") + "</b></span>" +
-          '<button class="btn" data-act="use-power" type="button">Use it now</button>' +
-          "</div></div>";
-      }
-    }
-
-    if (pending) {
-      var info = requiredWords(pending);
-      var needHtml = info.need.map(function (w) { return "<b>" + esc(w) + "</b>"; }).join(" and ");
-      var r = Math.floor(pending.cell / S.cols) + 1;
-      var c = (pending.cell % S.cols) + 1;
-      var title = pending.kind === "missile" ? "🚀 Missile target"
-        : pending.kind === "airstrike" ? (pending.dir === "row" ? "🛩️ Air strike · full row" : "🛩️ Air strike · full column")
-        : "🎯 Target";
-      html += '<div class="row" style="justify-content:space-between;align-items:baseline">' +
-        '<h2 style="margin:0">' + title + "</h2>" +
-        (S.opts.timer ? '<div class="small"><b id="timerText">' + Math.max(0, timeLeft) + "s</b></div>" : "") +
-        "</div>" +
-        '<p class="small muted" style="margin:6px 0 0">row ' + r + " \u201c" + esc(info.row || "—") +
-        "\u201d × column " + c + " \u201c" + esc(info.col || "—") + "\u201d</p>" +
-        '<p style="font-size:1.06rem;margin:12px 0 14px">Say a sentence using ' + needHtml + ".</p>" +
-        '<div class="row">' +
-        '<button class="btn btn-primary" data-act="accept" type="button">✅ Said it — fire</button>' +
-        '<button class="btn" data-act="cancel" type="button">✖ Cancel</button>' +
-        "</div>";
-    } else if (aim) {
-      html += "<h2>Choose a target</h2>";
-      if (aim.kind === "missile") {
-        html += '<p class="small muted" style="margin:0 0 12px">Click the centre square. Everything in a 3×3 box around it takes the blast.</p>';
-      } else {
-        html += '<p class="small muted" style="margin:0 0 10px">Choose a line, then click any square in it. Every other square along the line gets hit.</p>' +
-          '<div class="row" style="margin-bottom:12px">' +
-          '<button class="btn" data-act="aim-row" type="button" style="' + (aim.dir === "row" ? "background:#dbeafe;border-color:#2563eb" : "") + '">↔️ Row</button>' +
-          '<button class="btn" data-act="aim-col" type="button" style="' + (aim.dir === "col" ? "background:#dbeafe;border-color:#2563eb" : "") + '">↕️ Column</button>' +
-          "</div>";
-      }
-      html += '<button class="btn" data-act="cancel-aim" type="button">✖ Cancel</button>';
-    } else {
-      html += "<h2>Say it, then fire</h2>" +
-        '<p class="small muted" style="margin:0">Tap a square on the board. The student must build the sentence out loud before the shot counts.</p>';
-    }
-
-    p.innerHTML = html;
+    ships.push({ len: rem[0], cells: cand });
+    refresh();
   }
 
-  function renderLog() {
-    var box = el("log");
-    if (!S.log.length) {
-      box.innerHTML = '<p class="muted small" style="margin:0">No shots yet.</p>';
+  function copyText(text, btn) {
+    var label = btn.textContent;
+    function done() { btn.textContent = "✅ copied"; setTimeout(function () { btn.textContent = label; }, 1200); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, done);
       return;
     }
-    var html = "";
-    S.log.slice(0, 40).forEach(function (e) {
-      html += '<div class="logrow"><b style="color:' + (e.turn === "A" ? "#2563eb" : "#ea580c") + '">' +
-        esc(S.names[e.turn]) + "</b>" +
-        '<span class="muted">' + esc(e.label) + "</span>" +
-        '<span style="flex:1"></span>' +
-        '<span class="badge ' + e.outcome + '">' + (e.outcome === "sunk" ? "sunk" : e.outcome) + "</span>" +
-        (e.hits + e.misses > 1 ? ' <span class="small muted">' + e.hits + " hits / " + e.misses + " misses</span>" : "") +
-        "</div>";
-    });
-    var unused = [];
-    S.rowWords.forEach(function (w) { if (!S.used[w]) unused.push(w); });
-    S.colWords.forEach(function (w) { if (!S.used[w]) unused.push(w); });
-    html += '<p class="small muted" style="margin:10px 0 0">Words not used yet: ' +
-      (unused.length ? unused.map(esc).join(", ") : "all of them") + "</p>";
-    box.innerHTML = html;
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) { /* ignore */ }
+    document.body.removeChild(ta);
+    done();
   }
 
-  function statsLine() {
-    function line(p) {
-      var tot = S.log.filter(function (e) { return e.turn === p; });
-      return S.names[p] + ": " + hitsAgainst(other(p)) + " hits from " + S.shots[p].length + " shots";
-    }
-    return line("A") + " · " + line("B") + ".";
-  }
-
-  function renderOverlay() {
-    var ov = el("overlay");
-    if (S.reveal) { ov.hidden = true; return; }
-    var emoji = el("ovEmoji"), title = el("ovTitle"), body = el("ovBody"), acts = el("ovActions");
-
-    if (S.result) {
-      var r = S.result;
-      ov.hidden = false;
-      emoji.textContent = r.outcome === "sunk" ? "💥" : (r.outcome === "hit" ? "🎯" : "💦");
-      title.textContent = r.outcome === "sunk" ? "Ship sunk!" : (r.outcome === "hit" ? "It was a hit!" : "It was a miss!");
-      var bits = [];
-      if (r.fresh === 0) bits.push("Every square in that attack had already been fired at.");
-      else bits.push(r.hits + " hit" + (r.hits === 1 ? "" : "s") + ", " + r.misses + " miss" + (r.misses === 1 ? "" : "es") + ".");
-      if (r.ships.length) bits.push("Sunk: " + r.ships.join(", ") + ".");
-      if (r.earned) bits.push("Power shot earned for your next turn.");
-      bits.push(r.bonus ? S.names[r.nextTurn] + " fires again." : S.names[r.nextTurn] + "'s turn.");
-      body.textContent = bits.join(" ");
-      acts.innerHTML = '<button class="btn btn-primary" data-act="continue" type="button" style="min-width:180px">Next →</button>';
-      return;
-    }
-
-    if (S.over) {
-      ov.hidden = false;
-      emoji.textContent = "🏆";
-      title.textContent = S.names[S.over.winner] + " wins!";
-      body.textContent = statsLine() + " Sentences attempted: " + S.log.length + ".";
-      acts.innerHTML =
-        '<button class="btn" data-act="reveal" type="button">👁️ Reveal fleets</button>' +
-        '<button class="btn btn-primary" data-act="new-game" type="button">↺ New game</button>';
-      return;
-    }
-
-    ov.hidden = true;
-  }
-
-  function resolvePending() {
-    if (!pending) return;
-    var me = S.turn, foe = other(me), p = pending;
-    pending = null;
-    stopTimer();
-
-    var cells;
-    if (p.kind === "missile") cells = area3x3(p.cell);
-    else if (p.kind === "airstrike") cells = alternatingLine(p.dir, p.cell);
-    else cells = [p.cell];
-
-    var fleet = S.fleets[foe];
-    var hits = 0, misses = 0, fresh = 0, sunk = [], i, j;
-
-    for (i = 0; i < cells.length; i++) {
-      var cell = cells[i];
-      if (S.shots[me].indexOf(cell) >= 0) continue;
-      fresh++;
-      S.shots[me].push(cell);
-      var ship = null;
-      for (j = 0; j < fleet.ships.length; j++) {
-        if (fleet.ships[j].cells.indexOf(cell) >= 0) { ship = fleet.ships[j]; break; }
-      }
-      if (ship) {
-        ship.hits++;
-        hits++;
-        if (ship.hits >= ship.len && sunk.indexOf(ship.name) < 0) sunk.push(ship.name);
-      } else {
-        misses++;
-      }
-    }
-
-    var need = requiredWords(p).need;
-    for (i = 0; i < need.length; i++) S.used[need[i]] = true;
-
-    var outcome = sunk.length ? "sunk" : (hits ? "hit" : "miss");
-    S.log.unshift({ turn: me, label: describe(p), outcome: outcome, hits: hits, misses: misses, ships: sunk, fresh: fresh });
-
-    if (p.kind !== "single") { S.power[me] = null; aim = null; }
-
-    var won = true;
-    for (i = 0; i < fleet.ships.length; i++) if (fleet.ships[i].hits < fleet.ships[i].len) won = false;
-
-    var earned = false;
-    if (powersOn()) {
-      S.charge[me]++;
-      if (S.charge[me] >= 4) {
-        S.charge[me] = 0;
-        if (!S.power[me]) { S.power[me] = "pending"; earned = true; }
-      }
-    }
-
-    var bonus = (!won && hits > 0 && S.opts.bonus);
-    S.turn = won ? me : (bonus ? me : foe);
-
-    if (won) {
-      S.over = { winner: me };
-      S.result = null;
-    } else {
-      S.result = {
-        me: me, foe: foe, nextTurn: S.turn, bonus: bonus, outcome: outcome,
-        hits: hits, misses: misses, ships: sunk, earned: earned, fresh: fresh
-      };
-    }
-
-    save();
-    renderPlay();
-  }
-
-  function chooseCell(cell) {
-    if (S.over || S.reveal || S.result) return;
-
-    if (aim) {
-      pending = { kind: aim.kind, dir: aim.dir || "row", cell: cell };
-    } else {
-      if (S.shots[S.turn].indexOf(cell) >= 0) return;
-      pending = { kind: "single", cell: cell };
-    }
-    startTimer();
-    renderPlay();
-  }
-
-  function previewFor(cell) {
-    if (!aim) return [];
-    if (aim.kind === "missile") return area3x3(cell);
-    if (aim.kind === "airstrike") return alternatingLine(aim.dir || "row", cell);
-    return [];
-  }
-
-  function startTimer() {
-    stopTimer();
-    if (!S.opts.timer) return;
-    timeLeft = 30;
-    tickId = setInterval(function () {
-      timeLeft--;
-      var t = el("timerText");
-      if (t) t.textContent = timeLeft + "s";
-      if (timeLeft <= 0) {
-        stopTimer();
-        pending = null;
-        renderPlay();
-      }
-    }, 1000);
-  }
-
-  function stopTimer() {
-    if (tickId) { clearInterval(tickId); tickId = null; }
-  }
-
-  function renderVerify() {
-    var out = el("verifyOut");
+  function runTest() {
+    var out = el("stOut"), chip = el("stChip");
     try {
       var r = VB.selfTest(), html = "";
       r.results.forEach(function (t) {
@@ -1377,200 +770,147 @@ details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
           '<b style="color:' + (t.pass ? "#15803d" : "#dc2626") + '">' + (t.pass ? "PASS" : "FAIL") + "</b> " +
           esc(t.name) + ' <span class="muted">' + esc(t.detail) + "</span></div>";
       });
-      html += '<p class="small" style="margin:8px 0 0"><b>' +
-        (r.pass ? "All checks passed." : "Something is wrong.") + "</b> engine " + esc(r.version) + "</p>";
+      html += '<p class="small" style="margin:8px 0 0"><b>' + (r.pass ? "All checks passed." : "Something is wrong.") +
+        "</b> engine " + esc(r.version) + "</p>";
       out.innerHTML = html;
+      chip.textContent = r.pass ? "self-test OK" : "self-test FAIL";
+      chip.style.color = r.pass ? "#15803d" : "#dc2626";
+      chip.style.borderColor = r.pass ? "#a7f3d0" : "#fecaca";
     } catch (e) {
       out.innerHTML = '<p class="err">Self-test crashed: ' + esc(e.message) + "</p>";
+      chip.textContent = "self-test crashed";
     }
   }
 
-  function newGameSameWords() {
-    var rows = S.rowWords.slice(), cols = S.colWords.slice(), opts = S.opts,
-        names = S.names, mode = S.mode;
-    S = freshState();
-    S.rowWords = rows;
-    S.colWords = cols;
-    S.rows = rows.length;
-    S.cols = cols.length;
-    S.mode = mode;
-    S.opts = opts;
-    S.names = names;
-    S.code = VB.randomGameCode(S.rows, S.cols);
-    pending = null;
-    aim = null;
-    el("keyA").value = "";
-    el("codeA").value = "";
-    el("keyB").value = "";
-    el("codeB").value = "";
-    go("load");
+  function openBoard(r, c, label) {
+    rows = r; cols = c;
+    ships = [];
+    horiz = true;
+    el("btnRotate").textContent = "🔄 Rotate ↔️ Horizontal";
+    el("step1").hidden = true;
+    el("placer").hidden = false;
+    el("boardLabel").textContent = rows + " × " + cols;
+    el("gameLabel").textContent = label || "no code";
+    el("keyIn").value = keyVal;
+    refresh();
   }
 
-  function bind() {
-    el("mode").addEventListener("change", updateCounts);
-    el("wordsRow").addEventListener("input", updateCounts);
-    el("wordsCol").addEventListener("input", updateCounts);
+  el("btnStart").addEventListener("click", function () {
+    var raw = el("gameIn").value.trim();
+    var err = el("gameErr");
+    err.textContent = "";
 
-    el("btnSample").addEventListener("click", function () {
-      el("wordsRow").value = SAMPLE_ROWS.join("\n");
-      el("wordsCol").value = SAMPLE_COLS.join("\n");
-      updateCounts();
-    });
-
-    el("btnSwap").addEventListener("click", function () {
-      var a = el("wordsRow").value;
-      el("wordsRow").value = el("wordsCol").value;
-      el("wordsCol").value = a;
-      updateCounts();
-    });
-
-    el("btnClearWords").addEventListener("click", function () {
-      el("wordsRow").value = "";
-      el("wordsCol").value = "";
-      updateCounts();
-    });
-
-    el("btnCreate").addEventListener("click", createGame);
-    el("btnVerify").addEventListener("click", renderVerify);
-
-    el("preset").addEventListener("change", function () {
-      if (this.value === "") return;
-      var p = getPresets()[Number(this.value)];
-      if (!p) return;
-      el("mode").value = p.mode || "full";
-      el("wordsRow").value = p.rowWords.join("\n");
-      el("wordsCol").value = p.colWords.join("\n");
-      el("difficulty").value = p.opts.difficulty;
-      el("optBonus").checked = !!p.opts.bonus;
-      el("optTimer").checked = !!p.opts.timer;
-      el("optPowers").checked = !!p.opts.powers;
-      updateCounts();
-    });
-
-    el("btnSavePreset").addEventListener("click", function () {
-      var rng = modeRange();
-      var rows = parseWords(el("wordsRow").value);
-      var cols = parseWords(el("wordsCol").value);
-      if (rows.length < rng.min || rows.length > rng.max || cols.length < rng.min || cols.length > rng.max) {
-        el("setupErr").textContent = "Fill both lists to " + rng.min + "–" + rng.max + " words before saving.";
-        return;
-      }
-      var name = window.prompt("Name this lesson", rows[0] + " set");
-      if (!name) return;
-      var list = getPresets();
-      list.push({
-        name: name,
-        mode: el("mode").value,
-        rowWords: rows,
-        colWords: cols,
-        opts: {
-          difficulty: el("difficulty").value,
-          bonus: el("optBonus").checked,
-          timer: el("optTimer").checked,
-          powers: el("optPowers").checked
-        }
-      });
-      try { localStorage.setItem(LS_PRESETS, JSON.stringify(list)); } catch (e) { /* ignore */ }
-      renderPresets();
-    });
-
-    el("btnLoadA").addEventListener("click", function () { loadFleetFor("A"); });
-    el("btnLoadB").addEventListener("click", function () { loadFleetFor("B"); });
-    el("btnStart").addEventListener("click", startMatch);
-    el("btnBackSetup").addEventListener("click", function () { go("setup"); });
-
-    el("board").addEventListener("click", function (e) {
-      var node = e.target.closest("[data-cell]");
-      if (!node || node.disabled) return;
-      chooseCell(Number(node.dataset.cell));
-    });
-
-    el("board").addEventListener("mouseover", function (e) {
-      var node = e.target.closest("[data-cell]");
-      if (!node || !aim) return;
-      var cells = previewFor(Number(node.dataset.cell));
-      var old = el("board").querySelectorAll(".cell.aim");
-      for (var i = 0; i < old.length; i++) old[i].classList.remove("aim");
-      for (var j = 0; j < cells.length; j++) {
-        var q = el("board").querySelector('[data-cell="' + cells[j] + '"]');
-        if (q) q.classList.add("aim");
-      }
-    });
-
-    el("board").addEventListener("mouseleave", function () {
-      var old = el("board").querySelectorAll(".cell.aim");
-      for (var i = 0; i < old.length; i++) old[i].classList.remove("aim");
-    });
-
-    el("sentencePanel").addEventListener("click", function (e) {
-      var b = e.target.closest("[data-act]");
-      if (!b) return;
-      var act = b.dataset.act, me = S.turn;
-
-      if (act === "accept") { resolvePending(); return; }
-      if (act === "cancel") { pending = null; stopTimer(); renderPlay(); return; }
-      if (act === "choose-missile") { S.power[me] = "missile"; aim = { kind: "missile" }; renderPlay(); return; }
-      if (act === "choose-airstrike") { S.power[me] = "airstrike"; aim = { kind: "airstrike", dir: "row" }; renderPlay(); return; }
-      if (act === "use-power") {
-        aim = S.power[me] === "missile" ? { kind: "missile" } : { kind: "airstrike", dir: "row" };
-        renderPlay();
-        return;
-      }
-      if (act === "aim-row") { aim.dir = "row"; renderPlay(); return; }
-      if (act === "aim-col") { aim.dir = "col"; renderPlay(); return; }
-      if (act === "cancel-aim") { aim = null; pending = null; renderPlay(); return; }
-    });
-
-    el("overlay").addEventListener("click", function (e) {
-      var b = e.target.closest("[data-act]");
-      if (!b) return;
-      var act = b.dataset.act;
-      if (act === "continue") { S.result = null; renderPlay(); return; }
-      if (act === "reveal") { S.reveal = true; S.result = null; save(); renderPlay(); return; }
-      if (act === "new-game") { newGameSameWords(); return; }
-    });
-
-    el("btnReveal").addEventListener("click", function () {
-      S.reveal = true;
-      save();
-      renderPlay();
-    });
-
-    el("btnNewGame").addEventListener("click", newGameSameWords);
-
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && S && S.result) { S.result = null; renderPlay(); }
-    });
-  }
-
-  function init() {
-    var tag = el("engineTag");
-    if (tag) tag.textContent = "engine " + VB.version;
-    bind();
-    renderPresets();
-
-    var saved = loadSaved();
-    if (saved && saved.phase && saved.phase !== "setup" && saved.code) {
-      S = saved;
-      el("mode").value = S.mode || "full";
-      el("wordsRow").value = S.rowWords.join("\n");
-      el("wordsCol").value = S.colWords.join("\n");
-      el("nameA").value = S.names.A === "Player A" ? "" : S.names.A;
-      el("nameB").value = S.names.B === "Player B" ? "" : S.names.B;
-      el("difficulty").value = S.opts.difficulty;
-      el("optBonus").checked = !!S.opts.bonus;
-      el("optTimer").checked = !!S.opts.timer;
-      el("optPowers").checked = !!S.opts.powers;
-      updateCounts();
-      go(S.phase);
-    } else {
-      S = freshState();
-      updateCounts();
-      go("setup");
+    var parsed = VB.parseGameCode(raw);
+    if (parsed.ok) {
+      gameLabel = parsed.code;
+      openBoard(parsed.rows, parsed.cols, parsed.code);
+      return;
     }
-  }
 
-  init();
+    var m = raw.match(/^(\d{1,2})\s*[x×,\s]\s*(\d{1,2})$/i);
+    if (m) {
+      var r = Number(m[1]), c = Number(m[2]);
+      if (VB.isValidShape(r, c)) { gameLabel = ""; openBoard(r, c, ""); return; }
+    }
+    if (/^\d{1,2}$/.test(raw) && VB.isValidShape(Number(raw), Number(raw))) {
+      gameLabel = "";
+      openBoard(Number(raw), Number(raw), "");
+      return;
+    }
+
+    err.textContent = raw
+      ? parsed.error
+      : "Enter the game code, or type a board shape such as 8x10.";
+  });
+
+  el("gameIn").addEventListener("keydown", function (e) { if (e.key === "Enter") el("btnStart").click(); });
+
+  el("cboard").addEventListener("click", function (e) {
+    var node = e.target.closest("[data-cell]");
+    if (node) place(Number(node.dataset.cell));
+  });
+
+  el("cboard").addEventListener("mouseover", function (e) {
+    var node = e.target.closest("[data-cell]");
+    if (!node) return;
+    var old = el("cboard").querySelectorAll(".cell.preview"), i;
+    for (i = 0; i < old.length; i++) old[i].classList.remove("preview");
+    var rem = remaining();
+    if (!rem.length) return;
+    var cand = candidate(Number(node.dataset.cell), rem[0], horiz);
+    if (!cand) return;
+    for (i = 0; i < cand.length; i++) {
+      var q = el("cboard").querySelector('[data-cell="' + cand[i] + '"]');
+      if (q) q.classList.add("preview");
+    }
+  });
+
+  el("cboard").addEventListener("mouseleave", function () {
+    var old = el("cboard").querySelectorAll(".cell.preview"), i;
+    for (i = 0; i < old.length; i++) old[i].classList.remove("preview");
+  });
+
+  el("btnRotate").addEventListener("click", function () {
+    horiz = !horiz;
+    this.textContent = horiz ? "🔄 Rotate ↔️ Horizontal" : "🔄 Rotate ↕️ Vertical";
+    renderTray();
+  });
+
+  el("btnUndo").addEventListener("click", function () { ships.pop(); refresh(); });
+
+  el("btnRandom").addEventListener("click", function () {
+    if (!rows) return;
+    try {
+      ships = VB.randomShips(rows, cols);
+      refresh();
+    } catch (e) {
+      el("placerMsg").textContent = e.message;
+    }
+  });
+
+  el("btnClear").addEventListener("click", function () { ships = []; refresh(); });
+
+  el("keyIn").addEventListener("input", function () {
+    var v = Math.trunc(Number(this.value));
+    var err = el("keyErr");
+    if (isFinite(v) && v >= 1 && v <= 500) { keyVal = v; err.textContent = ""; slip(); }
+    else err.textContent = "Enter a whole number from 1 to 500.";
+  });
+
+  el("btnNewKey").addEventListener("click", function () {
+    keyVal = 1 + Math.floor(Math.random() * 500);
+    el("keyIn").value = keyVal;
+    el("keyErr").textContent = "";
+    slip();
+  });
+
+  el("btnCopyKey").addEventListener("click", function () { copyText(String(el("slipKey").textContent), this); });
+  el("btnCopyCode").addEventListener("click", function () { copyText(String(el("slipCode").textContent), this); });
+  el("btnPrint").addEventListener("click", function () { window.print(); });
+  el("btnSelfTest").addEventListener("click", runTest);
+
+  el("btnCheck").addEventListener("click", function () {
+    var err = el("chkErr"), ok = el("chkOk");
+    err.textContent = "";
+    ok.textContent = "";
+    el("chkBoard").innerHTML = "";
+    try {
+      var dec = VB.decodeFleet(el("chkCode").value, el("chkKey").value);
+      ok.textContent = "Valid: " + dec.ships.length + " ships, " + dec.cells.length +
+        " squares, board " + dec.rows + " × " + dec.cols + ".";
+      var b = el("chkBoard");
+      b.style.gridTemplateColumns = "repeat(" + dec.cols + ", minmax(0,1fr))";
+      b.style.width = "min(100%, " + Math.max(280, dec.cols * 30) + "px)";
+      var on = {}, html = "", i;
+      for (i = 0; i < dec.cells.length; i++) on[dec.cells[i]] = true;
+      for (i = 0; i < dec.rows * dec.cols; i++) html += '<div class="cell' + (on[i] ? " ship" : "") + '"></div>';
+      b.innerHTML = html;
+    } catch (e) {
+      err.textContent = e.message;
+    }
+  });
+
+  runTest();
 })();
 </script>
 </body>
