@@ -4,7 +4,72 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vocab Battleships — referee board</title>
-<link rel="stylesheet" href="shared/style.css">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--bg:#f4f7fb;--panel:#fff;--line:#d8e0ea;--ink:#101828;--muted:#5b6b7f;--accent:#2563eb;--hit:#dc2626;--ok:#15803d}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.5;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 16px 72px}
+header.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.brand{font-weight:800;font-size:1.1rem;letter-spacing:-.01em}.brand span{color:var(--accent)}
+.tag{font-size:.74rem;color:var(--muted);border:1px solid var(--line);background:#fff;padding:3px 9px;border-radius:999px}
+.spacer{flex:1}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.08),0 8px 24px rgba(16,24,40,.06);padding:18px}
+.panel+.panel,.panel+.grid2{margin-top:16px}
+.card{background:#fbfdff;border:1px solid var(--line);border-radius:12px;padding:14px}
+h1{font-size:1.55rem;margin:0 0 6px;letter-spacing:-.02em}
+h2{font-size:1rem;margin:0 0 10px}h2.mt{margin-top:16px}
+p{margin:0 0 9px}p.lead{color:var(--muted);margin:0 0 14px}
+label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:4px}
+label.inline{display:flex;align-items:center;gap:8px;margin:8px 0;font-weight:500;color:var(--ink);font-size:.88rem}
+input,select,textarea,button{font:inherit}
+input[type=text],input[type=number],textarea,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+textarea{min-height:210px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9rem}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid rgba(37,99,235,.35);outline-offset:1px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 15px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:600;cursor:pointer;text-decoration:none;transition:background .12s,border-color .12s}
+.btn:hover{background:#f1f5fb}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-danger{border-color:#fecaca;color:var(--hit)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.muted{color:var(--muted)}.small{font-size:.82rem}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.err{color:var(--hit);font-size:.84rem;min-height:1.2em;margin:6px 0 0}
+.ok{color:var(--ok);font-size:.84rem;min-height:1.2em;margin:6px 0 0}
+.board-scroll{overflow-x:auto;padding-bottom:4px}
+.board{display:grid;gap:4px}
+.axis-col,.axis-row{font-size:.7rem;font-weight:700;color:var(--muted);display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;line-height:1.1}
+.axis-col{writing-mode:vertical-rl;transform:rotate(180deg);height:86px}
+.axis-row{padding-right:6px;justify-content:flex-end}
+.cell{aspect-ratio:1;width:100%;padding:0;min-width:0;border:1px solid var(--line);border-radius:7px;background:#eef3fa;color:#fff;font-size:.85rem;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:crosshair}
+.cell:hover:not(:disabled){background:#dbe7fa;border-color:var(--accent)}
+.cell:disabled{cursor:default}
+.cell.miss{background:#c8d2df;border-color:#b6c2d1}
+.cell.hit{background:var(--hit);border-color:#b91c1c}
+.cell.sunk{background:#7f1d1d;border-color:#7f1d1d}
+.cell.ship{background:#1e3a8a;border-color:#1e3a8a}
+.cell.selected{outline:3px solid var(--accent);outline-offset:1px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.77rem;font-weight:600;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.chip.done{background:#ecfdf5;border-color:#a7f3d0;color:var(--ok)}
+.slip{border:2px dashed var(--ink);border-radius:14px;padding:16px;background:#fff;margin-top:14px}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.22rem;font-weight:700;letter-spacing:.12em;word-break:break-all}
+.keynum{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.8rem;font-weight:800}
+.logrow{display:flex;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid #eef2f7;flex-wrap:wrap}
+.logrow:last-child{border-bottom:0}
+.badge{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:999px}
+.badge.miss{background:#eef2f7;color:var(--muted)}
+.badge.hit{background:#fee2e2;color:var(--hit)}
+.badge.sunk{background:#7f1d1d;color:#fff}
+.overlay{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:rgba(16,24,40,.45)}
+.overlay[hidden]{display:none}
+.modal{max-width:560px;width:100%;box-shadow:0 24px 60px rgba(16,24,40,.3)}
+details.panel{margin-top:16px}
+details.panel>summary{cursor:pointer;font-weight:700;font-size:.95rem}
+@media(max-width:640px){.wrap{padding:14px 12px 56px}.panel{padding:14px}h1{font-size:1.28rem}.axis-col{height:72px}}
+@media print{body{background:#fff}.noprint,header.top{display:none!important}.wrap{max-width:none;padding:0}.panel{border:0;box-shadow:none;padding:0}.slip{border-style:solid}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -13,9 +78,15 @@
     <div class="brand">Vocab <span>Battleships</span></div>
     <span class="tag">referee board</span>
     <span class="tag" id="headCode">no game yet</span>
+    <span class="tag" id="engineTag">engine …</span>
     <div class="spacer"></div>
     <a class="btn" href="cipher.html">Fleet cipher →</a>
   </header>
+
+  <div class="panel" id="bootErr" hidden style="border-color:#fecaca;background:#fef2f2;margin-bottom:16px">
+    <h2 style="color:#b91c1c;margin-bottom:6px">This page is incomplete</h2>
+    <p class="small" style="margin:0">The engine block is missing, which means the paste was cut short. Copy the whole file again.</p>
+  </div>
 
   <!-- ============ SETUP ============ -->
   <section class="panel" id="screen-setup">
@@ -58,7 +129,7 @@
         </div>
 
         <button class="btn btn-primary" id="btnCreate" type="button" style="width:100%;margin-top:18px">Create game →</button>
-        <p class="small muted" style="margin-top:10px">Next you will get a game code. Students type it into the fleet cipher page, hide their ships, and bring you a key and a code.</p>
+        <p class="small muted" style="margin-top:10px">Next you get a game code. Students type it into the fleet cipher page, hide their ships, and bring you a key and a code.</p>
       </div>
     </div>
   </section>
@@ -77,7 +148,7 @@
       </div>
     </div>
 
-    <div class="grid2" style="margin-top:18px">
+    <div class="grid2" style="margin-top:16px">
       <div class="card">
         <h2>Player A fleet</h2>
         <label for="keyA">Key (1 to 500)</label>
@@ -101,25 +172,32 @@
       </div>
     </div>
 
-    <div class="row" style="margin-top:18px">
+    <div class="row" style="margin-top:16px">
       <button class="btn" id="btnBackSetup" type="button">← Back to setup</button>
       <div class="spacer"></div>
       <button class="btn btn-primary" id="btnStart" type="button" disabled>Start match →</button>
     </div>
+
+    <details class="panel">
+      <summary>Engine check</summary>
+      <p class="small muted" style="margin-top:10px">Both pages must run the same engine. Slips only decode if this says PASS.</p>
+      <button class="btn" id="btnVerify" type="button">Run engine self-test</button>
+      <div id="verifyOut" class="small" style="margin-top:10px"></div>
+    </details>
   </section>
 
   <!-- ============ PLAY ============ -->
   <section id="screen-play" hidden>
-    <div class="panel" style="margin-bottom:16px">
+    <div class="panel" style="margin-bottom:14px">
       <div class="row" style="justify-content:space-between;align-items:flex-start">
         <div>
           <h1 style="margin-bottom:2px">Player <span id="turnName">A</span>, choose your target</h1>
           <p class="lead" id="turnHint" style="margin:0">Pick a square, then say your sentence.</p>
         </div>
         <div class="row">
-          <div class="card small" style="text-align:center;padding:10px 14px"><div class="muted">shots</div><b id="statShots">0</b></div>
-          <div class="card small" style="text-align:center;padding:10px 14px"><div class="muted">hits</div><b id="statHits">0</b></div>
-          <div class="card small" style="text-align:center;padding:10px 14px"><div class="muted">game</div><b id="statCode" class="mono">—</b></div>
+          <div class="card small" style="text-align:center;padding:9px 13px"><div class="muted">shots</div><b id="statShots">0</b></div>
+          <div class="card small" style="text-align:center;padding:9px 13px"><div class="muted">hits</div><b id="statHits">0</b></div>
+          <div class="card small" style="text-align:center;padding:9px 13px"><div class="muted">game</div><b id="statCode" class="mono">—</b></div>
         </div>
       </div>
     </div>
@@ -171,14 +249,426 @@
   </div>
 </div>
 
-<script src="shared/cipher.js"></script>
+<script>
+/* ==== ENGINE START ==== */
+(function (global) {
+  "use strict";
+
+  var ALPHA = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  var BASE = 36n;
+  var MIN = 8;
+  var MAX = 15;
+  var VERSION = "3.2-inline";
+  var NAMES = { 5: "Carrier", 4: "Battleship", 3: "Cruiser", 2: "Destroyer" };
+
+  function shipLengths(n) {
+    if (n <= 10) return [5, 4, 3, 3, 2];
+    if (n <= 12) return [5, 4, 3, 3, 2, 2];
+    return [5, 4, 3, 3, 2, 2, 2];
+  }
+
+  function fleetCellCount(n) {
+    var a = shipLengths(n);
+    var t = 0;
+    for (var i = 0; i < a.length; i++) t += a[i];
+    return t;
+  }
+
+  function isValidBoardSize(n) {
+    return typeof n === "number" && isFinite(n) && Math.floor(n) === n && n >= MIN && n <= MAX;
+  }
+
+  function randomGameCode(n) {
+    var tail = "";
+    for (var i = 0; i < 3; i++) tail += ALPHA.charAt(Math.floor(Math.random() * 36));
+    return "V" + ALPHA.charAt(n) + tail;
+  }
+
+  function parseGameCode(raw) {
+    var code = String(raw == null ? "" : raw).toUpperCase().replace(/[^0-9A-Z]/g, "");
+    if (code.length < 2 || code.charAt(0) !== "V") {
+      return { ok: false, error: "A game code starts with V, for example VA7KQ." };
+    }
+    var n = ALPHA.indexOf(code.charAt(1));
+    if (!isValidBoardSize(n)) return { ok: false, error: "That code does not describe a board of 8 to 15 words." };
+    return { ok: true, n: n, code: code };
+  }
+
+  function toB36(v) {
+    if (v === 0n) return "0";
+    var s = "";
+    while (v > 0n) { s = ALPHA.charAt(Number(v % BASE)) + s; v = v / BASE; }
+    return s;
+  }
+
+  function fromB36(s) {
+    var v = 0n;
+    for (var i = 0; i < s.length; i++) {
+      var d = ALPHA.indexOf(s.charAt(i));
+      if (d < 0) throw new Error("The code contains an unknown character.");
+      v = v * BASE + BigInt(d);
+    }
+    return v;
+  }
+
+  function checksum(body) {
+    var a = 0, b = 0;
+    for (var i = 0; i < body.length; i++) {
+      var v = ALPHA.indexOf(body.charAt(i));
+      a = (a + v) % 36;
+      b = (b + v * (i + 1)) % 36;
+    }
+    return ALPHA.charAt(a) + ALPHA.charAt(b);
+  }
+
+  function mulberry32(seed) {
+    var a = seed | 0;
+    return function () {
+      a = (a + 0x6d2b79f5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function permFor(len, key) {
+    var seed = (Math.trunc(key) * 7919 + 104729) % 2147483647;
+    var rnd = mulberry32(seed);
+    var p = [], i, k, t;
+    for (i = 0; i < len; i++) p.push(i);
+    for (i = len - 1; i > 0; i--) {
+      k = Math.floor(rnd() * (i + 1));
+      t = p[i]; p[i] = p[k]; p[k] = t;
+    }
+    return p;
+  }
+
+  function normalizeKey(raw) {
+    var k = Math.trunc(Number(raw));
+    if (!isFinite(k) || k < 1 || k > 500) throw new Error("The key must be a whole number from 1 to 500.");
+    return k;
+  }
+
+  function group(s) { return s.replace(/(.{4})(?=.)/g, "$1-"); }
+  function ungroup(s) { return String(s == null ? "" : s).toUpperCase().replace(/[^0-9A-Z]/g, ""); }
+
+  function recordOf(ship) {
+    var cells = ship.cells.slice().sort(function (a, b) { return a - b; });
+    var anchor = cells[0];
+    var horiz = cells.length > 1 && cells[1] === anchor + 1 ? 1 : 0;
+    return { anchor: anchor, horiz: horiz, len: cells.length, cells: cells };
+  }
+
+  function nameShips(ships) {
+    var totals = {}, seen = {};
+    ships.forEach(function (s) { totals[s.len] = (totals[s.len] || 0) + 1; });
+    ships.forEach(function (s) {
+      seen[s.len] = (seen[s.len] || 0) + 1;
+      s.name = NAMES[s.len] || (s.len + "-deck ship");
+      if (totals[s.len] > 1) s.name = s.name + " " + seen[s.len];
+      if (typeof s.hits !== "number") s.hits = 0;
+    });
+    return ships;
+  }
+
+  function finishEncode(value, n, k) {
+    var body = ALPHA.charAt(n) + toB36(value);
+    var raw = body + checksum(body);
+    var shift = k % 36;
+    var shifted = "", i;
+    for (i = 0; i < raw.length; i++) shifted += ALPHA.charAt((ALPHA.indexOf(raw.charAt(i)) + shift) % 36);
+    var perm = permFor(shifted.length, k);
+    var out = "";
+    for (i = 0; i < perm.length; i++) out += shifted.charAt(perm[i]);
+    return { code: group(out), key: k, n: n };
+  }
+
+  function encodeShips(ships, n, key) {
+    var k = normalizeKey(key);
+    if (!isValidBoardSize(n)) throw new Error("Board size must be 8 to 15.");
+    var lengths = shipLengths(n).slice().sort(function (a, b) { return b - a; });
+    if (!ships || ships.length !== lengths.length) {
+      throw new Error("This fleet has " + (ships ? ships.length : 0) + " ships, but a " + n + " by " + n + " board needs " + lengths.length + ".");
+    }
+    var list = ships.slice().sort(function (a, b) {
+      var ra = recordOf(a), rb = recordOf(b);
+      if (rb.len !== ra.len) return rb.len - ra.len;
+      return ra.anchor - rb.anchor;
+    });
+    var value = 0n;
+    for (var i = 0; i < list.length; i++) {
+      var r = recordOf(list[i]);
+      if (r.len !== lengths[i]) throw new Error("Those ships are not the right sizes for this board.");
+      value = value * 512n + BigInt(r.anchor) * 2n + BigInt(r.horiz);
+    }
+    return finishEncode(value, n, k);
+  }
+
+  function runOf(start, step, len) {
+    var out = [];
+    for (var i = 0; i < len; i++) out.push(start + i * step);
+    return out;
+  }
+
+  function shipsFromCells(cells, n) {
+    if (!isValidBoardSize(n)) throw new Error("Board size must be 8 to 15.");
+    var set = new Set(cells);
+    if (set.size !== cells.length) throw new Error("Two squares in this fleet are the same square.");
+    var expected = fleetCellCount(n);
+    if (cells.length !== expected) {
+      throw new Error("This fleet has " + cells.length + " squares, but a " + n + " by " + n + " board needs " + expected + ".");
+    }
+    var runs = [];
+    cells.forEach(function (c) {
+      var row = Math.floor(c / n), col = c % n, len, x;
+      if (col === 0 || !set.has(c - 1)) {
+        len = 0; x = c;
+        while (Math.floor(x / n) === row && set.has(x)) { len++; x++; }
+        if (len > 1) runs.push(runOf(c, 1, len));
+      }
+      if (row === 0 || !set.has(c - n)) {
+        len = 0; x = c;
+        while (x < n * n && set.has(x)) { len++; x += n; }
+        if (len > 1) runs.push(runOf(c, n, len));
+      }
+    });
+    var wanted = shipLengths(n).slice().sort(function (a, b) { return b - a; });
+    if (runs.length !== wanted.length) {
+      throw new Error("Those squares do not form " + wanted.length + " separate ships.");
+    }
+    var found = runs.map(function (r) { return r.length; }).sort(function (a, b) { return b - a; });
+    for (var i = 0; i < wanted.length; i++) {
+      if (found[i] !== wanted[i]) {
+        throw new Error("Those squares do not match the ship sizes for this board: " + wanted.join(", ") + ".");
+      }
+    }
+    return nameShips(runs.map(function (r) { return { len: r.length, cells: r.slice() }; }));
+  }
+
+  function encodeFleet(cells, n, key) {
+    return encodeShips(shipsFromCells(cells, n), n, key);
+  }
+
+  function decodeFleet(rawCode, rawKey) {
+    var k = normalizeKey(rawKey);
+    var clean = ungroup(rawCode);
+    if (clean.length < 5) throw new Error("That code is too short to be a fleet code.");
+    if (clean.length > 40) throw new Error("That code is too long to be a fleet code.");
+
+    var perm = permFor(clean.length, k);
+    var digits = new Array(clean.length), i;
+    for (i = 0; i < clean.length; i++) digits[perm[i]] = ALPHA.indexOf(clean.charAt(i));
+
+    var shift = k % 36, raw = "";
+    for (i = 0; i < digits.length; i++) raw += ALPHA.charAt((digits[i] - shift + 36) % 36);
+
+    var body = raw.slice(0, -2), cs = raw.slice(-2);
+    if (checksum(body) !== cs) {
+      throw new Error("Wrong key, or a mistyped character. Check the key first, then every letter of the code.");
+    }
+
+    var n = ALPHA.indexOf(body.charAt(0));
+    if (!isValidBoardSize(n)) throw new Error("That code belongs to a different board size.");
+
+    var value = fromB36(body.slice(1));
+    var wanted = shipLengths(n).slice().sort(function (a, b) { return b - a; });
+    var chunks = [], v = value;
+    for (var c = 0; c < wanted.length; c++) { chunks.unshift(v % 512n); v = v / 512n; }
+    if (v !== 0n) throw new Error("That code does not fit this game's fleet size.");
+
+    var owner = new Array(n * n);
+    for (i = 0; i < owner.length; i++) owner[i] = -1;
+
+    var seen = {}, ships = [];
+    for (var s = 0; s < wanted.length; s++) {
+      var anchor = Number(chunks[s] >> 1n);
+      var horiz = (chunks[s] & 1n) === 1n;
+      var len = wanted[s];
+      if (anchor >= n * n) throw new Error("A ship in that slip is off the board.");
+      var row = Math.floor(anchor / n), col = anchor % n;
+      if (horiz && col + len > n) throw new Error("A ship in that slip runs off the edge.");
+      if (!horiz && row + len > n) throw new Error("A ship in that slip runs off the edge.");
+      var sig = anchor + ":" + (horiz ? 1 : 0);
+      if (seen[sig]) throw new Error("That slip lists one ship twice, so it came from the first buggy version. Make a fresh slip on the current page.");
+      seen[sig] = true;
+      var sc = [];
+      for (var d = 0; d < len; d++) sc.push(horiz ? anchor + d : anchor + d * n);
+      for (var q = 0; q < sc.length; q++) {
+        if (owner[sc[q]] !== -1) throw new Error("Two ships in that slip overlap. Make a fresh slip.");
+      }
+      for (q = 0; q < sc.length; q++) owner[sc[q]] = s;
+      ships.push({ len: len, cells: sc });
+    }
+
+    nameShips(ships);
+    var cells = [];
+    for (i = 0; i < owner.length; i++) if (owner[i] !== -1) cells.push(i);
+    if (cells.length !== fleetCellCount(n)) throw new Error("That slip is incomplete.");
+    return { cells: cells, n: n, key: k, ships: ships };
+  }
+
+  function touches(idx, occ, n) {
+    var r = Math.floor(idx / n), c = idx % n;
+    for (var dr = -1; dr <= 1; dr++) {
+      for (var dc = -1; dc <= 1; dc++) {
+        var rr = r + dr, cc = c + dc;
+        if (rr < 0 || cc < 0 || rr >= n || cc >= n) continue;
+        if (occ.has(rr * n + cc)) return true;
+      }
+    }
+    return false;
+  }
+
+  function randomShips(n) {
+    var lengths = shipLengths(n).slice().sort(function (a, b) { return b - a; });
+    for (var attempt = 0; attempt < 400; attempt++) {
+      var occ = new Set(), ships = [], ok = true, i;
+      for (i = 0; i < lengths.length && ok; i++) {
+        var len = lengths[i], placed = false;
+        for (var t = 0; t < 500 && !placed; t++) {
+          var horiz = Math.random() < 0.5;
+          var r = Math.floor(Math.random() * n), c = Math.floor(Math.random() * n);
+          if (horiz ? c + len > n : r + len > n) continue;
+          var cand = [], d;
+          for (d = 0; d < len; d++) cand.push(horiz ? r * n + c + d : (r + d) * n + c);
+          var bad = false, q;
+          for (q = 0; q < cand.length; q++) if (touches(cand[q], occ, n)) { bad = true; break; }
+          if (bad) continue;
+          for (q = 0; q < cand.length; q++) occ.add(cand[q]);
+          ships.push({ len: len, cells: cand.slice() });
+          placed = true;
+        }
+        if (!placed) ok = false;
+      }
+      if (ok) return ships;
+    }
+    throw new Error("Could not find room for a fleet. Press Clear and try again.");
+  }
+
+  function randomFleet(n) {
+    var ships = randomShips(n), out = [];
+    ships.forEach(function (s) { s.cells.forEach(function (c) { out.push(c); }); });
+    return out.sort(function (a, b) { return a - b; });
+  }
+
+  function selfTest() {
+    var results = [];
+
+    var trips = 60, bad = 0, firstBad = "";
+    for (var i = 0; i < trips; i++) {
+      var n = MIN + Math.floor(Math.random() * (MAX - MIN + 1));
+      var k = 1 + Math.floor(Math.random() * 500);
+      try {
+        var ships = randomShips(n);
+        var enc = encodeShips(ships, n, k);
+        var dec = decodeFleet(enc.code, k);
+        var want = randomFleet(n);
+        if (dec.n !== n || dec.cells.join(",") !== want.join(",")) {
+          bad++;
+          if (!firstBad) firstBad = "n=" + n + " key=" + k;
+        }
+      } catch (e) {
+        bad++;
+        if (!firstBad) firstBad = "n=" + n + " key=" + k + " -> " + e.message;
+      }
+    }
+    results.push({ name: "Round trip", pass: bad === 0,
+      detail: bad === 0 ? trips + " random fleets decoded exactly" : bad + " failures, first: " + firstBad });
+
+    var fixture = [0, 1, 2, 3, 4, 27, 37, 47, 57, 40, 41, 42, 60, 70, 80, 98, 99];
+    var fixtureBad = 0, fixtureTries = 0;
+    for (var fk = 1; fk <= 500; fk += 7) {
+      fixtureTries++;
+      try {
+        var fe = encodeFleet(fixture, 10, fk);
+        var fd = decodeFleet(fe.code, fk);
+        if (fd.cells.join(",") !== fixture.slice().sort(function (a, b) { return a - b; }).join(",")) fixtureBad++;
+      } catch (e) { fixtureBad++; }
+    }
+    results.push({ name: "Two ships of equal length", pass: fixtureBad === 0,
+      detail: fixtureBad === 0 ? fixtureTries + " keys, fleet rebuilt exactly" : fixtureBad + " of " + fixtureTries + " failed" });
+
+    var throws = 0, tries = 150;
+    for (var r = 0; r < tries; r++) {
+      try {
+        var nn = MIN + Math.floor(Math.random() * (MAX - MIN + 1));
+        var ss = randomShips(nn);
+        var enc2 = encodeShips(ss, nn, 1 + Math.floor(Math.random() * 500));
+        if (!enc2.code) throws++;
+      } catch (e) { throws++; }
+    }
+    results.push({ name: "Random always yields a slip", pass: throws === 0,
+      detail: throws === 0 ? tries + " of " + tries + " produced a code" : throws + " of " + tries + " failed" });
+
+    var rejected = 0, wrongTries = 30;
+    for (var j = 0; j < wrongTries; j++) {
+      var n2 = MIN + Math.floor(Math.random() * 8);
+      var k2 = 1 + Math.floor(Math.random() * 500);
+      var k3 = k2 === 500 ? 1 : k2 + 1;
+      try {
+        var e2 = encodeShips(randomShips(n2), n2, k2);
+        decodeFleet(e2.code, k3);
+      } catch (e) { rejected++; }
+    }
+    results.push({ name: "Wrong key rejected", pass: rejected === wrongTries,
+      detail: rejected + " of " + wrongTries + " rejected" });
+
+    var caught = 0, typoTries = 30;
+    for (var t2 = 0; t2 < typoTries; t2++) {
+      var n4 = MIN + Math.floor(Math.random() * 8);
+      var k4 = 1 + Math.floor(Math.random() * 500);
+      try {
+        var e3 = encodeShips(randomShips(n4), n4, k4);
+        var chars = e3.code.split("");
+        var at = Math.floor(Math.random() * chars.length);
+        var cur = ALPHA.indexOf(chars[at]);
+        chars[at] = ALPHA.charAt((cur + 1 + Math.floor(Math.random() * 34)) % 36);
+        decodeFleet(chars.join(""), k4);
+      } catch (e) { caught++; }
+    }
+    results.push({ name: "Typo caught", pass: caught === typoTries,
+      detail: caught + " of " + typoTries + " refused" });
+
+    return { pass: results.every(function (x) { return x.pass; }), version: VERSION, results: results };
+  }
+
+  global.VBCipher = {
+    version: VERSION,
+    ALPHA: ALPHA,
+    MIN_WORDS: MIN,
+    MAX_WORDS: MAX,
+    shipLengths: shipLengths,
+    fleetCellCount: fleetCellCount,
+    isValidBoardSize: isValidBoardSize,
+    randomGameCode: randomGameCode,
+    parseGameCode: parseGameCode,
+    encodeShips: encodeShips,
+    encodeFleet: encodeFleet,
+    shipsFromCells: shipsFromCells,
+    decodeFleet: decodeFleet,
+    randomShips: randomShips,
+    randomFleet: randomFleet,
+    selfTest: selfTest,
+    group: group,
+    ungroup: ungroup
+  };
+})(typeof window !== "undefined" ? window : globalThis);
+/* ==== ENGINE END ==== */
+</script>
+
 <script>
 (function () {
   "use strict";
 
-  var C = window.VBCipher;
-  var LS_GAME = "vbbs.game.v1";
-  var LS_PRESETS = "vbbs.presets.v1";
+  var VB = window.VBCipher;
+  if (!VB) {
+    var boot = document.getElementById("bootErr");
+    if (boot) boot.hidden = false;
+    return;
+  }
+
+  var LS_GAME = "vbbs.game.v4";
+  var LS_PRESETS = "vbbs.presets.v4";
 
   var SAMPLE = ["chocolate", "bicycle", "museum", "thunderstorm", "volunteer",
                 "recycling", "flexible", "recipe", "journey", "discount"];
@@ -221,6 +711,7 @@
       if (!raw) return null;
       var s = JSON.parse(raw);
       if (!s || !Array.isArray(s.words) || !s.words.length) return null;
+      if (!s.fleets || !s.shots) return null;
       return s;
     } catch (e) { return null; }
   }
@@ -248,7 +739,7 @@
     el("headCode").textContent = S.code ? "game " + S.code : "no game yet";
     if (phase === "load") renderLoad();
     if (phase === "play") renderPlay();
-    window.scrollTo(0, 0);
+    try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
     save();
   }
 
@@ -258,15 +749,17 @@
     var words = parseWords(el("wordsIn").value);
     var n = words.length;
     var txt = n + (n === 1 ? " word" : " words");
-    if (n >= C.MIN_WORDS && n <= C.MAX_WORDS) txt += " · board " + n + "×" + n;
+    if (n >= VB.MIN_WORDS && n <= VB.MAX_WORDS) {
+      txt += " · board " + n + " × " + n + " · ships " + VB.shipLengths(n).join("/");
+    }
     el("wordCount").textContent = txt;
   }
 
   function createGame() {
     var words = parseWords(el("wordsIn").value);
     var err = el("setupErr");
-    if (words.length < C.MIN_WORDS || words.length > C.MAX_WORDS) {
-      err.textContent = "Enter between " + C.MIN_WORDS + " and " + C.MAX_WORDS +
+    if (words.length < VB.MIN_WORDS || words.length > VB.MAX_WORDS) {
+      err.textContent = "Enter between " + VB.MIN_WORDS + " and " + VB.MAX_WORDS +
         " words (you have " + words.length + ").";
       return;
     }
@@ -279,7 +772,7 @@
     S = freshState();
     S.words = words;
     S.n = words.length;
-    S.code = C.randomGameCode(words.length);
+    S.code = VB.randomGameCode(words.length);
     S.opts = opts;
     el("keyA").value = "";
     el("codeA").value = "";
@@ -308,7 +801,7 @@
 
   function renderLoad() {
     el("loadCode").textContent = S.code;
-    el("loadSize").textContent = S.n + " × " + S.n + " · ships " + C.shipLengths(S.n).join(" / ");
+    el("loadSize").textContent = S.n + " × " + S.n + " · ships " + VB.shipLengths(S.n).join(" / ");
     ["A", "B"].forEach(function (p) {
       var f = S.fleets[p];
       el("ok" + p).textContent = f
@@ -324,14 +817,15 @@
     err.textContent = "";
     ok.textContent = "";
     try {
-      var dec = C.decodeFleet(el("code" + p).value, el("key" + p).value);
+      var dec = VB.decodeFleet(el("code" + p).value, el("key" + p).value);
       if (dec.n !== S.n) {
-        throw new Error("That fleet is for a " + dec.n + "×" + dec.n +
-          " board, but this game is " + S.n + "×" + S.n + ".");
+        throw new Error("That fleet is for a " + dec.n + " × " + dec.n +
+          " board, but this game is " + S.n + " × " + S.n + ".");
       }
       S.fleets[p] = { cells: dec.cells, ships: dec.ships, key: dec.key };
       save();
-      ok.textContent = "Loaded: " + dec.ships.length + " ships, " + dec.cells.length + " squares.";
+      ok.textContent = "Loaded: " + dec.ships.length + " ships, " + dec.cells.length + " squares." +
+        " (" + dec.ships.map(function (s) { return s.name; }).join(", ") + ")";
       el("btnStart").disabled = !(S.fleets.A && S.fleets.B);
     } catch (e) {
       err.textContent = e.message;
@@ -346,6 +840,7 @@
     S.over = null;
     S.reveal = false;
     pending = null;
+    stopTimer();
     go("play");
   }
 
@@ -363,15 +858,15 @@
     var shots = {};
     (S.shots[shooter] || []).forEach(function (c) { shots[c] = true; });
 
-    var parts = ['<div></div>'];
-    for (var c = 0; c < n; c++) {
+    var parts = ["<div></div>"], c, r, col;
+    for (c = 0; c < n; c++) {
       parts.push('<div class="axis-col" title="' + esc(S.words[c]) + '">' +
         esc(short(S.words[c], 12)) + "</div>");
     }
-    for (var r = 0; r < n; r++) {
+    for (r = 0; r < n; r++) {
       parts.push('<div class="axis-row" title="' + esc(S.words[r]) + '">' +
         esc(short(S.words[r], 12)) + "</div>");
-      for (var col = 0; col < n; col++) {
+      for (col = 0; col < n; col++) {
         var idx = r * n + col;
         var ship = shipAt[idx];
         var shot = !!shots[idx];
@@ -379,10 +874,10 @@
         var glyph = "";
         if (shot && ship) {
           cls.push(ship.hits >= ship.len ? "sunk" : "hit");
-          glyph = "✕";
+          glyph = "\u2715";
         } else if (shot) {
           cls.push("miss");
-          glyph = "•";
+          glyph = "\u2022";
         } else if (reveal && ship) {
           cls.push("ship");
         }
@@ -481,10 +976,10 @@
       "\u201d × column " + c + " \u201c" + esc(info.col) + "\u201d</div>" +
       (S.opts.timer ? '<div class="small"><b id="timerText">' + Math.max(0, timeLeft) + "s</b></div>" : "") +
       "</div>" +
-      '<p style="font-size:1.12rem;margin:12px 0 14px">Make a sentence using ' + needHtml + ".</p>" +
+      '<p style="font-size:1.1rem;margin:12px 0 14px">Make a sentence using ' + needHtml + ".</p>" +
       '<div class="row">' +
-      '<button type="button" class="btn btn-primary" data-act="accept">✓ Said it — fire</button>' +
-      '<button type="button" class="btn" data-act="reject">✗ Try again</button>' +
+      '<button type="button" class="btn btn-primary" data-act="accept">\u2713 Said it — fire</button>' +
+      '<button type="button" class="btn" data-act="reject">\u2717 Try again</button>' +
       '<button type="button" class="btn" data-act="cancel">Cancel shot</button>' +
       "</div>";
   }
@@ -499,7 +994,7 @@
     S.log.slice(0, 60).forEach(function (e) {
       html += '<div class="logrow"><b>' + esc(e.turn) + "</b>" +
         '<span class="muted">' + esc(short(e.rowWord, 12)) + " × " + esc(short(e.colWord, 12)) + "</span>" +
-        '<span class="spacer" style="flex:1"></span>' +
+        '<span style="flex:1"></span>' +
         '<span class="badge ' + e.result + '">' + e.result + "</span>" +
         (e.ship ? ' <span class="small muted">' + esc(e.ship) + "</span>" : "") +
         "</div>";
@@ -524,7 +1019,7 @@
     el("ovTitle").textContent = "Player " + S.over.winner + " wins";
     el("ovBody").textContent = "A: " + totals.A.hits + " hits from " + totals.A.shots +
       " shots. B: " + totals.B.hits + " hits from " + totals.B.shots + " shots. " +
-      "Total sentences attempted: " + S.log.length + ".";
+      "Sentences attempted: " + S.log.length + ".";
   }
 
   /* ---------- shooting ---------- */
@@ -576,8 +1071,8 @@
   function choose(cell) {
     if (S.over || S.reveal) return;
     if (S.shots[S.turn].indexOf(cell) >= 0) return;
-    var old = document.querySelectorAll(".cell.selected");
-    for (var i = 0; i < old.length; i++) old[i].classList.remove("selected");
+    var old = document.querySelectorAll(".cell.selected"), i;
+    for (i = 0; i < old.length; i++) old[i].classList.remove("selected");
     pending = { cell: cell };
     var node = document.querySelector('#board [data-cell="' + cell + '"]');
     if (node) node.classList.add("selected");
@@ -607,7 +1102,45 @@
     if (tickId) { clearInterval(tickId); tickId = null; }
   }
 
+  /* ---------- engine check ---------- */
+
+  function renderVerify() {
+    var out = el("verifyOut");
+    try {
+      var r = VB.selfTest(), html = "", i;
+      for (i = 0; i < r.results.length; i++) {
+        var t = r.results[i];
+        html += '<div style="padding:4px 0;border-bottom:1px solid #eef2f7">' +
+          '<b style="color:' + (t.pass ? "#15803d" : "#dc2626") + '">' +
+          (t.pass ? "PASS" : "FAIL") + "</b> " + esc(t.name) +
+          ' <span class="muted">' + esc(t.detail) + "</span></div>";
+      }
+      html += '<p class="small" style="margin:8px 0 0"><b>' +
+        (r.pass ? "All checks passed." : "Something is wrong.") + "</b> engine " +
+        esc(r.version) + "</p>";
+      out.innerHTML = html;
+    } catch (e) {
+      out.innerHTML = '<p class="err">Self-test crashed: ' + esc(e.message) + "</p>";
+    }
+  }
+
   /* ---------- wiring ---------- */
+
+  function newGameSameWords() {
+    var words = S.words.slice();
+    var opts = S.opts;
+    S = freshState();
+    S.words = words;
+    S.n = words.length;
+    S.code = VB.randomGameCode(words.length);
+    S.opts = opts;
+    el("overlay").hidden = true;
+    el("keyA").value = "";
+    el("codeA").value = "";
+    el("keyB").value = "";
+    el("codeB").value = "";
+    go("load");
+  }
 
   function bind() {
     el("wordsIn").addEventListener("input", updateWordCount);
@@ -623,6 +1156,7 @@
     });
 
     el("btnCreate").addEventListener("click", createGame);
+    el("btnVerify").addEventListener("click", renderVerify);
 
     el("preset").addEventListener("change", function () {
       var i = this.value;
@@ -638,7 +1172,7 @@
 
     el("btnSavePreset").addEventListener("click", function () {
       var words = parseWords(el("wordsIn").value);
-      if (words.length < C.MIN_WORDS || words.length > C.MAX_WORDS) {
+      if (words.length < VB.MIN_WORDS || words.length > VB.MAX_WORDS) {
         el("setupErr").textContent = "Save a list of 8 to 15 words first.";
         return;
       }
@@ -662,9 +1196,7 @@
     el("btnLoadB").addEventListener("click", function () { loadFleetFor("B"); });
     el("btnStart").addEventListener("click", startMatch);
 
-    el("btnBackSetup").addEventListener("click", function () {
-      go("setup");
-    });
+    el("btnBackSetup").addEventListener("click", function () { go("setup"); });
 
     el("board").addEventListener("click", function (e) {
       var node = e.target.closest("[data-cell]");
@@ -697,23 +1229,10 @@
     });
   }
 
-  function newGameSameWords() {
-    var words = S.words.slice();
-    var opts = S.opts;
-    S = freshState();
-    S.words = words;
-    S.n = words.length;
-    S.code = C.randomGameCode(words.length);
-    S.opts = opts;
-    el("overlay").hidden = true;
-    el("keyA").value = "";
-    el("codeA").value = "";
-    el("keyB").value = "";
-    el("codeB").value = "";
-    go("load");
-  }
-
   function init() {
+    var tag = el("engineTag");
+    if (tag) tag.textContent = "engine " + VB.version;
+
     bind();
     renderPresets();
 
