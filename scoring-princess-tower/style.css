@@ -3977,3 +3977,179 @@ body {
     min-height: 50px;
   }
 }
+
+/* Bigger die, slower tumble — anticipation first. */
+.dice-popup {
+  gap: 14px;
+  padding: 20px 26px 26px;
+  border-radius: 16px;
+}
+
+.dice-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.26em;
+}
+
+.die-visual {
+  width: clamp(140px, 30vmin, 212px);
+  height: clamp(140px, 30vmin, 212px);
+  border-radius: 14px;
+}
+
+.die-fallback {
+  font-size: clamp(3.4rem, 8vmin, 5rem);
+}
+
+.die-img {
+  inset: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+}
+
+.die-value {
+  right: -14px;
+  bottom: -14px;
+  width: 54px;
+  height: 54px;
+  border-width: 3px;
+  font-size: 1.5rem;
+}
+
+.dice-popup.is-visible .die-visual {
+  animation: dieTumble 0.86s ease-in-out infinite;
+}
+
+.dice-popup.is-settled .die-visual {
+  animation: dieSettle 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) 1 both;
+}
+
+@keyframes dieTumble {
+  0% {
+    transform: rotate(-6deg) scale(1);
+  }
+  25% {
+    transform: rotate(4deg) scale(1.05) translateY(-6px);
+  }
+  50% {
+    transform: rotate(-3deg) scale(0.98) translateY(2px);
+  }
+  75% {
+    transform: rotate(6deg) scale(1.04) translateY(-4px);
+  }
+  100% {
+    transform: rotate(-6deg) scale(1);
+  }
+}
+
+.memory-grid {
+  gap: 12px;
+  width: min(344px, 84vw);
+}
+
+.memory-cell {
+  border-radius: 8px;
+}
+
+.memory-cell::after {
+  content: none;
+  display: none;
+}
+
+.memory-shape {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 54%;
+  height: 54%;
+  fill: var(--shape-color, #f6c453);
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5));
+  transition: fill 0.18s ease, filter 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+
+.memory-cell:hover .memory-shape {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.memory-cell.is-lit .memory-shape {
+  fill: #33210a;
+  filter: none;
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+.memory-cell.is-bad .memory-shape {
+  fill: #ffe3e8;
+  filter: none;
+}
+
+.memory-grid.is-preview .memory-cell {
+  cursor: default;
+}
+
+.wobble-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.wobble-actions .btn {
+  width: 100%;
+}
+
+.wobble-start-btn {
+  padding: 0.9em 1.2em;
+  font-size: 1rem;
+}
+
+.stat-hearts {
+  min-width: 78px;
+}
+
+@media (max-width: 820px) {
+  .stat-hearts {
+    min-width: 62px;
+  }
+}
+
+/* Symmetrical top face, inset side shading, texture pulled back a touch. */
+.block {
+  border-radius: 3px;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 165% auto;
+  background-position: center, center, center, center, var(--tex-x) var(--tex-y);
+  transform: none;
+}
+
+.block::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  height: 9px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #b9becf 0%, #949aae 54%, #6e738a 100%);
+  clip-path: polygon(0 100%, 8px 0, calc(100% - 8px) 0, 100% 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  opacity: 1;
+}
+
+.block::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  right: 0;
+  bottom: 1px;
+  width: 18px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(
+    90deg,
+    rgba(8, 5, 16, 0) 0%,
+    rgba(8, 5, 16, 0.34) 62%,
+    rgba(8, 5, 16, 0.58) 100%
+  );
+  clip-path: none;
+  box-shadow: none;
+  pointer-events: none;
+}
