@@ -47,6 +47,15 @@
       <circle cx="32" cy="44.5" r="2.3" fill="#f6c453" />
       <path d="M18 40.5c-3.7 2-6 5.4-7 9.5h6.5l2.4-8-1.9-1.5ZM46 40.5c3.7 2 6 5.4 7 9.5h-6.5l-2.4-8 1.9-1.5Z" fill="#f3c9a4" />
     </symbol>
+    <symbol id="shape-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" /></symbol>
+    <symbol id="shape-triangle" viewBox="0 0 24 24"><path d="M12 3.2 21.2 20.4H2.8Z" /></symbol>
+    <symbol id="shape-square" viewBox="0 0 24 24"><rect x="4.2" y="4.2" width="15.6" height="15.6" rx="2.2" /></symbol>
+    <symbol id="shape-diamond" viewBox="0 0 24 24"><path d="M12 2.2 21.8 12 12 21.8 2.2 12Z" /></symbol>
+    <symbol id="shape-star" viewBox="0 0 24 24"><path d="M12 2.4l2.95 6.05 6.65.95-4.8 4.7 1.15 6.6L12 17.6l-5.95 3.1 1.15-6.6-4.8-4.7 6.65-.95Z" /></symbol>
+    <symbol id="shape-cross" viewBox="0 0 24 24"><path d="M9.5 2.6h5v6.9h6.9v5h-6.9v6.9h-5v-6.9H2.6v-5h6.9Z" /></symbol>
+    <symbol id="shape-heart" viewBox="0 0 24 24"><path d="M12 21.4S3.2 15.7 3.2 9.6A4.85 4.85 0 0 1 12 6.3a4.85 4.85 0 0 1 8.8 3.3c0 6.1-8.8 11.8-8.8 11.8Z" /></symbol>
+    <symbol id="shape-moon" viewBox="0 0 24 24"><path d="M15.8 2.6a9.4 9.4 0 1 0 5.6 15.9A10 10 0 0 1 15.8 2.6Z" /></symbol>
+    <symbol id="shape-hex" viewBox="0 0 24 24"><path d="M12 2.2 20.5 7v10L12 21.8 3.5 17V7Z" /></symbol>
   </svg>
 
   <div class="app" id="app">
@@ -164,7 +173,7 @@
           </div>
           <div class="stat stat-hearts">
             <span class="stat-label">Hearts</span>
-            <div class="hearts" id="hearts" aria-label="3 of 3 hearts"></div>
+            <div class="hearts" id="hearts" aria-label="5 of 5 hearts"></div>
           </div>
           <div class="stat">
             <span class="stat-label">Streak</span>
@@ -247,7 +256,10 @@
         <div class="memory-grid" id="memory-grid" aria-label="Memory grid"></div>
         <div class="sequence-dots" id="sequence-dots" aria-hidden="true"></div>
         <p class="wobble-status" id="wobble-status">Get ready…</p>
-        <button class="btn btn-ghost wobble-pause-btn" id="btn-wobble-pause" type="button">Pause &amp; Save</button>
+        <div class="wobble-actions">
+          <button class="btn btn-primary wobble-start-btn" id="btn-wobble-start" type="button">Start</button>
+          <button class="btn btn-ghost wobble-pause-btn" id="btn-wobble-pause" type="button">Pause &amp; Save</button>
+        </div>
       </div>
     </div>
 
@@ -304,9 +316,9 @@
           <li><strong>Guess the next card.</strong> Is it higher or lower than the card you can see?</li>
           <li><strong>Know the order.</strong> Ace = 1 (lowest), Jack = 11, Queen = 12, King = 13 (highest). A tie is safe.</li>
           <li><strong>Build the tower.</strong> Every correct guess rolls the green die and adds 1–6 stones.</li>
-          <li><strong>Mind your hearts.</strong> A wrong guess rolls the red die: it costs 1–2 hearts and up to 3 stones.</li>
-          <li><strong>Steady the wobble.</strong> Every 3 correct guesses, repeat the glowing stone pattern. Success earns a bonus green-die roll; failure costs a heart.</li>
-          <li><strong>Reach the top.</strong> Lose all 3 hearts and the tower falls. Your height goes on the local Top 5 leaderboard.</li>
+          <li><strong>Mind your hearts.</strong> A wrong guess rolls the red die: it always costs exactly 1 heart, plus up to 3 stones.</li>
+          <li><strong>Steady the wobble.</strong> Every 3 correct guesses a shape puzzle appears. Press <em>Start</em>, watch the glowing stones, then tap them in the same order. Success earns a bonus green-die roll; failure costs a heart.</li>
+          <li><strong>Reach the top.</strong> You begin with 5 hearts. Lose them all and the tower falls — your height goes on the local Top 5 leaderboard.</li>
         </ol>
         <p class="howto-note">Tip: press <kbd>H</kbd> / <kbd>↑</kbd> for Higher and <kbd>L</kbd> / <kbd>↓</kbd> for Lower. <kbd>Esc</kbd> pauses.</p>
         <button class="btn btn-primary" id="btn-howto-close" type="button">Got it</button>
