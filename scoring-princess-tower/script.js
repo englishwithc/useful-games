@@ -26,6 +26,18 @@
     flame: { name: 'Flame', symbol: '#icon-flame' },
   };
 
+  const MEMORY_SHAPES = [
+    { icon: 'shape-circle', name: 'circle', color: '#ffd166' },
+    { icon: 'shape-triangle', name: 'triangle', color: '#7ee08a' },
+    { icon: 'shape-square', name: 'square', color: '#8eb9ff' },
+    { icon: 'shape-diamond', name: 'diamond', color: '#ff9ebd' },
+    { icon: 'shape-star', name: 'star', color: '#f7a467' },
+    { icon: 'shape-cross', name: 'cross', color: '#b98be8' },
+    { icon: 'shape-heart', name: 'heart', color: '#ff7789' },
+    { icon: 'shape-moon', name: 'moon', color: '#dbe7ff' },
+    { icon: 'shape-hex', name: 'hexagon', color: '#7ee0d0' },
+  ];
+
   const SUIT_KEYS = Object.keys(SUITS);
   const RANKS = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king'];
   const RANK_VALUE = Object.fromEntries(RANKS.map((rank, index) => [rank, index + 1]));
@@ -33,7 +45,7 @@
   const RANK_NAME = { ace: 'Ace', jack: 'Jack', queen: 'Queen', king: 'King' };
   const DECK_IDS = SUIT_KEYS.flatMap((suit) => RANKS.map((rank) => `${suit}-${rank}`));
 
-  const MAX_LIVES = 3;
+  const MAX_LIVES = 5;
   const MAX_BLOCK_LOSS = 3;
   const WOBBLE_EVERY = 3;
   const WOBBLE_SEQUENCE_MIN = 3;
@@ -114,6 +126,7 @@
     memoryGrid: $('#memory-grid'),
     sequenceDots: $('#sequence-dots'),
     btnWobblePause: $('#btn-wobble-pause'),
+    btnWobbleStart: $('#btn-wobble-start'),
 
     overlayPause: $('#overlay-pause'),
     btnResume: $('#btn-resume'),
@@ -600,8 +613,6 @@
       const block = document.createElement('span');
       block.className = 'block';
       block.style.setProperty('--i', String(index));
-      const tilt = Math.sin(index * 1.9) * 0.55;
-      block.style.setProperty('--tilt', `${tilt.toFixed(2)}deg`);
       const tone = 0.92 + ((Math.sin(index * 2.7) + 1) / 2) * 0.16;
       block.style.setProperty('--stone-tone', tone.toFixed(3));
       block.style.setProperty('--tex-x', `${(index * 37) % 100}%`);
@@ -647,7 +658,7 @@
     const sceneHeight = els.towerScene.clientHeight || 380;
 
     const princessBottom = height
-      ? height * blockStep + blockHeight - blockStep + 2
+      ? height * blockStep - blockStep + blockHeight + 10
       : 0;
     els.towerPrincess.style.bottom = `${princessBottom}px`;
 
@@ -799,9 +810,9 @@
       diceInterval = window.setInterval(() => {
         if (token !== diceToken) return;
         paint();
-        if (ticks % 3 === 0) sound.diceTick();
+        if (ticks % 2 === 0) sound.diceTick();
         ticks += 1;
-      }, 95);
+      }, 150);
 
       diceTimeout = window.setTimeout(() => {
         if (token !== diceToken) {
@@ -826,8 +837,8 @@
           if (token === diceToken) {
             popup.classList.remove('is-visible', 'is-settled', 'is-green', 'is-red');
           }
-        }, 1400);
-      }, 1150);
+        }, 1500);
+      }, 2000);
     });
   }
 
@@ -856,7 +867,8 @@
     els.card.classList.remove('is-flipping');
     els.screenGame.classList.remove('is-impact');
     els.overlayWobble.classList.remove('is-winning', 'is-failing');
-    els.memoryGrid.classList.remove('is-locked');
+    els.memoryGrid.classList.remove('is-locked', 'is-preview');
+    els.btnWobbleStart.hidden = true;
     els.cardLabel.textContent = 'Current card';
 
     if (towerShiftTimer) {
@@ -907,11 +919,10 @@
     updateSoundUI();
 
     if (state.wobble) {
-      state.phase = 'wobble-show';
-      openOverlay(els.overlayWobble);
+      openOverlay(els.overlayWobble, els.btnWobbleStart);
       renderWobbleGrid();
       updateWobbleDots();
-      playWobbleSequence(run);
+      enterWobbleReady();
     } else {
       updatePrompt(DEFAULT_PROMPT);
     }
@@ -1024,26 +1035,25 @@
     const roll = await rollDice('red', run);
     if (run !== sessionId) return;
 
-    const penalty = roll >= 5 ? 2 : 1;
+    // One mistake = one heart, regardless of the red die value.
     const blocksLost = Math.min(MAX_BLOCK_LOSS, roll, state.towerHeight);
-    state.lives = Math.max(0, state.lives - penalty);
+    state.lives = Math.max(0, state.lives - 1);
     state.towerHeight = Math.max(0, state.towerHeight - blocksLost);
     renderHUD();
     renderTower();
     shakeTower();
     shakeStage();
 
-    const stoneLoss = blocksLost
-      ? ` and ${blocksLost} stone${blocksLost === 1 ? '' : 's'}`
-      : '';
-    spawnFloat(`−${penalty}♥`, 'bad');
+    spawnFloat('−1♥', 'bad');
     showResult(
-      `−${penalty} HEART${penalty > 1 ? 'S' : ''}`,
+      '−1 HEART',
       blocksLost ? `−${blocksLost} stone${blocksLost === 1 ? '' : 's'}` : 'the tower shudders',
       'bad'
     );
     updatePrompt(
-      `Red die: ${roll}. You lose ${penalty} heart${penalty > 1 ? 's' : ''}${stoneLoss}.`,
+      blocksLost
+        ? `Red die: ${roll}. You lose 1 heart and ${blocksLost} stone${blocksLost === 1 ? '' : 's'}.`
+        : `Red die: ${roll}. You lose 1 heart.`,
       'bad'
     );
     await sleep(1650);
@@ -1168,7 +1178,6 @@
       WOBBLE_SEQUENCE_MAX,
       WOBBLE_SEQUENCE_MIN + Math.floor(state.towerHeight / 12)
     );
-    state.phase = 'wobble-show';
     state.wobbleCounter = 0;
     state.wobble = {
       gridSize: 3,
@@ -1178,10 +1187,30 @@
 
     setGuessEnabled(false);
     els.overlayWobble.classList.remove('is-winning', 'is-failing');
-    openOverlay(els.overlayWobble);
+    openOverlay(els.overlayWobble, els.btnWobbleStart);
     renderWobbleGrid();
     updateWobbleDots();
-    playWobbleSequence(run);
+    enterWobbleReady();
+  }
+
+  // The board is visible but nothing is shown until the player opts in.
+  function enterWobbleReady() {
+    state.phase = 'wobble-ready';
+    els.memoryGrid.classList.remove('is-locked');
+    els.memoryGrid.classList.add('is-preview');
+    els.btnWobbleStart.hidden = false;
+    els.wobbleInstruction.textContent =
+      'Study the shapes on the stones — press Start when you are ready.';
+    els.wobbleStatus.textContent = 'Ready when you are';
+    setPauseEnabled(true);
+  }
+
+  function beginWobbleShow() {
+    if (state.phase !== 'wobble-ready' || !state.wobble) return;
+    els.btnWobbleStart.hidden = true;
+    els.memoryGrid.classList.remove('is-preview');
+    state.phase = 'wobble-show';
+    playWobbleSequence(sessionId);
   }
 
   function renderWobbleGrid() {
@@ -1191,11 +1220,16 @@
 
     const fragment = document.createDocumentFragment();
     for (let index = 0; index < size * size; index += 1) {
+      const shape = MEMORY_SHAPES[index % MEMORY_SHAPES.length];
       const cell = document.createElement('button');
       cell.type = 'button';
       cell.className = 'memory-cell';
       cell.dataset.index = String(index);
-      cell.setAttribute('aria-label', `Stone ${index + 1}`);
+      cell.style.setProperty('--shape-color', shape.color);
+      cell.setAttribute('aria-label', `${shape.name} stone`);
+      cell.innerHTML =
+        `<svg class="memory-shape" viewBox="0 0 24 24" aria-hidden="true" focusable="false">` +
+        `<use href="#${shape.icon}"></use></svg>`;
       fragment.appendChild(cell);
     }
     els.memoryGrid.appendChild(fragment);
@@ -1224,7 +1258,7 @@
     els.wobbleStatus.textContent = 'Watch closely…';
     updateWobbleDots();
 
-    await sleep(850);
+    await sleep(500);
     if (run !== sessionId || !state.wobble) return;
 
     // On an imported mid-wobble save, resume from the saved progress so the
@@ -1370,7 +1404,13 @@
      ------------------------------------------------------------ */
 
   function openPause() {
-    if (state.phase !== 'guess' && state.phase !== 'wobble-input') return;
+    if (
+      state.phase !== 'guess' &&
+      state.phase !== 'wobble-input' &&
+      state.phase !== 'wobble-ready'
+    ) {
+      return;
+    }
 
     pausedFrom = state.phase;
     state.phase = 'paused';
@@ -1582,6 +1622,7 @@
 
     els.btnPause.addEventListener('click', openPause);
     els.btnWobblePause.addEventListener('click', openPause);
+    els.btnWobbleStart.addEventListener('click', beginWobbleShow);
     els.btnResume.addEventListener('click', closePause);
     els.btnSave.addEventListener('click', saveProgress);
     els.btnImport.addEventListener('click', () => els.importFile.click());
@@ -1626,7 +1667,9 @@
         }
         if (
           els.screenGame.classList.contains('is-active') &&
-          (state.phase === 'guess' || state.phase === 'wobble-input')
+          (state.phase === 'guess' ||
+            state.phase === 'wobble-input' ||
+            state.phase === 'wobble-ready')
         ) {
           openPause();
         }
