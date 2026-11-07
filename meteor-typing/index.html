@@ -177,6 +177,17 @@
     #lives { border: 2px solid #ff3333; }
     #alienBadge { border: 2px solid #7cfc00 !important; color: #b4ff8a; display: none; font-size: 16px; }
 
+    /* --- level progress bar inside the Level chip --- */
+    #gameUI > #level {
+        position: relative; overflow: hidden; padding-bottom: 12px;
+    }
+    #levelBar {
+        position: absolute; left: 0; bottom: 0; height: 4px; width: 0%;
+        background: linear-gradient(90deg, #ffd700, #ff8c00);
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.9);
+        transition: width .25s ease;
+    }
+
     #speedControl {
         display: flex; align-items: center; gap: 10px;
         border: 2px solid #9b6bff !important; color: #c9a8ff !important;
@@ -191,12 +202,12 @@
     #speedControl button:hover { background: rgba(155,107,255,.45); color: #fff; }
     #speedVal { min-width: 48px; text-align: center; }
 
-    /* --- Big planet: only its crest peeks out below the typing field --- */
+    /* --- Big planet: crest sits 110px above the bottom (was 150px) --- */
     #planet {
         position: absolute;
         left: 50%; transform: translateX(-50%);
         width: 300vh; height: 300vh;
-        bottom: calc(-300vh + 150px);
+        bottom: calc(-300vh + 110px);
         border-radius: 50%;
         background:
             radial-gradient(ellipse 26% 14% at 44% 3.5%, rgba(46,204,113,.85), transparent 70%),
@@ -221,13 +232,13 @@
 
     #earth { display: none; } /* replaced by the big planet */
 
-    /* --- Big meteors --- */
+    /* --- Big meteors (130px, driven from CONFIG.METEOR_SIZE) --- */
     .meteor {
         position: absolute;
-        width: 110px; height: 110px;
+        width: 130px; height: 130px;
         border-radius: 50%;
         display: flex; justify-content: center; align-items: center;
-        font-size: 62px; font-weight: bold;
+        font-size: 72px; font-weight: bold;
         cursor: pointer;
         border: 3px solid rgba(255,255,255,0.35);
         box-shadow: 0 0 18px rgba(255, 100, 0, 0.6);
@@ -248,7 +259,7 @@
         pointer-events: none; line-height: 1;
     }
     .meteor-content img {
-        width: 88px; height: 88px; border-radius: 50%; object-fit: cover;
+        width: 82%; height: 82%; border-radius: 50%; object-fit: cover;
         pointer-events: none;
     }
     .meteor.urgent {
@@ -269,7 +280,7 @@
     }
 
     #inputContainer {
-        position: absolute; bottom: 215px;
+        position: absolute; bottom: 170px;
         left: 50%; transform: translateX(-50%);
         z-index: 500; text-align: center;
     }
@@ -371,8 +382,8 @@
     .alien {
         position: absolute; font-size: 95px; z-index: 1700;
         filter: drop-shadow(0 0 22px rgba(124, 252, 0, 0.9));
-        transition: left 1.8s cubic-bezier(.45,0,.55,1), top 1.8s cubic-bezier(.45,0,.55,1);
-        pointer-events: none;
+        transition: left .55s cubic-bezier(.25,.6,.35,1), top .55s cubic-bezier(.25,.6,.35,1);
+        pointer-events: none; will-change: left, top;
     }
     .alien.blasting { animation: alienShake .25s infinite; }
     @keyframes alienShake {
@@ -433,7 +444,7 @@
     <div id="gameContainer">
         <div id="gameUI">
             <div id="score">Score: 0</div>
-            <div id="level">Level: 1</div>
+            <div id="level"><span id="levelText">Level: 1</span><div id="levelBar"></div></div>
             <div id="speedControl">
                 <button id="speedDown" title="Slower">−</button>
                 <span id="speedVal">1.0x</span>
@@ -473,16 +484,23 @@
 // ⚙️ CONFIGURATION
 // ========================================================================
 const CONFIG = {
-    INITIAL_FALL_DURATION_MS: 8000,   // Base time for a meteor to cross the screen
-    INITIAL_SPAWN_RATE_MS: 4000,      // Base time between meteor spawns
-    FALL_SPEED_ACCELERATION: 0.1,     // Speed multiplier added per level
+    INITIAL_FALL_DURATION_MS: 8000,   // Base time for a meteor to reach the planet
+    INITIAL_SPAWN_RATE_MS: 2000,      // Base time between meteor spawns (was 4000)
     MIN_FALL_DURATION_MS: 2500,
-    MIN_SPAWN_RATE_MS: 1500,
-    METEOR_SIZE: 110,
+    MIN_SPAWN_RATE_MS: 800,           // was 1500
+    FALL_DURATION_STEP_MS: 170,       // shaved off the fall time per level
+    SPAWN_RATE_STEP_MS: 140,          // shaved off the spawn gap per level
+    FALL_SPEED_ACCELERATION: 0.09,    // extra speed multiplier added per level
+    METEOR_SIZE: 130,                 // was 110
+    LEVEL_BASE_POINTS: 100,           // points needed for level 1; scales ×level
+    POINTS_PER_HIT: 10,               // ×level per correct word
     PLANET_HITS_TO_BLACK: 3,          // Hits needed for the planet to go fully black
     ALIEN_BLIND_MS: 7000,             // How long a blasted meteor stays blank
+    ALIEN_BLIND_MIN_MS: 4000,
+    ALIEN_BLIND_REDUCTION_PER_LEVEL: 250,
     ALIEN_MIN_DELAY_MS: 8000,         // First/next UFO appears between 8–15s
-    ALIEN_MAX_DELAY_MS: 15000
+    ALIEN_MAX_DELAY_MS: 15000,
+    ALIEN_TRAVEL_MS: 550              // how long the UFO takes to reach its target
 };
 const SPEED_MIN = 0.25, SPEED_MAX = 2.0, SPEED_STEP = 0.1;
 const VOCAB_KEY = 'mtd_vocab_v1', SCORES_KEY = 'mtd_scores_v1', NAME_KEY = 'mtd_name';
@@ -510,6 +528,7 @@ let VOCAB = [];                       // active word list for this match
 let meteors = [];
 let meteorIdCounter = 0;
 let score = 0, lives = 3, level = 1, combo = 0;
+let levelProgress = 0;                // points earned inside the CURRENT level
 let gameActive = false;
 let fallDuration, spawnRate, fallSpeedMult = 1, speedSetting = 1;
 let planetHits = 0;
@@ -521,7 +540,8 @@ const planetEl = document.getElementById('planet');
 const planetScorch = document.getElementById('planetScorch');
 const gameInput = document.getElementById('gameInput');
 const scoreDisplay = document.getElementById('score');
-const levelDisplay = document.getElementById('level');
+const levelText = document.getElementById('levelText');
+const levelBar = document.getElementById('levelBar');
 const livesDisplay = document.getElementById('lives');
 const speedVal = document.getElementById('speedVal');
 const alienBadge = document.getElementById('alienBadge');
@@ -705,6 +725,7 @@ function startGame() {
 
 function resetGameState() {
     score = 0; lives = 3; level = 1; combo = 0;
+    levelProgress = 0;
     fallDuration = CONFIG.INITIAL_FALL_DURATION_MS;
     spawnRate = CONFIG.INITIAL_SPAWN_RATE_MS;
     fallSpeedMult = 1;
@@ -767,15 +788,20 @@ function getRandomWord() {
 function spawnMeteors() {
     if (!gameActive) return;
     createMeteor();
-    const delay = Math.max(600, spawnRate / speedSetting);
+    const delay = Math.max(450, spawnRate / speedSetting);
     spawnTid = setTimeout(spawnMeteors, delay);
 }
 
 function createMeteor() {
     const wordData = getRandomWord();
+    const size = CONFIG.METEOR_SIZE;
+
     const el = document.createElement('div');
     el.className = 'meteor';
     el.style.background = wordData.color;
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.fontSize = Math.round(size * 0.56) + 'px';
 
     const content = document.createElement('div');
     content.className = 'meteor-content';
@@ -788,18 +814,22 @@ function createMeteor() {
     }
     el.appendChild(content);
 
-    const size = CONFIG.METEOR_SIZE;
-    el.style.left = Math.random() * (gameContainer.clientWidth - size) + 'px';
+    const spawnLeft = Math.random() * Math.max(1, gameContainer.clientWidth - size);
+    el.style.left = spawnLeft + 'px';
     const y = -size;
     el.style.top = y + 'px';
     gameContainer.appendChild(el);
 
-    const fallDist = gameContainer.clientHeight + size - 150;
+    // Measure the REAL distance from off-screen top to the planet's surface,
+    // so the planet's position is the single source of truth for fall time.
+    const containerTop = gameContainer.getBoundingClientRect().top;
+    const planetTopRel = planetEl.getBoundingClientRect().top - containerTop;
+    const fallDist = Math.max(120, planetTopRel + size);
     const speed = fallDist / fallDuration; // px per ms at 1x speed
 
     meteors.push({
         element: el, contentEl: content, word: wordData.word,
-        id: meteorIdCounter++, y, speed,
+        id: meteorIdCounter++, y, speed, size,
         destroyed: false, blinded: false, blindTimer: null
     });
     updateUrgency();
@@ -854,13 +884,11 @@ gameInput.addEventListener('input', (e) => {
     for (const meteorData of [...meteors]) {
         if (meteorData.word === input && !meteorData.destroyed) {
             destroyMeteor(meteorData);
-            score += 10 * level;
+            grantPoints(CONFIG.POINTS_PER_HIT * level);
             combo++;
             showCombo();
-            updateUI();
             gameInput.value = '';
             gameInput.focus();
-            if (score >= level * 100) levelUp();
             break;
         }
     }
@@ -869,9 +897,11 @@ gameInput.addEventListener('input', (e) => {
 function destroyMeteor(m) {
     const containerRect = gameContainer.getBoundingClientRect();
     const rect = m.element.getBoundingClientRect();
+    const cx = rect.left - containerRect.left + rect.width / 2;
+    const cy = rect.top - containerRect.top + rect.height / 2;
     m.element.style.animation = 'explosion 0.5s ease-out forwards';
     for (let i = 0; i < 10; i++) {
-        createParticle(rect.left - containerRect.left + 55, rect.top - containerRect.top + 55, m.element.style.background);
+        createParticle(cx, cy, m.element.style.background);
     }
     m.destroyed = true;
     if (m.blindTimer) clearTimeout(m.blindTimer);
@@ -932,14 +962,40 @@ function flashScreen() {
 
 function updateUI() {
     scoreDisplay.textContent = 'Score: ' + score;
-    levelDisplay.textContent = 'Level: ' + level;
+    levelText.textContent = 'Level: ' + level;
     livesDisplay.textContent = '❤️ ' + lives;
+    updateLevelBar();
+}
+
+function levelGoalPoints(lv) {
+    return CONFIG.LEVEL_BASE_POINTS * lv;
+}
+
+function updateLevelBar() {
+    const need = levelGoalPoints(level);
+    const pct = Math.max(0, Math.min(100, (levelProgress / need) * 100));
+    levelBar.style.width = pct + '%';
+}
+
+// Awards points and handles level-ups using PER-LEVEL progress.
+// Because hits are worth (10 × level) and a level costs (100 × level),
+// that is always exactly 10 correct words per level — no runaway levelling.
+function grantPoints(points) {
+    score += points;
+    levelProgress += points;
+    let need = levelGoalPoints(level);
+    while (levelProgress >= need) {
+        levelProgress -= need;
+        levelUp();
+        need = levelGoalPoints(level);
+    }
+    updateUI();
 }
 
 function levelUp() {
     level++;
-    fallDuration = Math.max(CONFIG.MIN_FALL_DURATION_MS, fallDuration - 200);
-    spawnRate = Math.max(CONFIG.MIN_SPAWN_RATE_MS, spawnRate - 150);
+    fallDuration = Math.max(CONFIG.MIN_FALL_DURATION_MS, fallDuration - CONFIG.FALL_DURATION_STEP_MS);
+    spawnRate = Math.max(CONFIG.MIN_SPAWN_RATE_MS, spawnRate - CONFIG.SPAWN_RATE_STEP_MS);
     fallSpeedMult += CONFIG.FALL_SPEED_ACCELERATION;
     combo = 0;
     const t = document.createElement('div');
@@ -948,7 +1004,6 @@ function levelUp() {
     t.textContent = '⭐ LEVEL ' + level + ' ⭐';
     gameContainer.appendChild(t);
     setTimeout(() => t.remove(), 2000);
-    updateUI();
 }
 
 // ========================================================================
@@ -963,73 +1018,107 @@ document.getElementById('speedUp').addEventListener('click', () => setSpeed(spee
 
 // ========================================================================
 // 👽 ALIEN MODE — UFO erases a meteor's picture for a while
+// ------------------------------------------------------------------------
+// The UFO now:
+//   • targets the meteors CLOSEST to the planet (the actual threats)
+//   • leads the shot: it flies to where the meteor WILL be on arrival
+//   • arrives in ~0.55s and fires almost immediately
+//   • shows up more often (and blinds slightly shorter) at higher levels
 // ========================================================================
 function scheduleAlien(alienModeOn) {
     if (!gameActive || !alienModeOn) return;
     if (alienTid) clearTimeout(alienTid);
-    const wait = CONFIG.ALIEN_MIN_DELAY_MS +
+    const base = CONFIG.ALIEN_MIN_DELAY_MS +
         Math.random() * (CONFIG.ALIEN_MAX_DELAY_MS - CONFIG.ALIEN_MIN_DELAY_MS);
+    const scaled = base / (1 + 0.10 * (level - 1));
+    const wait = Math.max(CONFIG.ALIEN_MIN_DELAY_MS * 0.55, scaled);
     alienTid = setTimeout(alienPass, wait);
 }
 
 function alienPass() {
     if (!gameActive) return;
-    const candidates = meteors.filter(m => !m.destroyed);
+
+    const candidates = meteors.filter(m => !m.destroyed && m.element.parentNode);
     if (!candidates.length) { scheduleAlien(true); return; }
-    const target = candidates[Math.floor(Math.random() * candidates.length)];
+
+    // Deepest meteors first — pick from the 3 most urgent.
+    candidates.sort((a, b) => b.y - a.y);
+    const target = candidates[Math.floor(Math.random() * Math.min(3, candidates.length))];
+
+    if (alienEl) { alienEl.remove(); alienEl = null; }
 
     alienEl = document.createElement('div');
     alienEl.className = 'alien';
     alienEl.textContent = '🛸';
     const fromLeft = Math.random() < 0.5;
-    const startX = fromLeft ? -150 : gameContainer.clientWidth + 50;
-    alienEl.style.left = startX + 'px';
-    alienEl.style.top = '40px';
+    alienEl.style.transition = 'none';
+    alienEl.style.left = (fromLeft ? -140 : gameContainer.clientWidth + 40) + 'px';
+    alienEl.style.top = '22px';
     gameContainer.appendChild(alienEl);
+
+    // Force a layout flush so the off-screen start position is committed
+    // before we start the CSS transition.
+    const ufoW = alienEl.offsetWidth || 95;
+    void alienEl.offsetWidth;
+
+    // Lead the shot: where will the meteor be when the UFO arrives?
+    const lead = target.speed * fallSpeedMult * speedSetting * CONFIG.ALIEN_TRAVEL_MS;
+    const hoverX = target.element.offsetLeft + target.element.offsetWidth / 2 - ufoW / 2;
+    const hoverY = Math.max(2, target.y + lead - ufoW * 1.15);
 
     requestAnimationFrame(() => {
         if (!alienEl) return;
-        const tr = target.element.getBoundingClientRect();
-        const cr = gameContainer.getBoundingClientRect();
-        alienEl.style.left = (tr.left - cr.left) + 'px';
-        alienEl.style.top = Math.max(15, tr.top - cr.top - 125) + 'px';
+        alienEl.style.transition =
+            `left ${CONFIG.ALIEN_TRAVEL_MS}ms cubic-bezier(.25,.6,.35,1), ` +
+            `top ${CONFIG.ALIEN_TRAVEL_MS}ms cubic-bezier(.25,.6,.35,1)`;
+        alienEl.style.left = Math.max(4, Math.min(gameContainer.clientWidth - ufoW - 4, hoverX)) + 'px';
+        alienEl.style.top = hoverY + 'px';
     });
 
+    setTimeout(() => fireAlien(target, fromLeft), CONFIG.ALIEN_TRAVEL_MS + 90);
+}
+
+function fireAlien(target, fromLeft) {
+    if (!gameActive || !alienEl) { cleanupAlien(); return; }
+    if (target.destroyed || !target.element.parentNode) { cleanupAlien(); return; }
+
+    const cr = gameContainer.getBoundingClientRect();
+    const tr = target.element.getBoundingClientRect();
+    const ar = alienEl.getBoundingClientRect();
+    const muzzleY = ar.top - cr.top + ar.height * 0.72;
+
+    alienEl.classList.add('blasting');
+
+    // laser beam from UFO down to the meteor
+    const laser = document.createElement('div');
+    laser.className = 'laser';
+    laser.style.left = (tr.left - cr.left + tr.width / 2 - 4) + 'px';
+    laser.style.top = muzzleY + 'px';
+    laser.style.height = Math.max(16, (tr.top - cr.top) - muzzleY + 14) + 'px';
+    gameContainer.appendChild(laser);
+    setTimeout(() => laser.remove(), 600);
+
+    // blind the target — picture vanishes, word memory is tested
+    target.blinded = true;
+    target.element.classList.add('blinded');
+    if (target.blindTimer) clearTimeout(target.blindTimer);
+    const blindMs = Math.max(
+        CONFIG.ALIEN_BLIND_MIN_MS,
+        CONFIG.ALIEN_BLIND_MS - (level - 1) * CONFIG.ALIEN_BLIND_REDUCTION_PER_LEVEL
+    );
+    target.blindTimer = setTimeout(() => {
+        target.blinded = false;
+        if (target.element) target.element.classList.remove('blinded');
+    }, blindMs);
+
     setTimeout(() => {
-        if (!gameActive || !alienEl) { cleanupAlien(); return; }
-        alienEl.classList.add('blasting');
-
-        // laser beam from UFO down to the meteor
-        const cr = gameContainer.getBoundingClientRect();
-        const tr = target.element.getBoundingClientRect();
-        const ar = alienEl.getBoundingClientRect();
-        const laser = document.createElement('div');
-        laser.className = 'laser';
-        laser.style.left = (tr.left - cr.left + tr.width / 2 - 4) + 'px';
-        laser.style.top = (ar.bottom - cr.top - 10) + 'px';
-        laser.style.height = Math.max(20, tr.top - ar.bottom + 20) + 'px';
-        gameContainer.appendChild(laser);
-        setTimeout(() => laser.remove(), 600);
-
-        // blind the target — picture vanishes, word memory is tested
-        target.blinded = true;
-        target.element.classList.add('blinded');
-        if (target.blindTimer) clearTimeout(target.blindTimer);
-        target.blindTimer = setTimeout(() => {
-            target.blinded = false;
-            target.element.classList.remove('blinded');
-        }, CONFIG.ALIEN_BLIND_MS);
-
-        setTimeout(() => {
-            if (alienEl) {
-                const exitX = fromLeft ? gameContainer.clientWidth + 50 : -150;
-                alienEl.style.transition = 'left 1.3s linear, top 1.3s linear';
-                alienEl.style.left = exitX + 'px';
-                alienEl.style.top = '25px';
-            }
-        }, 650);
-        setTimeout(cleanupAlien, 2200);
-    }, 2000);
+        if (!alienEl) return;
+        alienEl.classList.remove('blasting');
+        alienEl.style.transition = 'left 900ms linear, top 900ms linear';
+        alienEl.style.left = (fromLeft ? gameContainer.clientWidth + 60 : -160) + 'px';
+        alienEl.style.top = '16px';
+    }, 380);
+    setTimeout(cleanupAlien, 1500);
 }
 
 function cleanupAlien() {
@@ -1081,6 +1170,7 @@ function endGame() {
     gameInput.disabled = true;
     if (alienTid) clearTimeout(alienTid);
     if (spawnTid) clearTimeout(spawnTid);
+    if (alienEl) { alienEl.remove(); alienEl = null; }
 
     document.getElementById('finalScore').textContent = 'Final Score: ' + score;
     document.getElementById('finalLevel').textContent = 'Level Reached: ' + level;
